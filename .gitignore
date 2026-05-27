@@ -1,0 +1,25 @@
+# Maven target directory
+target/
+**/target/
+
+# IDE files and settings
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS and system files
+Thumbs.db
+.DS_Store
+*.log
+*.tmp
+
+# Environment Files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
