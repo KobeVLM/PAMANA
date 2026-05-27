@@ -110,7 +110,7 @@ public class AuthService {
         );
 
         log.info("Login successful for user ID: {}, generating bearer token", user.getId());
-        return new AuthResponse(jwt, user.getRole(), user.getId());
+        return new AuthResponse(jwt, mapToUserResponse(user));
     }
 
     private void initializeModuleProgress(UUID userId) {

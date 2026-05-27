@@ -53,7 +53,7 @@ export const LoginPage: React.FC = () => {
 
       <div className="relative w-full max-w-md">
         {/* Card */}
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pamana-gold to-pamana-amber flex items-center justify-center shadow-lg mb-4 animate-float">

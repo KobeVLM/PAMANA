@@ -6,16 +6,14 @@ import java.util.UUID;
 public class AuthResponse {
 
     private String token;
-    private Role role;
-    private UUID userId;
+    private UserResponse user;
 
     public AuthResponse() {
     }
 
-    public AuthResponse(String token, Role role, UUID userId) {
+    public AuthResponse(String token, UserResponse user) {
         this.token = token;
-        this.role = role;
-        this.userId = userId;
+        this.user = user;
     }
 
     // Getters and Setters
@@ -27,19 +25,11 @@ public class AuthResponse {
         this.token = token;
     }
 
-    public Role getRole() {
-        return role;
+    public UserResponse getUser() {
+        return user;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setUser(UserResponse user) {
+        this.user = user;
     }
 }

@@ -14,6 +14,7 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [role, setRole] = useState<'LEARNER' | 'PARENT' | 'TEACHER'>('LEARNER')
   const [joinCode, setJoinCode] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -21,7 +22,8 @@ export const RegisterPage: React.FC = () => {
 
   React.useEffect(() => {
     if (user) {
-      navigate('/trail', { replace: true })
+      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail'
+      navigate(dest, { replace: true })
     }
   }, [user, navigate])
 
@@ -46,7 +48,7 @@ export const RegisterPage: React.FC = () => {
     setIsLoading(true)
     setErrors({})
     try {
-      await register(name.trim(), email.trim(), password, joinCode || undefined)
+      await register(name.trim(), email.trim(), password, role, joinCode || undefined)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       const msg = axiosErr?.response?.data?.message ?? 'May error. Subukan ulit.'
@@ -64,7 +66,7 @@ export const RegisterPage: React.FC = () => {
       </div>
 
       <div className="relative w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-6">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pamana-gold to-pamana-amber flex items-center justify-center shadow-lg mb-3 animate-float">
@@ -144,24 +146,48 @@ export const RegisterPage: React.FC = () => {
               {errors.confirmPassword && <p className="text-red-300 text-xs">{errors.confirmPassword}</p>}
             </div>
 
-            {/* Join Code (optional) */}
+            {/* Role Selection */}
             <div className="space-y-1.5">
-              <Label htmlFor="join-code" className="text-green-200 font-medium text-sm flex items-center gap-1.5">
-                Klase Code
-                <span className="text-green-400 text-xs font-normal">(opsyonal)</span>
-                <Info className="w-3.5 h-3.5 text-green-400" />
-              </Label>
-              <Input
-                id="join-code"
-                type="text"
-                placeholder="6-digit na code mula sa guro"
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
-                className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-pamana-gold rounded-xl font-mono tracking-widest"
-                maxLength={6}
-                disabled={isLoading}
-              />
+              <Label className="text-green-200 font-medium text-sm">Role</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(['LEARNER', 'PARENT', 'TEACHER'] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setRole(r)}
+                    className={`h-10 text-xs font-bold rounded-xl transition-all ${
+                      role === r
+                        ? 'bg-pamana-gold text-green-950 shadow-md scale-105'
+                        : 'bg-white/10 text-white hover:bg-white/20'
+                    }`}
+                  >
+                    {r === 'LEARNER' ? 'Mag-aaral' : r === 'PARENT' ? 'Magulang' : 'Guro'}
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Join Code (optional) */}
+            {role === 'LEARNER' && (
+              <div className="space-y-1.5">
+                <Label htmlFor="join-code" className="text-green-200 font-medium text-sm flex items-center gap-1.5">
+                  Klase Code
+                  <span className="text-green-400 text-xs font-normal">(opsyonal)</span>
+                  <Info className="w-3.5 h-3.5 text-green-400" />
+                </Label>
+
+                <Input
+                  id="join-code"
+                  type="text"
+                  placeholder="6-digit na code mula sa guro"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
+                  className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-pamana-gold rounded-xl font-mono tracking-widest"
+                  maxLength={6}
+                  disabled={isLoading}
+                />
+              </div>
+            )}
 
             {/* General error */}
             {errors.general && (

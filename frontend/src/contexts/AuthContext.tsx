@@ -11,13 +11,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Hydrate from session storage on mount
   useEffect(() => {
-    const storedToken = sessionStorage.getItem('pamana_token')
-    const storedUser = sessionStorage.getItem('pamana_user')
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    try {
+      const storedToken = sessionStorage.getItem('pamana_token')
+      const storedUser = sessionStorage.getItem('pamana_user')
+      if (storedToken && storedUser && storedUser !== 'undefined' && storedUser !== '{}') {
+        setToken(storedToken)
+        setUser(JSON.parse(storedUser))
+      } else if (storedUser === 'undefined' || storedUser === '{}') {
+        sessionStorage.removeItem('pamana_token')
+        sessionStorage.removeItem('pamana_user')
+      }
+    } catch (e) {
+      sessionStorage.removeItem('pamana_token')
+      sessionStorage.removeItem('pamana_user')
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
   }, [])
 
   const login = useCallback(async (email: string, password: string) => {
@@ -33,10 +42,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     password: string,
+    role: 'LEARNER' | 'PARENT' | 'TEACHER',
     joinCode?: string
   ) => {
-    const response = await api.post('/auth/register', { name, email, password, joinCode })
-    const { token: jwt, user: userData } = response.data
+    // 1. Register the user
+    await api.post('/auth/register', { name, email, password, role, joinCode })
+    
+    // 2. Automatically log them in to get the JWT token
+    const loginResponse = await api.post('/auth/login', { email, password })
+    const { token: jwt, user: userData } = loginResponse.data
+    
     sessionStorage.setItem('pamana_token', jwt)
     sessionStorage.setItem('pamana_user', JSON.stringify(userData))
     setToken(jwt)

@@ -11,7 +11,7 @@ export interface AuthContextType {
   token: string | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string, joinCode?: string) => Promise<void>
+  register: (name: string, email: string, password: string, role: 'LEARNER' | 'PARENT' | 'TEACHER', joinCode?: string) => Promise<void>
   logout: () => void
 }
 
