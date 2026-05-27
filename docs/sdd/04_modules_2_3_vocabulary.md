@@ -4,7 +4,7 @@
 
 **User Interface Design**
 
-The Word Introduction screen displays: (1) Lolo NPC with speech bubble 'Pakinggan natin ang bagong salita!', (2) a centered large image tile of the vocabulary word loaded from Supabase Storage, (3) the written Filipino word below the image in large bold text, (4) an audio play button that automatically fires on screen load and is tappable for replay. After audio completes, a 'Susunod' (Next) button appears. No input is required - this is a passive introduction step.
+The Word Introduction screen displays: (1) Lolo NPC with speech bubble 'Pakinggan natin ang bagong salita!', (2) a centered large image tile of the vocabulary word loaded from Local static asset directories (Spring Boot), (3) the written Filipino word below the image in large bold text, (4) an audio play button that automatically fires on screen load and is tappable for replay. After audio completes, a 'Susunod' (Next) button appears. No input is required - this is a passive introduction step.
 
 **Front-end Component(s)**
 
@@ -12,7 +12,7 @@ The Word Introduction screen displays: (1) Lolo NPC with speech bubble 'Pakingga
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
 | VocabularyModule   | Container managing the 4-step vocabulary spiral loop state (Pakinggan → Kilalanin → Basahin → Gamitin) for the current word. Fetches word data from VocabularyController on mount. Manages step transitions. | React Functional Component (.jsx) |
 | WordIntro          | Displays the word image, written label, and auto-plays audio on mount. Shows 'Susunod' button after audio completes. Accepts word object prop from VocabularyModule.                                         | React Functional Component (.jsx) |
-| AudioPlayer        | Plays vocabulary word audio from Supabase Storage URL. Called automatically on mount.                                                                                                                        | React Functional Component (.jsx) |
+| AudioPlayer        | Plays vocabulary word audio from Local static asset directories (Spring Boot) URL. Called automatically on mount.                                                                                                                        | React Functional Component (.jsx) |
 | NPCDialogue        | Lolo NPC rendering word introduction instruction line.                                                                                                                                                       | React Functional Component (.jsx) |
 
 **Back-end Component(s)**
@@ -51,8 +51,8 @@ The Word Introduction screen displays: (1) Lolo NPC with speech bubble 'Pakingga
 | vocabulary_items | id               | UUID (PK)                       | Generated                                        |
 | vocabulary_items | word             | VARCHAR(50)                     | NOT NULL; the Filipino vocabulary word           |
 | vocabulary_items | domain           | VARCHAR(20)                     | CHECK IN ('self_body','family_home')             |
-| vocabulary_items | audio_url        | TEXT                            | Supabase Storage URL for native speaker audio    |
-| vocabulary_items | image_url        | TEXT                            | Supabase Storage URL for word illustration       |
+| vocabulary_items | audio_url        | TEXT                            | Local static asset directories (Spring Boot) URL for native speaker audio    |
+| vocabulary_items | image_url        | TEXT                            | Local static asset directories (Spring Boot) URL for word illustration       |
 | vocabulary_items | ordinal          | INTEGER                         | NOT NULL; defines word introduction order        |
 | word_mastery     | id               | UUID (PK)                       | Generated                                        |
 | word_mastery     | user_id          | UUID (FK → users.id)            | NOT NULL; CASCADE DELETE                         |
@@ -74,7 +74,7 @@ The Kilalanin step screen displays: (1) Lolo NPC with 'Kilalanin! Alin ang laraw
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | ImageMatch         | Manages audio-to-image matching step. Loads 4 image URLs (1 target + 3 distractors from VocabularyController). Renders image OptionGrid. Handles selection and accuracy recording. | React Functional Component (.jsx) |
 | AudioPlayer        | Plays target word audio. Fires auto on step load. Tappable for replay.                                                                                                             | React Functional Component (.jsx) |
-| OptionGrid         | 2×2 image tile grid with feedback color state. Images loaded from Supabase Storage URLs.                                                                                           | React Functional Component (.jsx) |
+| OptionGrid         | 2×2 image tile grid with feedback color state. Images loaded from Local static asset directories (Spring Boot) URLs.                                                                                           | React Functional Component (.jsx) |
 
 **Back-end Component(s)**
 

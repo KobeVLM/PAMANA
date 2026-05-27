@@ -11,7 +11,7 @@ The Registration screen presents a vertically centered card layout with: (1) PAM
 | **Component Name** | **Description and Purpose**                                                                                                                                                  | **Component Type / Format**       |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | RegisterPage       | Top-level page component orchestrating the registration flow. Manages form state (name, email, password, joinCode) and dispatches registration actions via AuthContext.      | React Functional Component (.jsx) |
-| AuthContext        | React Context providing authentication state (user, role, JWT) and auth actions (register, login, logout) to the entire component tree. Wraps supabase-js calls.             | React Context + Provider (.jsx)   |
+| AuthContext        | React Context providing authentication state (user, role, JWT) and auth actions (register, login, logout) to the entire component tree. Wraps Axios API client calls.             | React Context + Provider (.jsx)   |
 | InputField         | Reusable labeled input component supporting text, email, password, and optional validation state (error, success) with accessible ARIA labels. Minimum 44×44px touch target. | React Functional Component (.jsx) |
 | LoadingSpinner     | Full-card overlay spinner displayed during async API calls to prevent duplicate submissions.                                                                                 | React Functional Component (.jsx) |
 
@@ -20,7 +20,7 @@ The Registration screen presents a vertically centered card layout with: (1) PAM
 | **Component Name** | **Description and Purpose**                                                                                                                                                                                         | **Component Type / Format**                  |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | AuthController     | REST controller exposing POST /api/auth/register. Validates request body, delegates to AuthService, returns 201 Created with user record or 400/409 on error.                                                       | Spring Boot @RestController                  |
-| AuthService        | Business logic for user registration: calls Supabase Auth to create the auth account, inserts the users record, initializes 4 module_progress rows (Module 1 unlocked), and optionally links a Klase via join code. | Spring Boot @Service                         |
+| AuthService        | Business logic for user registration: calls Spring Security JWT Authentication to create the auth account, inserts the users record, initializes 4 module_progress rows (Module 1 unlocked), and optionally links a Klase via join code. | Spring Boot @Service                         |
 | UserRepository     | JPA repository for the users table. Provides save(), findByEmail(), and findByKlaseId() operations.                                                                                                                 | Spring Boot JpaRepository&lt;User, UUID&gt;  |
 | KlaseRepository    | JPA repository for the klases table. Provides findByJoinCode() used during optional Klase linking at registration.                                                                                                  | Spring Boot JpaRepository&lt;Klase, UUID&gt; |
 
@@ -32,7 +32,7 @@ The Registration screen presents a vertically centered card layout with: (1) PAM
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | User (Entity)         | id: UUID name: String email: String role: Role (enum: LEARNER, PARENT, TEACHER) klaseId: UUID (nullable) createdAt: Timestamp                     | getId() getRole() getKlaseId() setKlaseId(UUID)                                                                                                                                 |
 | AuthController        | - (stateless)                                                                                                                                     | register(RegisterRequest): ResponseEntity&lt;UserResponse&gt; login(LoginRequest): ResponseEntity&lt;AuthResponse&gt;                                                           |
-| AuthService           | supabaseClient: SupabaseClient userRepository: UserRepository klaseRepository: KlaseRepository moduleProgressRepository: ModuleProgressRepository | createAccount(RegisterRequest): UserResponse initializeModuleProgress(UUID userId): void linkKlase(UUID userId, String joinCode): void authenticate(LoginRequest): AuthResponse |
+| AuthService           | jwtTokenProvider: JwtTokenProvider, passwordEncoder: BCryptPasswordEncoder userRepository: UserRepository klaseRepository: KlaseRepository moduleProgressRepository: ModuleProgressRepository | createAccount(RegisterRequest): UserResponse initializeModuleProgress(UUID userId): void linkKlase(UUID userId, String joinCode): void authenticate(LoginRequest): AuthResponse |
 | RegisterRequest (DTO) | name: String email: String password: String joinCode: String (optional)                                                                           | validate(): boolean                                                                                                                                                             |
 
 **_Sequence Diagram_**
@@ -43,8 +43,8 @@ The Registration screen presents a vertically centered card layout with: (1) PAM
 | 2        | RegisterPage     | Calls AuthContext.register(name, email, password, joinCode)                   |
 | 3        | AuthContext      | Sends POST /api/auth/register to AuthController                               |
 | 4        | AuthController   | Validates RegisterRequest DTO, delegates to AuthService.createAccount()       |
-| 5        | AuthService      | Calls Supabase Auth API to create auth account; receives user UUID            |
-| 6        | AuthService      | Calls UserRepository.save(new User(uuid, name, email, LEARNER))               |
+| 5        | AuthService      | Hashes password using BCryptPasswordEncoder; generates a new local user UUID |
+| 6        | AuthService      | Calls UserRepository.save(new User(uuid, name, email, role))                 |
 | 7        | AuthService      | Calls initializeModuleProgress(userId) - inserts 4 module_progress rows       |
 | 8        | AuthService      | If joinCode present: KlaseRepository.findByJoinCode(code) → User.setKlaseId() |
 | 9        | AuthController   | Returns HTTP 201 with UserResponse                                            |
@@ -55,7 +55,7 @@ The Registration screen presents a vertically centered card layout with: (1) PAM
 
 | **Table**       | **Column**    | **Type**                           | **Constraints / Notes**                    |
 | --------------- | ------------- | ---------------------------------- | ------------------------------------------ |
-| users           | id            | UUID (PK)                          | Generated; references Supabase auth.users  |
+| users           | id            | UUID (PK)                          | Generated locally using standard UUID generator |
 | users           | name          | VARCHAR(100)                       | NOT NULL                                   |
 | users           | email         | VARCHAR(255)                       | NOT NULL, UNIQUE                           |
 | users           | role          | ENUM('learner','parent','teacher') | NOT NULL; DEFAULT 'learner'                |
@@ -79,7 +79,7 @@ The Login screen presents a centered card with: (1) PAMANA logo, (2) email Input
 | **Component Name** | **Description and Purpose**                                                                                                                   | **Component Type / Format**       |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | LoginPage          | Page component managing login form state and calling AuthContext.login(). Displays inline error messages and loading state.                   | React Functional Component (.jsx) |
-| AuthContext        | Handles supabase.auth.signInWithPassword(), reads user role from users table, stores JWT in session context, and triggers role-based routing. | React Context + Provider (.jsx)   |
+| AuthContext        | Handles Spring Boot local auth API (/api/auth/login)(), reads user role from users table, stores JWT in session context, and triggers role-based routing. | React Context + Provider (.jsx)   |
 | InputField         | Reusable labeled input. Used for email and password fields with validation feedback.                                                          | React Functional Component (.jsx) |
 | LoadingSpinner     | Overlay spinner displayed during async authentication call.                                                                                   | React Functional Component (.jsx) |
 
@@ -88,7 +88,7 @@ The Login screen presents a centered card with: (1) PAMANA logo, (2) email Input
 | **Component Name** | **Description and Purpose**                                                                                                                      | **Component Type / Format**                 |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------- |
 | AuthController     | Exposes POST /api/auth/login. Validates credentials, returns JWT and user role. On invalid credentials returns HTTP 401.                         | Spring Boot @RestController                 |
-| AuthService        | Delegates authentication to Supabase Auth via supabase-js. Reads role from users table after successful auth. Returns AuthResponse (JWT + role). | Spring Boot @Service                        |
+| AuthService        | Authenticates credentials using Spring Security local AuthenticationManager. Generates local JWT token on successful authentication. Returns AuthResponse (JWT + role). | Spring Boot @Service                        |
 | UserRepository     | Provides findByEmail() and findById() for post-authentication role lookup.                                                                       | Spring Boot JpaRepository&lt;User, UUID&gt; |
 
 **Object-Oriented Components**
@@ -98,7 +98,7 @@ The Login screen presents a centered card with: (1) PAMANA logo, (2) email Input
 | **Class / Interface** | **Key Attributes**                                            | **Key Methods**                                                                                                       |
 | --------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | AuthController        | - (stateless)                                                 | register(RegisterRequest): ResponseEntity&lt;UserResponse&gt; login(LoginRequest): ResponseEntity&lt;AuthResponse&gt; |
-| AuthService           | supabaseClient: SupabaseClient userRepository: UserRepository | authenticate(LoginRequest): AuthResponse getUserRole(UUID userId): Role                                               |
+| AuthService           | jwtTokenProvider: JwtTokenProvider, passwordEncoder: BCryptPasswordEncoder userRepository: UserRepository | authenticate(LoginRequest): AuthResponse getUserRole(UUID userId): Role                                               |
 | LoginRequest (DTO)    | email: String password: String                                | validate(): boolean                                                                                                   |
 | AuthResponse (DTO)    | jwt: String role: Role userId: UUID                           | -                                                                                                                     |
 
@@ -108,19 +108,18 @@ The Login screen presents a centered card with: (1) PAMANA logo, (2) email Input
 | -------- | -------------- | ------------------------------------------------------------------------------------- |
 | 1        | User           | Enters email and password on LoginPage; clicks 'Mag-login'                            |
 | 2        | LoginPage      | Calls AuthContext.login(email, password)                                              |
-| 3        | AuthContext    | Calls supabase.auth.signInWithPassword({email, password})                             |
-| 4        | Supabase Auth  | Validates credentials; returns JWT if valid; error if invalid                         |
-| 5        | AuthContext    | Sends POST /api/auth/login with JWT to verify role from Spring Boot                   |
-| 6        | AuthController | Calls AuthService.getUserRole(userId) via UserRepository.findById()                   |
-| 7        | AuthController | Returns AuthResponse (jwt, role, userId)                                              |
-| 8        | AuthContext    | Stores JWT and role in session state                                                  |
-| 9        | React Router   | Redirects: role=LEARNER → /trail \| role=PARENT → /dashboard \| role=TEACHER → /klase |
+| 3        | AuthContext    | Calls Spring Boot local auth API (/api/auth/login)({email, password})                             |
+| 4        | AuthController | Delegates credential validation to AuthService.authenticate()                         |
+| 5        | AuthService    | Authenticates credentials via local AuthenticationManager; generates JWT token        |
+| 6        | AuthController | Returns AuthResponse (jwt, role, userId)                                              |
+| 7        | AuthContext    | Stores JWT and role in session state                                                  |
+| 8        | React Router   | Redirects: role=LEARNER → /trail \| role=PARENT → /dashboard \| role=TEACHER → /klase |
 
 **Data Design**
 
 | **Table** | **Column** | **Type**     | **Constraints / Notes**                   |
 | --------- | ---------- | ------------ | ----------------------------------------- |
-| users     | id         | UUID (PK)    | References Supabase auth.users.id         |
+| users     | id         | UUID (PK)    | Primary key (locally generated UUID)      |
 | users     | role       | ENUM         | Read during login for role-based redirect |
 | users     | email      | VARCHAR(255) | Used for login lookup                     |
 

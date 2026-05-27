@@ -9,13 +9,25 @@ By modularizing the core document files (Proposal, SRS, and SDD) and extracting 
 ## 🧠 System Overview & Architecture
 
 PAMANA is a standalone three-tier web application built on the following stack:
-* **Frontend:** React 18 SPA (single-page application) for UI rendering, Web Audio API playback, and HTML5 drag-and-drop.
+* **Frontend:** React 18 SPA (single-page application) powered by **Vite** for fast hot module reloading, **shadcn/ui** as the core component library for clean, premium, and accelerated component creation, Web Audio API for audio playback, and HTML5 drag-and-drop.
 * **Backend:** Spring Boot 3.x REST API for core business logic, JWT authentication validation, progress threshold evaluation, and automated PDF report generation (via Apache PDFBox).
-* **Database:** Supabase managed PostgreSQL 15+ database with Row-Level Security (RLS) policies for user data isolation, and Supabase Storage for hosting pre-recorded native audio/image assets.
-* **Social/Real-time:** Supabase Realtime WebSocket subscriptions powering the asynchronous classroom leaderboard (Klase Mode).
+* **Database (Dual Environment Strategy):**
+  * **Local Development:** **Local PostgreSQL 15+** database (connected on `localhost:5432` for fast, offline, and zero-latency development).
+  * **Production / Deployment (Final):** **Supabase PostgreSQL** cloud database.
+  * **JPA Security:** Spring Security JPA Authorization policies for user data isolation, and Local static asset directories (Spring Boot) for hosting pre-recorded native audio/image assets.
+* **Social/Real-time:** Spring Boot WebSockets (STOMP) WebSocket subscriptions powering the asynchronous classroom leaderboard (Klase Mode).
 
 ### Core Game Narrative
 Grade 2 child visiting their grandparents Lolo and Lola in the province for the summer. To complete household tasks ("Pamanang Gawain") and communicate with Lolo and Lola (who speak only Filipino), the child must progress along the **Pamana Trail** map across four modules, eventually unlocking the **Reunion Ending** to speak in complete Filipino sentences to their parents on the phone.
+
+---
+
+## 🌐 Git & Repository Guidelines
+
+* **GitHub Repository Link:** [https://github.com/KobeVLM/PAMANA](https://github.com/KobeVLM/PAMANA)
+* **Branching Strategy:**
+  * **`main`**: Production-ready branch. This is where our deployment and final product live.
+  * **`develop`**: Active development branch. This is where we do our day-to-day development, feature branching, and integration.
 
 ---
 
@@ -76,6 +88,14 @@ Use the directory map below to dynamically fetch only the relevant markdown file
 ## 🤖 Guide for Code-Generating Agents
 
 When assigned a specific implementation task, follow these search and retrieval instructions to construct correct, cohesive, and compliant code:
+
+### Step 0: Adopt Your Role Persona & Git Workflows (CRITICAL FIRST STEP)
+Before you write any code, design database schemas, or make commits, you **MUST** load, read, and adopt the exact guidelines, coding conventions, child-friendly parameters, architecture rules, and git branching/commit specifications defined in our core engineering profiles in the project root:
+* **If you are implementing UI/Frontend tasks:** Read and follow [engineering-frontend-developer.md](../engineering-frontend-developer.md).
+* **If you are implementing API/Database/Backend tasks:** Read and follow [engineering-backend-architect.md](../engineering-backend-architect.md).
+* **For any Git actions, commits, branches, or pushes:** Read and follow [engineering-git-workflow-master.md](../engineering-git-workflow-master.md) to ensure atomic, conventional commits and clean, rebased branches.
+
+Adopting these profiles ensures that your generated code is 100% compliant with standard child-safety guidelines, motor targets, local configurations, and git-flow branch hierarchies.
 
 ### Step 1: Locate Your Feature Area
 Refer to the mapping below to find the specific files you must read:

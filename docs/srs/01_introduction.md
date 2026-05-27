@@ -96,7 +96,7 @@ This Software Requirements Specifications (SRS) document provides a complete des
 
 ## Scope
 
-PAMANA is a web-based application built on React (frontend), Spring Boot (backend), and Supabase PostgreSQL (database) that delivers gamified Filipino language practice for Grade 2 learners aligned with the MATATAG curriculum competencies for Quarter 1 and Quarter 2 only.
+PAMANA is a web-based application built on React + Vite (frontend), Spring Boot (backend), and Local PostgreSQL (database) that delivers gamified Filipino language practice for Grade 2 learners aligned with the MATATAG curriculum competencies for Quarter 1 and Quarter 2 only.
 
 The system provides four content modules:  
 Module 1 - Syllable Recognition through Pagsama-Pakinggan-Kilalanin mechanics;  
@@ -104,7 +104,7 @@ Modules 2-3 - Self and Body and Family and Home Vocabulary through a 4-step spir
 Module 4 - Simple Sentence Construction for paturol and patanong forms.  
 Supporting features include the Pamana Trail progression lock, Hamon ng Pamana vocabulary review challenges, Klase Mode classroom leaderboard, and a Parent/Guardian Progress Dashboard with at-risk word indicators and PDF session reports.
 
-All learning measurement is performed through game interaction accuracy tracked automatically by Supabase. No standalone pre-test or post-test quiz instrument is used. The game itself is the evidence of learning progress.
+All learning measurement is performed through game interaction accuracy tracked automatically by local database. No standalone pre-test or post-test quiz instrument is used. The game itself is the evidence of learning progress.
 
 ## Definitions, Acronyms and Abbreviations
 
@@ -126,8 +126,8 @@ All learning measurement is performed through game interaction accuracy tracked 
 | Patanong           | Interrogative sentence type in Filipino (e.g., "Saan si Nanay?"). Tier 2 of Module 4.                                                                                              |
 | SRS                | Software Requirements Specifications - this document.                                                                                                                              |
 | SDD                | Software Design Description - companion technical design document.                                                                                                                 |
-| RLS                | Row Level Security - Supabase/PostgreSQL feature ensuring each user can only access their own data.                                                                                |
-| JWT                | JSON Web Token - authentication token issued by Supabase Auth and validated by the Spring Boot API on every request.                                                               |
+| RLS                | Spring Security JPA Row Authorization - Local PostgreSQL feature ensuring each user can only access their own data.                                                                                |
+| JWT                | JSON Web Token - authentication token issued by Spring Security JWT Authentication and validated by the Spring Boot API on every request.                                                               |
 | NFR                | Non-Functional Requirement - a system quality constraint not directly related to a specific function.                                                                              |
 | UC                 | Use Case - a specific interaction between an actor and the system.                                                                                                                 |
 | MVP                | Minimum Viable Product - the development target for Capstone 1, defined as ≥60% completion of each module's objectives.                                                            |
@@ -139,7 +139,7 @@ All learning measurement is performed through game interaction accuracy tracked 
 - PAMANA Software Project Proposal - Team 33, May 2026.
 - IEEE Std 830-1998: IEEE Recommended Practice for Software Requirements Specifications.
 - Republic Act 10173 - Data Privacy Act of 2012. Philippines.
-- Supabase Documentation: <https://supabase.com/docs>
+- local database Documentation: <https://local database.com/docs>
 - Spring Boot Reference Documentation: <https://docs.spring.io/spring-boot/>
 - React Documentation: <https://react.dev/>
 - react-dnd Documentation: <https://react-dnd.github.io/react-dnd/>

@@ -10,7 +10,7 @@ The Parent Dashboard displays after Parent login: (1) a top header bar with the 
 
 | **Component Name** | **Description and Purpose**                                                                                                                                                                                      | **Component Type / Format**       |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| ParentDashboard    | Root parent view. Fetches all 5 metrics from ProgressController on mount. Renders MetricCard grid, WordMasteryList, session history, and PDF download buttons. Subscribes to Supabase Realtime for live updates. | React Functional Component (.jsx) |
+| ParentDashboard    | Root parent view. Fetches all 5 metrics from ProgressController on mount. Renders MetricCard grid, WordMasteryList, session history, and PDF download buttons. Subscribes to Spring Boot WebSockets (STOMP) for live updates. | React Functional Component (.jsx) |
 | MetricCard         | Reusable card component displaying a single metric with title, value, and optional chart (line/donut). Accepts metric type prop and data array. Renders using recharts or CSS-only for simple values.            | React Functional Component (.jsx) |
 | WordMasteryList    | Renders alphabetical list of all introduced vocabulary words with color-coded AtRiskIndicator badge and accuracy percentage per word. Filters to active module domain.                                           | React Functional Component (.jsx) |
 | AtRiskIndicator    | Color-coded badge: Green (Mastered ≥75%), Yellow (Developing 50-74%), Red (At-Risk <50% or hamon_fail_count ≥3), Grey (Not Started). Includes accessible text label alongside color for color-blind users.       | React Functional Component (.jsx) |
@@ -48,7 +48,7 @@ The Parent Dashboard displays after Parent login: (1) a top header bar with the 
 | 5        | ProgressService    | Computes 5 metric values; builds DashboardResponse DTO                                         |
 | 6        | ProgressController | Returns DashboardResponse with all metrics, word list, and session history                     |
 | 7        | ParentDashboard    | Renders MetricCard × 5, WordMasteryList, AlertBanner (if Red words exist), session history     |
-| 8        | ParentDashboard    | Subscribes to Supabase Realtime on module_progress table for live updates                      |
+| 8        | ParentDashboard    | Subscribes to Spring Boot WebSockets (STOMP) on module_progress table for live updates                      |
 
 **Data Design**
 
@@ -69,7 +69,7 @@ The Parent Dashboard displays after Parent login: (1) a top header bar with the 
 
 **User Interface Design**
 
-At-Risk indicators are embedded within the WordMasteryList on the Parent Dashboard and are automatically updated in real time via Supabase Realtime. Each vocabulary word row displays: (1) the Filipino word, (2) the AtRiskIndicator badge (Green/Yellow/Red/Grey with text label), (3) the current accuracy percentage. Red-flagged words additionally trigger an AlertBanner notification at the top of the dashboard. Each alert reads: 'Si \[learner name\] ay nahihirapan sa salitang \[word\]. Subukan ulit!'
+At-Risk indicators are embedded within the WordMasteryList on the Parent Dashboard and are automatically updated in real time via Spring Boot WebSockets (STOMP). Each vocabulary word row displays: (1) the Filipino word, (2) the AtRiskIndicator badge (Green/Yellow/Red/Grey with text label), (3) the current accuracy percentage. Red-flagged words additionally trigger an AlertBanner notification at the top of the dashboard. Each alert reads: 'Si \[learner name\] ay nahihirapan sa salitang \[word\]. Subukan ulit!'
 
 **Front-end Component(s)**
 
@@ -77,7 +77,7 @@ At-Risk indicators are embedded within the WordMasteryList on the Parent Dashboa
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- |
 | AtRiskIndicator    | Stateless presentational component. Accepts status prop (green/yellow/red/grey) and renders corresponding color badge with accessibility text label. Badge min-width 80px for readability. | React Functional Component (.jsx) |
 | AlertBanner        | Renders a dismissible banner per Red-flagged word. Banner includes word name and encouragement message for parent. Uses useEffect to re-evaluate when word_mastery data changes.           | React Functional Component (.jsx) |
-| WordMasteryList    | Fetches word_mastery list from ProgressController. Re-renders on Supabase Realtime push events targeting word_mastery table.                                                               | React Functional Component (.jsx) |
+| WordMasteryList    | Fetches word_mastery list from ProgressController. Re-renders on Spring Boot WebSockets (STOMP) push events targeting word_mastery table.                                                               | React Functional Component (.jsx) |
 
 **Back-end Component(s)**
 
@@ -100,8 +100,8 @@ At-Risk indicators are embedded within the WordMasteryList on the Parent Dashboa
 | **Step** | **Actor**          | **Action / Message**                                                       |
 | -------- | ------------------ | -------------------------------------------------------------------------- |
 | 1        | Learner            | Completes any vocabulary spiral step in game                               |
-| 2        | VocabularyService  | recordStepAccuracy() → word_mastery updated in Supabase                    |
-| 3        | Supabase Realtime  | Pushes UPDATE event on word_mastery table to all subscribed clients        |
+| 2        | VocabularyService  | recordStepAccuracy() → word_mastery updated in local database                    |
+| 3        | Spring Boot WebSockets (STOMP)  | Pushes UPDATE event on word_mastery table to all subscribed clients        |
 | 4        | ParentDashboard    | Receives Realtime event; triggers GET /api/progress/{userId}/words refresh |
 | 5        | ProgressController | Calls ProgressService.getWordMasteryList(userId)                           |
 | 6        | ProgressService    | For each word_mastery record: calls evaluateWordRisk() to assign status    |
@@ -178,13 +178,13 @@ The PDF Download button (PDFDownloadButton) appears on the Parent Dashboard for 
 
 **User Interface Design**
 
-The Klase Mode screen displays: (1) a Pamana Trail-themed leaderboard header showing the class Klase name, (2) a ranked list of LeaderboardRow items showing rank number, learner name, current module name, and total modules completed, (3) a live update indicator showing 'Nag-a-update...' when a Supabase Realtime push event is received, (4) for unjoined learners: a 'Sumali sa Klase' prompt with a join code input. The Teacher Dashboard shows an expanded per-learner view with accuracy, Hamon pass rate, and at-risk word flags.
+The Klase Mode screen displays: (1) a Pamana Trail-themed leaderboard header showing the class Klase name, (2) a ranked list of LeaderboardRow items showing rank number, learner name, current module name, and total modules completed, (3) a live update indicator showing 'Nag-a-update...' when a Spring Boot WebSockets (STOMP) push event is received, (4) for unjoined learners: a 'Sumali sa Klase' prompt with a join code input. The Teacher Dashboard shows an expanded per-learner view with accuracy, Hamon pass rate, and at-risk word flags.
 
 **Front-end Component(s)**
 
 | **Component Name** | **Description and Purpose**                                                                                                                                                                                                   | **Component Type / Format**       |
 | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| KlaseLeaderboard   | Fetches leaderboard data for learner's Klase from KlaseController on mount. Subscribes to Supabase Realtime on module_progress table filtered by klase_id. Updates LeaderboardRow list within ≤5 seconds of any member event. | React Functional Component (.jsx) |
+| KlaseLeaderboard   | Fetches leaderboard data for learner's Klase from KlaseController on mount. Subscribes to Spring Boot WebSockets (STOMP) on module_progress table filtered by klase_id. Updates LeaderboardRow list within ≤5 seconds of any member event. | React Functional Component (.jsx) |
 | LeaderboardRow     | Presentational row component displaying rank, learner name, current module label, and modules_completed count. Highlights the current learner's row.                                                                          | React Functional Component (.jsx) |
 | TeacherDashboard   | Teacher-only read-only view. Loads per-learner detail data for all Klase members: module completion, word accuracy, Hamon pass rate, at-risk flags. Paginated for up to 40 members.                                           | React Functional Component (.jsx) |
 
@@ -214,9 +214,9 @@ The Klase Mode screen displays: (1) a Pamana Trail-themed leaderboard header sho
 | 2        | KlaseLeaderboard  | GET /api/klase/{klaseId}/leaderboard - fetches ranked member list                                     |
 | 3        | KlaseService      | Queries users WHERE klase_id={klaseId} JOIN module_progress; counts modules_completed; orders DESC    |
 | 4        | KlaseController   | Returns List&lt;LeaderboardEntry&gt; ranked by modules_completed                                      |
-| 5        | KlaseLeaderboard  | Renders LeaderboardRow list; activates Supabase Realtime subscription on module_progress for klase_id |
+| 5        | KlaseLeaderboard  | Renders LeaderboardRow list; activates Spring Boot WebSockets (STOMP) subscription on module_progress for klase_id |
 | 6        | Another Learner   | Completes a sub-level in their session (any Klase member)                                             |
-| 7        | Supabase Realtime | Pushes module_progress UPDATE event to all KlaseLeaderboard subscribers                               |
+| 7        | Spring Boot WebSockets (STOMP) | Pushes module_progress UPDATE event to all KlaseLeaderboard subscribers                               |
 | 8        | KlaseLeaderboard  | Receives event; re-fetches GET /api/klase/{klaseId}/leaderboard; re-renders within ≤5 seconds         |
 | 9        | Teacher           | Navigates to Teacher Dashboard; GET /api/klase/{klaseId}/teacher-view                                 |
 | 10       | KlaseService      | Validates teacher ownership; returns LearnerDetail list for all 40 members                            |

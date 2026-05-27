@@ -22,4 +22,4 @@ This directory contains the modularized version of the **PAMANA Software Design 
    - Detailed design of **Module 4 (Sentence Construction)** (4.1 Scrambled drag-and-drop, 4.2 Sentence-level dialog completions, 4.3 Progression lock and Narrative ending trigger).
 
 6. **[06_support_features.md](06_support_features.md)**
-   - Detailed design of **Dashboard & Classroom features** (5.1 Parent Dashboard, 5.2 At-risk indicators, 5.3 Spring Boot Apache PDFBox service, 5.4 Supabase Realtime Leaderboard).
+   - Detailed design of **Dashboard & Classroom features** (5.1 Parent Dashboard, 5.2 At-risk indicators, 5.3 Spring Boot Apache PDFBox service, 5.4 Spring Boot WebSockets (STOMP) Leaderboard).

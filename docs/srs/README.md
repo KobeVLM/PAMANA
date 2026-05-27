@@ -15,7 +15,7 @@ This directory contains the modularized version of the **PAMANA Software Require
 
 3. **[03_ext_interfaces.md](03_ext_interfaces.md)**
    - Hardware interfaces (Speaker, Display resolution, Mouse/Touchpad, Connection).
-   - Software interfaces (Browsers, React, Spring Boot, Supabase).
+   - Software interfaces (Browsers, React, Spring Boot, local database).
    - Communications interfaces (HTTPS/TLS, REST APIs, WebSockets).
 
 4. **Functional Requirements (`04_functional_requirements/`)**
