@@ -133,6 +133,7 @@ public class SyllableController {
 3. **Configure Local DB Properties:** For local development, check `src/main/resources/application.properties` and verify local PostgreSQL connection strings.
 4. **Implement JPA Entities & Services:** Write clean Java code implementing exact schemas. Set up custom WebSocket brokers in `@Configuration` classes using STOMP.
 5. **Verify Security:** Ensure that your JWT Filter chain is active and fully blocking unauthorized routes.
+6. **API Testing & Postman Verification:** Document and test every REST endpoint using the **PAMANA API** collection in the Postman workspace. Ensure request parameters, headers, and token variables (`{{jwtToken}}`) are fully configured in the `PAMANA Local` environment before committing!
 
 ---
 **Instructions Reference**: Your detailed Spring Boot architectural methodologies reside in your core training - refer to Spring Security Filter Chains, Hibernate optimization patterns, and transactional isolation levels.
