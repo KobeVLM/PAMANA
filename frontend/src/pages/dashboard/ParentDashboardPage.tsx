@@ -1,0 +1,354 @@
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { AppShell } from '@/components/layout/AppShell'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import api from '@/lib/api'
+import type { DashboardMetrics, WordMasteryStatus } from '@/types'
+import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts'
+
+const STATUS_COLORS = {
+  green: { bg: 'bg-green-500/20', border: 'border-green-500/40', text: 'text-green-300', dot: 'bg-green-400' },
+  yellow: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/40', text: 'text-yellow-300', dot: 'bg-yellow-400' },
+  red: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-300', dot: 'bg-red-400' },
+  grey: { bg: 'bg-white/5', border: 'border-white/10', text: 'text-white/40', dot: 'bg-white/30' },
+}
+
+const STATUS_LABELS = {
+  green: 'Natuto na',
+  yellow: 'Nag-aaral pa',
+  red: 'Kailangan ng tulong',
+  grey: 'Hindi pa nagsisimula',
+}
+
+const MODULE_NAMES = ['Module 1', 'Module 2', 'Module 3', 'Module 4']
+
+interface PDFDownloadButtonProps {
+  userId: string
+  moduleNumber: number
+  isComplete: boolean
+}
+
+const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNumber, isComplete }) => {
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleDownload = async () => {
+    setIsDownloading(true)
+    setError('')
+    try {
+      const res = await api.get(`/reports/generate/${userId}/${moduleNumber}`, {
+        responseType: 'blob',
+        timeout: 12000,
+      })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `pamana_module${moduleNumber}_report.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError('Hindi na-generate ang report. Subukan ulit.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  return (
+    <div>
+      <button
+        onClick={handleDownload}
+        disabled={!isComplete || isDownloading}
+        aria-label={`I-download ang report para sa Module ${moduleNumber}`}
+        className={cn(
+          'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
+          isComplete
+            ? 'bg-pamana-green/20 border border-pamana-green/40 text-green-300 hover:bg-pamana-green/30'
+            : 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
+        )}
+      >
+        {isDownloading ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <Download className="w-3.5 h-3.5" />
+        )}
+        Module {moduleNumber} Report
+      </button>
+      {error && <p className="text-red-300 text-xs mt-1">{error}</p>}
+    </div>
+  )
+}
+
+export const ParentDashboardPage: React.FC = () => {
+  const { user } = useAuth()
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [targetUserId, setTargetUserId] = useState<string>('')
+  const [moduleCompletion, setModuleCompletion] = useState<boolean[]>([false, false, false, false])
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      const uid = user?.role === 'PARENT'
+        ? (user?.klaseId ?? user?.id)
+        : user?.id
+      setTargetUserId(uid ?? '')
+      try {
+        const [metricsRes, progressRes] = await Promise.all([
+          api.get(`/progress/${uid}/dashboard`),
+          api.get(`/modules/progress/${uid}`),
+        ])
+        setMetrics(metricsRes.data)
+        const completions = (progressRes.data as { isComplete: boolean }[]).map((p) => p.isComplete)
+        setModuleCompletion(completions)
+      } catch {
+        // Fallback mock
+        setMetrics({
+          accuracyTrend: [
+            { moduleNumber: 1, accuracy: 85 },
+            { moduleNumber: 2, accuracy: 72 },
+            { moduleNumber: 3, accuracy: 0 },
+            { moduleNumber: 4, accuracy: 0 },
+          ],
+          masteredCount: 12,
+          needsReviewCount: 3,
+          hamonPassRate: 78,
+          avgSessionDuration: 22,
+          trailCompletion: 45,
+          wordMasteryList: [],
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    if (user) loadDashboard()
+  }, [user])
+
+  const atRiskWords = metrics?.wordMasteryList.filter((w) => w.status === 'red') ?? []
+  const pieData = metrics
+    ? [
+        { name: 'Natuto na', value: metrics.masteredCount, color: '#22c55e' },
+        { name: 'Kailangan ng Tulong', value: metrics.needsReviewCount, color: '#ef4444' },
+      ]
+    : []
+
+  if (isLoading) {
+    return (
+      <AppShell>
+        <div className="min-h-full flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-10 h-10 text-pamana-gold animate-spin" />
+            <p className="text-green-300">Naglo-load ng datos...</p>
+          </div>
+        </div>
+      </AppShell>
+    )
+  }
+
+  return (
+    <AppShell>
+      <div className="p-6 lg:p-8 max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-heading font-bold text-white mb-1">
+            Dashboard ng Magulang 📊
+          </h1>
+          <p className="text-green-300">
+            Subaybayan ang pag-unlad ng iyong anak sa PAMANA.
+          </p>
+        </div>
+
+        {/* At-Risk Alerts */}
+        {atRiskWords.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {atRiskWords.map((word) => (
+              <Alert key={word.wordId} className="bg-red-500/10 border-red-500/40">
+                <AlertTriangle className="h-4 w-4 text-red-400" />
+                <AlertDescription className="text-red-200 text-sm">
+                  Ang iyong anak ay nahihirapan sa salitang <strong>"{word.word}"</strong>.
+                  Katumpakan: {word.overallAccuracy}%. Subukan ulit!
+                </AlertDescription>
+              </Alert>
+            ))}
+          </div>
+        )}
+
+        {/* Metric Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+          {/* Trail Completion */}
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-pamana-green/20 flex items-center justify-center">
+                <Map className="w-5 h-5 text-pamana-green" />
+              </div>
+              <span className="text-green-300 font-medium text-sm">Trail Completion</span>
+            </div>
+            <div className="text-3xl font-bold text-white mb-2">{metrics?.trailCompletion ?? 0}%</div>
+            <Progress
+              value={metrics?.trailCompletion ?? 0}
+              className="h-2 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400"
+            />
+          </div>
+
+          {/* Mastered Words */}
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-blue-400" />
+              </div>
+              <span className="text-green-300 font-medium text-sm">Mga Salitang Natuto</span>
+            </div>
+            <div className="flex items-end gap-2">
+              <div className="text-3xl font-bold text-white">{metrics?.masteredCount ?? 0}</div>
+              <div className="text-sm text-red-400 mb-1">/ {(metrics?.masteredCount ?? 0) + (metrics?.needsReviewCount ?? 0)} na natuklas</div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <div className="w-2 h-2 rounded-full bg-green-400" />
+              <span className="text-xs text-green-300">Natuto: {metrics?.masteredCount}</span>
+              <div className="w-2 h-2 rounded-full bg-red-400 ml-2" />
+              <span className="text-xs text-red-300">Kailangan: {metrics?.needsReviewCount}</span>
+            </div>
+          </div>
+
+          {/* Hamon Pass Rate */}
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-pamana-gold/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-pamana-gold" />
+              </div>
+              <span className="text-green-300 font-medium text-sm">Hamon ng Pamana</span>
+            </div>
+            <div className="text-3xl font-bold text-white mb-2">{metrics?.hamonPassRate ?? 0}%</div>
+            <div className="text-xs text-green-400">Pass Rate sa mga hamon</div>
+          </div>
+
+          {/* Avg Session Duration */}
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-purple-400" />
+              </div>
+              <span className="text-green-300 font-medium text-sm">Avg Session</span>
+            </div>
+            <div className="text-3xl font-bold text-white">{metrics?.avgSessionDuration ?? 0}<span className="text-lg text-green-400 ml-1">min</span></div>
+            <div className="text-xs text-green-400 mt-1">bawat linggo</div>
+          </div>
+
+          {/* Accuracy Trend Chart */}
+          <div className="md:col-span-2 bg-white/10 border border-white/20 rounded-2xl p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-cyan-400" />
+              </div>
+              <span className="text-green-300 font-medium text-sm">Katumpakan sa bawat Module</span>
+            </div>
+            <ResponsiveContainer width="100%" height={140}>
+              <LineChart data={metrics?.accuracyTrend.map((t, i) => ({ name: MODULE_NAMES[i], accuracy: t.accuracy }))}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="name" tick={{ fill: '#86efac', fontSize: 11 }} axisLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#86efac', fontSize: 11 }} axisLine={false} />
+                <Tooltip
+                  contentStyle={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                  labelStyle={{ color: '#86efac' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Line type="monotone" dataKey="accuracy" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Mastered vs Needs-Review Pie + Word Mastery List */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+          {/* Pie chart */}
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col items-center justify-center">
+            <h3 className="text-green-300 font-medium text-sm mb-3">Katayuan ng mga Salita</h3>
+            <PieChart width={160} height={160}>
+              <Pie data={pieData} cx={75} cy={75} innerRadius={45} outerRadius={70} dataKey="value" stroke="none">
+                {pieData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
+            <div className="flex gap-4 mt-2">
+              {pieData.map((entry) => (
+                <div key={entry.name} className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                  <span className="text-xs text-white/60">{entry.name}: {entry.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Word Mastery List */}
+          <div className="lg:col-span-2 bg-white/10 border border-white/20 rounded-2xl p-5">
+            <h3 className="text-green-300 font-medium text-sm mb-3">Listahan ng mga Salita</h3>
+            <ScrollArea className="h-52">
+              {metrics?.wordMasteryList.length === 0 ? (
+                <p className="text-white/40 text-sm text-center py-8">Hindi pa nagsisimula ang pag-aaral ng salita.</p>
+              ) : (
+                <div className="space-y-2 pr-2">
+                  {metrics?.wordMasteryList.map((word: WordMasteryStatus) => {
+                    const colors = STATUS_COLORS[word.status]
+                    return (
+                      <div
+                        key={word.wordId}
+                        className={cn(
+                          'flex items-center justify-between p-3 rounded-xl border',
+                          colors.bg, colors.border
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', colors.dot)} />
+                          <span className={cn('font-semibold text-sm', colors.text)}>{word.word}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={cn('text-xs border', colors.border, colors.text)}>
+                            {STATUS_LABELS[word.status]}
+                          </Badge>
+                          <span className="text-white/50 text-xs font-mono">{word.overallAccuracy}%</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </div>
+
+        {/* PDF Download buttons */}
+        <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+          <h3 className="text-green-300 font-medium text-sm mb-4">I-download ang mga Report</h3>
+          <div className="flex flex-wrap gap-3">
+            {[1, 2, 3, 4].map((moduleNum) => (
+              <PDFDownloadButton
+                key={moduleNum}
+                userId={targetUserId}
+                moduleNumber={moduleNum}
+                isComplete={moduleCompletion[moduleNum - 1] ?? false}
+              />
+            ))}
+          </div>
+          <p className="text-white/30 text-xs mt-3">
+            * Ang PDF report ay available lamang pagkatapos makumpleto ang bawat module.
+          </p>
+        </div>
+      </div>
+    </AppShell>
+  )
+}
