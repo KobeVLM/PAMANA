@@ -85,12 +85,12 @@ public class AuthControllerTest {
                 .andExpect(status().isForbidden());
 
         // 5. Verify that access to dummy secured endpoint is allowed with valid token header
-        // Since we don't have SyllableController fully wired, it will return 404 Not Found instead of 403 Forbidden!
+        // Since we have implemented SyllableController, it will return HTTP 200 OK instead of 403 Forbidden!
         // This proves the security filter chain let the request pass to the dispatcher servlet!
         mockMvc.perform(get("/api/syllables/status")
                 .header("Authorization", "Bearer " + token)
                 .param("userId", "00000000-0000-0000-0000-000000000000"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
     }
 
     @Test
