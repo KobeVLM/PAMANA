@@ -40,6 +40,9 @@ public class User {
     @Column(name = "klase_id")
     private UUID klaseId;
 
+    @Column(name = "parent_id")
+    private UUID parentId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -113,5 +116,13 @@ public class User {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public UUID getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(UUID parentId) {
+        this.parentId = parentId;
     }
 }

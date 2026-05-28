@@ -100,43 +100,59 @@ export const ParentDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [targetUserId, setTargetUserId] = useState<string>('')
   const [moduleCompletion, setModuleCompletion] = useState<boolean[]>([false, false, false, false])
+  const [linkedLearnerName, setLinkedLearnerName] = useState<string | null>(null)
+  const [learnerEmail, setLearnerEmail] = useState('')
+  const [isLinking, setIsLinking] = useState(false)
+  const [linkError, setLinkError] = useState('')
 
-  useEffect(() => {
-    const loadDashboard = async () => {
-      const uid = user?.role === 'PARENT'
-        ? (user?.klaseId ?? user?.id)
-        : user?.id
-      setTargetUserId(uid ?? '')
-      try {
+  const loadDashboard = async () => {
+    try {
+      const linkedRes = await api.get('/parent/linked-learner')
+      if (linkedRes.data.hasLinkedLearner) {
+        const uid = linkedRes.data.learnerId
+        setTargetUserId(uid)
+        setLinkedLearnerName(linkedRes.data.learnerName)
+
         const [metricsRes, progressRes] = await Promise.all([
           api.get(`/progress/${uid}/dashboard`),
           api.get(`/modules/progress/${uid}`),
         ])
         setMetrics(metricsRes.data)
-        const completions = (progressRes.data as { isComplete: boolean }[]).map((p) => p.isComplete)
-        setModuleCompletion(completions)
-      } catch {
-        // Fallback mock
-        setMetrics({
-          accuracyTrend: [
-            { moduleNumber: 1, accuracy: 85 },
-            { moduleNumber: 2, accuracy: 72 },
-            { moduleNumber: 3, accuracy: 0 },
-            { moduleNumber: 4, accuracy: 0 },
-          ],
-          masteredCount: 12,
-          needsReviewCount: 3,
-          hamonPassRate: 78,
-          avgSessionDuration: 22,
-          trailCompletion: 45,
-          wordMasteryList: [],
+        const completions = [false, false, false, false]
+        ;(progressRes.data as { moduleNumber: number; isComplete: boolean }[]).forEach((p) => {
+          if (p.moduleNumber >= 1 && p.moduleNumber <= 4) {
+            completions[p.moduleNumber - 1] = p.isComplete
+          }
         })
-      } finally {
-        setIsLoading(false)
+        setModuleCompletion(completions)
+      } else {
+        setMetrics(null)
+        setTargetUserId('')
       }
+    } catch {
+      // Ignore errors for MVP if not fully wired
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  useEffect(() => {
     if (user) loadDashboard()
   }, [user])
+
+  const handleLinkLearner = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLinking(true)
+    setLinkError('')
+    try {
+      await api.post('/parent/link-learner', { learnerEmail })
+      await loadDashboard()
+    } catch (err: any) {
+      setLinkError(err.response?.data?.error || 'Failed to link learner. Make sure the email is correct.')
+    } finally {
+      setIsLinking(false)
+    }
+  }
 
   const atRiskWords = metrics?.wordMasteryList.filter((w) => w.status === 'red') ?? []
   const pieData = metrics
@@ -168,11 +184,40 @@ export const ParentDashboardPage: React.FC = () => {
             Dashboard ng Magulang 📊
           </h1>
           <p className="text-green-300">
-            Subaybayan ang pag-unlad ng iyong anak sa PAMANA.
+            {linkedLearnerName 
+              ? `Subaybayan ang pag-unlad ni ${linkedLearnerName} sa PAMANA.`
+              : 'Subaybayan ang pag-unlad ng iyong anak sa PAMANA.'}
           </p>
         </div>
 
-        {/* At-Risk Alerts */}
+        {!targetUserId && (
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 max-w-md mx-auto text-center mb-8">
+            <h2 className="text-xl font-bold text-white mb-2">I-link ang iyong anak</h2>
+            <p className="text-sm text-green-300 mb-6">Pakilagay ang email account ng iyong anak (Learner) upang masubaybayan ang kanilang progreso.</p>
+            <form onSubmit={handleLinkLearner} className="space-y-4">
+              <input
+                type="email"
+                placeholder="Email ng anak..."
+                value={learnerEmail}
+                onChange={(e) => setLearnerEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-pamana-green"
+                required
+              />
+              <button
+                type="submit"
+                disabled={isLinking}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:scale-105 transition-transform disabled:opacity-50"
+              >
+                {isLinking ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'I-link ang Account'}
+              </button>
+              {linkError && <p className="text-red-400 text-sm mt-2">{linkError}</p>}
+            </form>
+          </div>
+        )}
+
+        {targetUserId && (
+          <>
+            {/* At-Risk Alerts */}
         {atRiskWords.length > 0 && (
           <div className="mb-6 space-y-2">
             {atRiskWords.map((word) => (
@@ -348,6 +393,8 @@ export const ParentDashboardPage: React.FC = () => {
             * Ang PDF report ay available lamang pagkatapos makumpleto ang bawat module.
           </p>
         </div>
+        </>
+        )}
       </div>
     </AppShell>
   )

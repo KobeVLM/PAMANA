@@ -135,9 +135,9 @@ export const SyllableModulePage: React.FC = () => {
 
   const handleSelect = useCallback(async (optionId: string) => {
     if (isSubmitting || !currentSet || selectedId) return
-    const isCorrect = optionId === currentSet.targetSyllable.toLowerCase()
+    const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
     setSelectedId(optionId)
-    setCorrectId(currentSet.targetSyllable.toLowerCase())
+    setCorrectId(currentSet.targetSyllable)
     setFeedback(isCorrect ? 'correct' : 'incorrect')
 
     const newAttempts = attempts + 1
