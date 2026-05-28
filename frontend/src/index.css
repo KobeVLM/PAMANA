@@ -1,0 +1,127 @@
+/* Google Fonts - Nunito for child-friendly rounded typography */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 142 76% 8%;
+    --foreground: 120 20% 90%;
+    --card: 142 50% 12%;
+    --card-foreground: 120 20% 90%;
+    --popover: 142 50% 12%;
+    --popover-foreground: 120 20% 90%;
+    --primary: 142 70% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 38 92% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 142 30% 18%;
+    --muted-foreground: 120 15% 60%;
+    --accent: 38 92% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 142 30% 20%;
+    --input: 142 30% 18%;
+    --ring: 142 70% 45%;
+    --radius: 0.75rem;
+    --chart-1: 142 70% 45%;
+    --chart-2: 38 92% 50%;
+    --chart-3: 220 70% 60%;
+    --chart-4: 340 75% 55%;
+    --chart-5: 280 65% 60%;
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    font-family: 'Nunito', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Game tile base styles - minimum 44px touch target */
+  .game-tile {
+    @apply min-h-[44px] min-w-[44px] rounded-2xl font-heading font-bold
+           transition-all duration-200 active:scale-95 select-none cursor-pointer;
+  }
+
+  /* Glassmorphic card */
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl;
+  }
+
+  /* PAMANA gradient button */
+  .btn-pamana {
+    @apply bg-gradient-to-r from-pamana-green to-emerald-500
+           text-white font-bold rounded-xl
+           hover:opacity-90 active:scale-95 transition-all duration-200;
+  }
+
+  /* Gold accent button */
+  .btn-gold {
+    @apply bg-gradient-to-r from-pamana-gold to-pamana-amber
+           text-white font-bold rounded-xl
+           hover:opacity-90 active:scale-95 transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  /* Animation utilities for game feedback */
+  .animate-shake {
+    animation: shake 0.4s ease-in-out;
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.4s ease-out;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s infinite;
+  }
+
+  .animate-star-pop {
+    animation: star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
