@@ -33,19 +33,22 @@ public class ReportService {
     private final WordMasteryRepository wordMasteryRepository;
     private final SentenceProgressRepository sentenceProgressRepository;
     private final ParentReportRepository parentReportRepository;
+    private final ProgressService progressService;
 
     public ReportService(UserRepository userRepository,
             ModuleProgressRepository moduleProgressRepository,
             SyllableProgressRepository syllableProgressRepository,
             WordMasteryRepository wordMasteryRepository,
             SentenceProgressRepository sentenceProgressRepository,
-            ParentReportRepository parentReportRepository) {
+            ParentReportRepository parentReportRepository,
+            ProgressService progressService) {
         this.userRepository = userRepository;
         this.moduleProgressRepository = moduleProgressRepository;
         this.syllableProgressRepository = syllableProgressRepository;
         this.wordMasteryRepository = wordMasteryRepository;
         this.sentenceProgressRepository = sentenceProgressRepository;
         this.parentReportRepository = parentReportRepository;
+        this.progressService = progressService;
     }
 
     @Transactional
@@ -213,7 +216,17 @@ public class ReportService {
 
     private int renderVocabularyReportContent(PDPageContentStream stream, UUID userId, int moduleNumber,
             PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
-        String domain = moduleNumber == 2 ? "self_body" : "family_home";
+        
+        com.pamana.dto.DashboardResponse metrics = progressService.getDashboardMetrics(userId);
+        List<com.pamana.dto.WordMasteryStatus> wordMasteryList = metrics.getWordMasteryList();
+
+        stream.beginText();
+        stream.setFont(fontBold, 12);
+        stream.newLineAtOffset(50, yOffset);
+        stream.showText("Hamon ng Pamana Pass Rate: " + metrics.getHamonPassRate() + "%");
+        stream.endText();
+
+        yOffset -= 30;
 
         stream.beginText();
         stream.setFont(fontBold, 12);
@@ -221,20 +234,10 @@ public class ReportService {
         stream.showText("Pagsusuri ng mga Salita (Vocabulary Word Analysis):");
         stream.endText();
 
-        List<WordMastery> masteries = wordMasteryRepository.findByUserId(userId);
-
-        int masteredWords = 0;
-        int reviewWords = 0;
+        int masteredWords = metrics.getMasteredCount();
+        int reviewWords = metrics.getNeedsReviewCount();
 
         yOffset -= 20;
-        for (WordMastery wm : masteries) {
-            if ("green".equalsIgnoreCase(wm.getStatus())) {
-                masteredWords++;
-            } else if ("red".equalsIgnoreCase(wm.getStatus())) {
-                reviewWords++;
-            }
-        }
-
         stream.beginText();
         stream.setFont(fontRegular, 11);
         stream.newLineAtOffset(60, yOffset);
@@ -247,6 +250,26 @@ public class ReportService {
         stream.newLineAtOffset(60, yOffset);
         stream.showText("Mga Salitang Kailangan Pang Sanayin (Red): " + reviewWords);
         stream.endText();
+
+        if (reviewWords > 0) {
+            yOffset -= 20;
+            stream.beginText();
+            stream.setFont(fontBold, 10);
+            stream.newLineAtOffset(70, yOffset);
+            stream.showText("Mga partikular na salitang pagtutuunan ng pansin:");
+            stream.endText();
+
+            for (com.pamana.dto.WordMasteryStatus w : wordMasteryList) {
+                if ("red".equalsIgnoreCase(w.getStatus())) {
+                    yOffset -= 15;
+                    stream.beginText();
+                    stream.setFont(fontRegular, 10);
+                    stream.newLineAtOffset(80, yOffset);
+                    stream.showText("- " + w.getWord() + " (Katumpakan: " + w.getOverallAccuracy() + "%)");
+                    stream.endText();
+                }
+            }
+        }
 
         yOffset -= 30;
         stream.beginText();
