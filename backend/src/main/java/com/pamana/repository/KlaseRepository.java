@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface KlaseRepository extends JpaRepository<Klase, UUID> {
     Optional<Klase> findByJoinCode(String joinCode);
     boolean existsByJoinCode(String joinCode);
+    Optional<Klase> findByTeacherId(UUID teacherId);
 }

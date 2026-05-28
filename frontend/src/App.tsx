@@ -1,6 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
 // Auth Pages
@@ -12,8 +12,10 @@ import { TrailMapPage } from '@/pages/trail/TrailMapPage'
 import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
 
 // Dashboard & Support
-import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
 import { KlaseLeaderboardPage } from '@/pages/klase/KlaseLeaderboardPage'
+import { TeacherKlasePage } from '@/pages/klase/TeacherKlasePage'
+import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
+import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
 
 // Lazy-loaded module pages (loaded on demand to keep initial bundle small)
 const VocabularyModulePage = React.lazy(() =>
@@ -100,7 +102,7 @@ function App() {
               path="/klase"
               element={
                 <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                  <KlaseLeaderboardPage />
+                  <RoleBasedKlaseRoute />
                 </ProtectedRoute>
               }
             />
@@ -118,7 +120,7 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute allowedRoles={['PARENT', 'TEACHER']}>
-                  <ParentDashboardPage />
+                  <RoleBasedDashboardRoute />
                 </ProtectedRoute>
               }
             />
@@ -131,6 +133,22 @@ function App() {
       </AuthProvider>
     </BrowserRouter>
   )
+}
+
+function RoleBasedDashboardRoute() {
+  const { user } = useAuth()
+  if (user?.role === 'TEACHER') {
+    return <TeacherDashboardPage />
+  }
+  return <ParentDashboardPage />
+}
+
+function RoleBasedKlaseRoute() {
+  const { user } = useAuth()
+  if (user?.role === 'TEACHER') {
+    return <TeacherKlasePage />
+  }
+  return <KlaseLeaderboardPage />
 }
 
 export default App

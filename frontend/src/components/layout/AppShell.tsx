@@ -128,7 +128,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => (
             <NavLink
-              key={item.to}
+              key={item.label}
               to={item.to}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
