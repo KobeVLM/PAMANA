@@ -20,7 +20,6 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,11 +35,11 @@ public class ReportService {
     private final ParentReportRepository parentReportRepository;
 
     public ReportService(UserRepository userRepository,
-                         ModuleProgressRepository moduleProgressRepository,
-                         SyllableProgressRepository syllableProgressRepository,
-                         WordMasteryRepository wordMasteryRepository,
-                         SentenceProgressRepository sentenceProgressRepository,
-                         ParentReportRepository parentReportRepository) {
+            ModuleProgressRepository moduleProgressRepository,
+            SyllableProgressRepository syllableProgressRepository,
+            WordMasteryRepository wordMasteryRepository,
+            SentenceProgressRepository sentenceProgressRepository,
+            ParentReportRepository parentReportRepository) {
         this.userRepository = userRepository;
         this.moduleProgressRepository = moduleProgressRepository;
         this.syllableProgressRepository = syllableProgressRepository;
@@ -58,10 +57,12 @@ public class ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
         ModuleProgress progress = moduleProgressRepository.findByUserIdAndModuleNumber(userId, moduleNumber)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hindi nakita ang module progress record."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Hindi nakita ang module progress record."));
 
         if (!progress.getIsComplete()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hindi pa tapos ang module na ito upang ma-download ang report.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Hindi pa tapos ang module na ito upang ma-download ang report.");
         }
 
         // 2. Aggregate Module Details
@@ -156,7 +157,8 @@ public class ReportService {
                 if (moduleNumber == 1) {
                     yOffset = renderSyllableReportContent(stream, userId, fontBold, fontRegular, yOffset);
                 } else if (moduleNumber == 2 || moduleNumber == 3) {
-                    yOffset = renderVocabularyReportContent(stream, userId, moduleNumber, fontBold, fontRegular, yOffset);
+                    yOffset = renderVocabularyReportContent(stream, userId, moduleNumber, fontBold, fontRegular,
+                            yOffset);
                 } else if (moduleNumber == 4) {
                     yOffset = renderSentenceReportContent(stream, userId, fontBold, fontRegular, yOffset);
                 }
@@ -179,11 +181,13 @@ public class ReportService {
             return outputStream.toByteArray();
         } catch (Exception e) {
             log.error("Failed to generate PDF document: {}", e.getMessage(), e);
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Hindi maiproseso ang PDF report sa ngayon. Subukan ulit.");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Hindi maiproseso ang PDF report sa ngayon. Subukan ulit.");
         }
     }
 
-    private int renderSyllableReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
+    private int renderSyllableReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold,
+            PDType1Font fontRegular, int yOffset) throws Exception {
         stream.beginText();
         stream.setFont(fontBold, 12);
         stream.newLineAtOffset(50, yOffset);
@@ -207,7 +211,8 @@ public class ReportService {
         return yOffset;
     }
 
-    private int renderVocabularyReportContent(PDPageContentStream stream, UUID userId, int moduleNumber, PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
+    private int renderVocabularyReportContent(PDPageContentStream stream, UUID userId, int moduleNumber,
+            PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
         String domain = moduleNumber == 2 ? "self_body" : "family_home";
 
         stream.beginText();
@@ -264,7 +269,8 @@ public class ReportService {
         return yOffset - 20;
     }
 
-    private int renderSentenceReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
+    private int renderSentenceReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold,
+            PDType1Font fontRegular, int yOffset) throws Exception {
         stream.beginText();
         stream.setFont(fontBold, 12);
         stream.newLineAtOffset(50, yOffset);
@@ -273,8 +279,10 @@ public class ReportService {
 
         List<SentenceProgress> attempts = sentenceProgressRepository.findByUserId(userId);
 
-        double tier1Avg = attempts.stream().filter(a -> a.getTier() == 1).mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
-        double tier2Avg = attempts.stream().filter(a -> a.getTier() == 2).mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
+        double tier1Avg = attempts.stream().filter(a -> a.getTier() == 1)
+                .mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
+        double tier2Avg = attempts.stream().filter(a -> a.getTier() == 2)
+                .mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
 
         yOffset -= 20;
         stream.beginText();
@@ -299,11 +307,16 @@ public class ReportService {
 
     private String getModuleTitle(int moduleNumber) {
         switch (moduleNumber) {
-            case 1: return "Module 1: Syllables Phonics (Pagbasa ng Pantig)";
-            case 2: return "Module 2: Self & Body Vocabulary (Ang Aking Sarili at Katawan)";
-            case 3: return "Module 3: Family & Home Vocabulary (Ang Aking Pamilya at Tahanan)";
-            case 4: return "Module 4: Simple Sentence Construction (Pagbuo ng Pangungusap)";
-            default: return "Module " + moduleNumber;
+            case 1:
+                return "Module 1: Syllables Phonics (Pagbasa ng Pantig)";
+            case 2:
+                return "Module 2: Self & Body Vocabulary (Ang Aking Sarili at Katawan)";
+            case 3:
+                return "Module 3: Family & Home Vocabulary (Ang Aking Pamilya at Tahanan)";
+            case 4:
+                return "Module 4: Simple Sentence Construction (Pagbuo ng Pangungusap)";
+            default:
+                return "Module " + moduleNumber;
         }
     }
 }

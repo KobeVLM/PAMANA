@@ -1,8 +1,5 @@
 package com.pamana.dto;
 
-import com.pamana.model.Role;
-import java.util.UUID;
-
 public class AuthResponse {
 
     private String token;
