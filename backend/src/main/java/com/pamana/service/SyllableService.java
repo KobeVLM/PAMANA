@@ -56,9 +56,9 @@ public class SyllableService extends BaseGameService {
             moduleLockService.evaluateAndUnlock(userId, 1, moduleAccuracy);
         }
 
-        // Standard logic: advances next set (e.g. if 3 attempts are made, nextSetId is setId + 1)
+        // Standard logic: advance to the next set when they get it correct
         Integer nextSetId = setId;
-        if (progress.getAttempts() >= 4) {
+        if (isCorrect) {
             nextSetId = setId + 1; // Unlock next phoneme set
         }
 
@@ -97,17 +97,12 @@ public class SyllableService extends BaseGameService {
     }
 
     public double computeModuleAccuracy(UUID userId) {
-        List<SyllableProgress> allProgress = syllableProgressRepository.findByUserId(userId);
-        if (allProgress.isEmpty()) {
-            return 0.0;
-        }
+        double pagsamaAcc = getSubLevelAverageAccuracy(userId, "pagsama");
+        double pakingganAcc = getSubLevelAverageAccuracy(userId, "pakinggan");
+        double kilalaninAcc = getSubLevelAverageAccuracy(userId, "kilalanin");
+        double rhymingAcc = getSubLevelAverageAccuracy(userId, "rhyming");
 
-        double sum = 0.0;
-        for (SyllableProgress p : allProgress) {
-            sum += p.getAccuracy().doubleValue();
-        }
-
-        return sum / allProgress.size();
+        return (pagsamaAcc + pakingganAcc + kilalaninAcc + rhymingAcc) / 4.0;
     }
 
     private double getSubLevelAverageAccuracy(UUID userId, String subLevel) {

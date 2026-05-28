@@ -84,7 +84,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const fetchMatchOptions = useCallback(async (wordId: string, step: SpiralStep) => {
     try {
       const res = await api.get(`/vocabulary/match/${wordId}?step=${step}`)
-      setMatchOptions(res.data)
+      const mappedOptions = res.data.options.map((o: any) => ({
+        id: o.wordId,
+        label: o.word,
+        imageUrl: o.imageUrl,
+      }))
+      setMatchOptions(mappedOptions)
     } catch {
       // Fallback mock options
       setMatchOptions([
@@ -122,7 +127,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
         userId: user?.id,
         wordId: currentWord.wordId,
         step: currentStep,
-        accuracy,
+        correct: isCorrect,
       })
 
       if (res.data.hamonTriggered) {
@@ -130,14 +135,19 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
       }
 
       setTimeout(() => {
-        const stepIdx = SPIRAL_STEPS.indexOf(currentStep)
-        if (stepIdx < SPIRAL_STEPS.length - 1) {
-          setCurrentStep(SPIRAL_STEPS[stepIdx + 1])
-          setSelectedId(null)
-          setCorrectId(null)
-          setAttempts(0)
+        if (isCorrect) {
+          const stepIdx = SPIRAL_STEPS.indexOf(currentStep)
+          if (stepIdx < SPIRAL_STEPS.length - 1) {
+            setCurrentStep(SPIRAL_STEPS[stepIdx + 1])
+            setSelectedId(null)
+            setCorrectId(null)
+            setAttempts(0)
+          } else {
+            setWordComplete(true)
+          }
         } else {
-          setWordComplete(true)
+          // If incorrect, just clear the selection so they can try again
+          setSelectedId(null)
         }
       }, 1200)
     } catch {

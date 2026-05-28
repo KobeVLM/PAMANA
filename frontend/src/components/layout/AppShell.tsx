@@ -31,7 +31,7 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'Mga Aralin',
-    to: '/modules',
+    to: '/trail',
     icon: <BookOpen className="w-5 h-5" />,
     roles: ['LEARNER'],
   },
