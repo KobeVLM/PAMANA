@@ -169,7 +169,7 @@ export const SyllableModulePage: React.FC = () => {
 
           // Determine if sublevel changed
           const newActiveSub = (['pagsama', 'pakinggan', 'kilalanin', 'rhyming'] as const).find(
-            s => (updatedStatus?.[`${s}Accuracy`] ?? 0) < 80
+            s => (updatedStatus?.subLevelAccuracies[s] ?? 0) < 80
           ) || 'rhyming'
 
           if (newActiveSub !== currentSet.subLevel) {
