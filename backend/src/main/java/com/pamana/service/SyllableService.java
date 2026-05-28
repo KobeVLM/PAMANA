@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -26,8 +25,10 @@ public class SyllableService extends BaseGameService {
     }
 
     @Transactional
-    public SyllableProgressResponse evaluateAnswer(UUID userId, String subLevel, Integer setId, String answer, boolean isCorrect) {
-        log.info("Evaluating Syllable answer: userId={}, subLevel={}, setId={}, correct={}", userId, subLevel, setId, isCorrect);
+    public SyllableProgressResponse evaluateAnswer(UUID userId, String subLevel, Integer setId, String answer,
+            boolean isCorrect) {
+        log.info("Evaluating Syllable answer: userId={}, subLevel={}, setId={}, correct={}", userId, subLevel, setId,
+                isCorrect);
 
         // 1. Fetch or create the progress entry for this subLevel and setId
         SyllableProgress progress = syllableProgressRepository
@@ -70,8 +71,7 @@ public class SyllableService extends BaseGameService {
                 calculatedAccuracy,
                 nextSetId,
                 moduleAccuracy,
-                module2Unlocked
-        );
+                module2Unlocked);
     }
 
     @Transactional(readOnly = true)
@@ -92,8 +92,7 @@ public class SyllableService extends BaseGameService {
                 rhymingAcc,
                 overallAcc,
                 isComplete,
-                module2Unlocked
-        );
+                module2Unlocked);
     }
 
     public double computeModuleAccuracy(UUID userId) {
@@ -126,10 +125,14 @@ public class SyllableService extends BaseGameService {
         boolean rhyming = false;
 
         for (SyllableProgress p : allProgress) {
-            if ("pagsama".equalsIgnoreCase(p.getSubLevel())) pagsama = true;
-            if ("pakinggan".equalsIgnoreCase(p.getSubLevel())) pakinggan = true;
-            if ("kilalanin".equalsIgnoreCase(p.getSubLevel())) kilalanin = true;
-            if ("rhyming".equalsIgnoreCase(p.getSubLevel())) rhyming = true;
+            if ("pagsama".equalsIgnoreCase(p.getSubLevel()))
+                pagsama = true;
+            if ("pakinggan".equalsIgnoreCase(p.getSubLevel()))
+                pakinggan = true;
+            if ("kilalanin".equalsIgnoreCase(p.getSubLevel()))
+                kilalanin = true;
+            if ("rhyming".equalsIgnoreCase(p.getSubLevel()))
+                rhyming = true;
         }
 
         return pagsama && pakinggan && kilalanin && rhyming;

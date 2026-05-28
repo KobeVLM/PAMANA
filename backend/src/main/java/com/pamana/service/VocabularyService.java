@@ -7,7 +7,6 @@ import com.pamana.dto.WordMasteryResponse;
 import com.pamana.model.ModuleProgress;
 import com.pamana.model.VocabularyItem;
 import com.pamana.model.WordMastery;
-import com.pamana.repository.ModuleProgressRepository;
 import com.pamana.repository.VocabularyItemRepository;
 import com.pamana.repository.WordMasteryRepository;
 import org.slf4j.Logger;
@@ -29,7 +28,8 @@ public class VocabularyService extends BaseGameService {
     private final WordMasteryRepository wordMasteryRepository;
     private final HamonService hamonService;
 
-    // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG competencies
+    // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG
+    // competencies
     private static final Map<String, String> DIALOGUE_TEMPLATES = new HashMap<>();
     static {
         // Module 2: Self & Body (10 words)
@@ -63,8 +63,8 @@ public class VocabularyService extends BaseGameService {
     }
 
     public VocabularyService(VocabularyItemRepository vocabularyItemRepository,
-                             WordMasteryRepository wordMasteryRepository,
-                             HamonService hamonService) {
+            WordMasteryRepository wordMasteryRepository,
+            HamonService hamonService) {
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.wordMasteryRepository = wordMasteryRepository;
         this.hamonService = hamonService;
@@ -100,8 +100,7 @@ public class VocabularyService extends BaseGameService {
                         item.getDomain(),
                         item.getAudioUrl(),
                         item.getImageUrl(),
-                        item.getOrdinal()
-                );
+                        item.getOrdinal());
             }
         }
 
@@ -140,8 +139,7 @@ public class VocabularyService extends BaseGameService {
                 target.getWord(),
                 target.getImageUrl(),
                 target.getAudioUrl(),
-                options
-        );
+                options);
     }
 
     @Transactional(readOnly = true)
@@ -153,7 +151,8 @@ public class VocabularyService extends BaseGameService {
 
         String template = DIALOGUE_TEMPLATES.getOrDefault(target.getWord(), "Ito ay ____.");
 
-        // Compile same-domain distractors (only written labels are needed for DialogueCompletion)
+        // Compile same-domain distractors (only written labels are needed for
+        // DialogueCompletion)
         List<VocabularyItem> sameDomainItems = vocabularyItemRepository.findByDomain(target.getDomain());
         List<String> distractors = sameDomainItems.stream()
                 .filter(item -> !item.getId().equals(wordId))
@@ -163,7 +162,8 @@ public class VocabularyService extends BaseGameService {
         Collections.shuffle(distractors);
         List<String> options = new ArrayList<>();
         options.add(target.getWord());
-        options.addAll(distractors.subList(0, Math.min(2, distractors.size()))); // 3 options total (target + 2 distractors)
+        options.addAll(distractors.subList(0, Math.min(2, distractors.size()))); // 3 options total (target + 2
+                                                                                 // distractors)
 
         Collections.shuffle(options);
 
@@ -172,8 +172,7 @@ public class VocabularyService extends BaseGameService {
                 template,
                 target.getWord(),
                 options,
-                target.getAudioUrl()
-        );
+                target.getAudioUrl());
     }
 
     @Transactional
@@ -205,7 +204,8 @@ public class VocabularyService extends BaseGameService {
         mastery.setOverallAccuracy(BigDecimal.valueOf(overall).setScale(2, RoundingMode.HALF_UP));
 
         // Evaluate Status
-        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50% OR hamon_fail_count >= 3
+        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50% OR hamon_fail_count
+        // >= 3
         if (mastery.getHamonFailCount() >= 3 || overall < 50.0) {
             mastery.setStatus("red");
         } else if (overall >= 75.0) {
@@ -216,7 +216,8 @@ public class VocabularyService extends BaseGameService {
 
         wordMasteryRepository.save(mastery);
 
-        // Check if the current domain is now fully complete (meaning all words in it are green)
+        // Check if the current domain is now fully complete (meaning all words in it
+        // are green)
         evaluateDomainCompletion(userId);
 
         // Evaluate Hamon ng Pamana milestones (mastered words count mod 5 == 0)
@@ -227,8 +228,7 @@ public class VocabularyService extends BaseGameService {
                 mastery.getOverallAccuracy().doubleValue(),
                 mastery.getStatus(),
                 "green".equalsIgnoreCase(mastery.getStatus()),
-                hamonTriggered
-        );
+                hamonTriggered);
     }
 
     private void evaluateDomainCompletion(UUID userId) {
@@ -253,7 +253,8 @@ public class VocabularyService extends BaseGameService {
                 log.info("All 10 Self & Body words are green! Unlocking Module 3. Avg accuracy: {}%", averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 2, averageAccuracy);
             } else if ("family_home".equalsIgnoreCase(activeDomain)) {
-                log.info("All 15 Family & Home words are green! Unlocking Module 4. Avg accuracy: {}%", averageAccuracy);
+                log.info("All 15 Family & Home words are green! Unlocking Module 4. Avg accuracy: {}%",
+                        averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 3, averageAccuracy);
             }
         }

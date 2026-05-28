@@ -30,7 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             HttpServletRequest request,
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        
+
         try {
             String jwt = getJwtFromRequest(request);
 
@@ -42,12 +42,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // Create authorities list
                 SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + role);
 
-                // Set principal as UUID string (accessible via principal.getName() in controllers)
+                // Set principal as UUID string (accessible via principal.getName() in
+                // controllers)
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userId.toString(),
                         null,
-                        Collections.singletonList(authority)
-                );
+                        Collections.singletonList(authority));
 
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
