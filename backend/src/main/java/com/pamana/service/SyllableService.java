@@ -2,6 +2,7 @@ package com.pamana.service;
 
 import com.pamana.dto.SyllableProgressResponse;
 import com.pamana.dto.SyllableStatusResponse;
+import com.pamana.dto.SyllableSetResponse;
 import com.pamana.model.SyllableProgress;
 import com.pamana.repository.SyllableProgressRepository;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -101,20 +103,18 @@ public class SyllableService extends BaseGameService {
         double kilalaninAcc = getSubLevelAverageAccuracy(userId, "kilalanin");
         double rhymingAcc = getSubLevelAverageAccuracy(userId, "rhyming");
 
-        return (pagsamaAcc + pakingganAcc + kilalaninAcc + rhymingAcc) / 4.0;
+        // Module 1 accuracy is the average of all 4 sub-levels
+        double rawAvg = (pagsamaAcc + pakingganAcc + kilalaninAcc + rhymingAcc) / 4.0;
+        return BigDecimal.valueOf(rawAvg).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     private double getSubLevelAverageAccuracy(UUID userId, String subLevel) {
         List<SyllableProgress> records = syllableProgressRepository.findByUserIdAndSubLevel(userId, subLevel);
-        if (records.isEmpty()) {
+        if (records == null || records.isEmpty()) {
             return 0.0;
         }
-
-        double sum = 0.0;
-        for (SyllableProgress p : records) {
-            sum += p.getAccuracy().doubleValue();
-        }
-        return sum / records.size();
+        double sum = records.stream().mapToDouble(r -> r.getAccuracy().doubleValue()).sum();
+        return BigDecimal.valueOf(sum / records.size()).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
     private boolean hasAttemptedAllSubLevels(UUID userId) {
@@ -136,5 +136,58 @@ public class SyllableService extends BaseGameService {
         }
 
         return pagsama && pakinggan && kilalanin && rhyming;
+    }
+
+    @Transactional(readOnly = true)
+    public SyllableSetResponse getSyllableSet(String subLevel, int setId, UUID userId) {
+        log.info("Generating syllable set for subLevel: {}, setId: {}", subLevel, setId);
+        SyllableSetResponse response = new SyllableSetResponse();
+        response.setSetId(setId);
+        response.setSubLevel(subLevel);
+
+        List<SyllableSetResponse.Option> options = new ArrayList<>();
+
+        if ("pagsama".equals(subLevel)) {
+            response.setConsonant("B");
+            response.setVowel("A");
+            response.setTargetSyllable("BA");
+            response.setConsonantAudioUrl("/audio/phonemes/b.mp3");
+            response.setVowelAudioUrl("/audio/phonemes/a.mp3");
+            options.add(new SyllableSetResponse.Option("BA", "BA"));
+            options.add(new SyllableSetResponse.Option("MA", "MA"));
+            options.add(new SyllableSetResponse.Option("TA", "TA"));
+            options.add(new SyllableSetResponse.Option("SA", "SA"));
+        } else if ("pakinggan".equals(subLevel)) {
+            response.setTargetSyllable("MA");
+            response.setAudioUrl("/audio/syllables/ma.mp3");
+            options.add(new SyllableSetResponse.Option("BA", "BA"));
+            options.add(new SyllableSetResponse.Option("MA", "MA"));
+            options.add(new SyllableSetResponse.Option("TA", "TA"));
+            options.add(new SyllableSetResponse.Option("SA", "SA"));
+        } else if ("kilalanin".equals(subLevel)) {
+            response.setTargetSyllable("TA");
+            response.setAudioUrl("/audio/words/tao.mp3");
+            options.add(new SyllableSetResponse.Option("BA", "BA"));
+            options.add(new SyllableSetResponse.Option("MA", "MA"));
+            options.add(new SyllableSetResponse.Option("TA", "TA"));
+            options.add(new SyllableSetResponse.Option("SA", "SA"));
+        } else if ("rhyming".equals(subLevel)) {
+            response.setTargetSyllable("SA");
+            response.setAudioUrl("/audio/words/basa.mp3");
+            options.add(new SyllableSetResponse.Option("BA", "BA"));
+            options.add(new SyllableSetResponse.Option("MA", "MA"));
+            options.add(new SyllableSetResponse.Option("TA", "TA"));
+            options.add(new SyllableSetResponse.Option("SA", "SA"));
+        } else {
+            // Default
+            response.setTargetSyllable("PA");
+            options.add(new SyllableSetResponse.Option("PA", "PA"));
+            options.add(new SyllableSetResponse.Option("KA", "KA"));
+            options.add(new SyllableSetResponse.Option("NA", "NA"));
+            options.add(new SyllableSetResponse.Option("LA", "LA"));
+        }
+
+        response.setOptions(options);
+        return response;
     }
 }

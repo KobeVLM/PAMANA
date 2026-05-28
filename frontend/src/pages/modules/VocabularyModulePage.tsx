@@ -62,6 +62,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [wordComplete, setWordComplete] = useState(false)
   const [moduleComplete, setModuleComplete] = useState(false)
   const [hamonTriggered, setHamonTriggered] = useState(false)
+  const [gamitinSentence, setGamitinSentence] = useState<string>("Ang aking _____ ay malaki at maliwanag.")
 
   const fetchNextWord = useCallback(async () => {
     setIsLoading(true)
@@ -74,6 +75,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
       setCorrectId(null)
       setAttempts(0)
       setWordComplete(false)
+      setMatchOptions([]) // Clear options to prevent UI flicker
     } catch {
       setModuleComplete(true)
     } finally {
@@ -108,6 +110,22 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   useEffect(() => {
     if (currentWord && currentStep !== 'pakinggan' && currentStep !== 'gamitin') {
       fetchMatchOptions(currentWord.wordId, currentStep)
+    } else if (currentWord && currentStep === 'gamitin') {
+      const fetchGamitin = async () => {
+        try {
+          const res = await api.get(`/vocabulary/gamitin/${currentWord.wordId}`)
+          setGamitinSentence(res.data.sentenceTemplate)
+          
+          const mappedOptions = res.data.options.map((opt: string, i: number) => ({
+            id: opt === res.data.correctWord ? currentWord.wordId : `opt${i}`,
+            label: opt
+          }))
+          setMatchOptions(mappedOptions)
+        } catch {
+          console.error('Failed to fetch gamitin dialogue')
+        }
+      }
+      fetchGamitin()
     }
   }, [currentWord, currentStep, fetchMatchOptions])
 
@@ -325,14 +343,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
               <div className="space-y-4">
                 <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
                   <p className="text-white text-base leading-relaxed text-center">
-                    "Ang aking _____ ay malaki at maliwanag."
+                    "{gamitinSentence}"
                   </p>
                 </div>
                 <OptionGrid
-                  options={[
-                    { id: currentWord.wordId, label: currentWord.word },
-                    ...matchOptions.slice(1).map((o, i) => ({ id: `opt${i}`, label: o.label ?? '' }))
-                  ]}
+                  options={matchOptions}
                   selectedId={selectedId}
                   correctId={correctId}
                   onSelect={handleStepSelect}
