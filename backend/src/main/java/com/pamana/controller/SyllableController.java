@@ -53,4 +53,15 @@ public class SyllableController {
         SyllableStatusResponse response = syllableService.computeModuleStatus(userId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/set")
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<com.pamana.dto.SyllableSetResponse> getSyllableSet(
+            @RequestParam String subLevel,
+            @RequestParam int setId,
+            @RequestParam UUID userId) {
+        log.info("REST API Request: Fetch Syllable set for user: {}, subLevel: {}, setId: {}", userId, subLevel, setId);
+        com.pamana.dto.SyllableSetResponse response = syllableService.getSyllableSet(subLevel, setId, userId);
+        return ResponseEntity.ok(response);
+    }
 }

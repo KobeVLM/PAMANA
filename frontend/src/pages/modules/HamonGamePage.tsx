@@ -17,10 +17,10 @@ interface VocabWord {
 
 interface DialogueResponse {
   wordId: string
-  sentence: string
+  sentenceTemplate: string
   correctWord: string
   options: string[]
-  dialogueAudioUrl: string
+  audioUrl: string
 }
 
 export const HamonGamePage: React.FC = () => {
@@ -181,11 +181,11 @@ export const HamonGamePage: React.FC = () => {
 
         {currentDialogue && (
           <div className="space-y-6">
-            <NPCDialogue npc="lolo" line={currentDialogue.sentence} />
+            <NPCDialogue npc="lolo" line={currentDialogue.sentenceTemplate} />
             
             <div className="flex flex-col items-center gap-3 mt-4 mb-2">
               <p className="text-white/90 text-sm font-medium">Kumpletuhin ang pangungusap sa itaas. Pakinggan ang pahiwatig:</p>
-              <AudioPlayer audioUrl={currentDialogue.dialogueAudioUrl} />
+              <AudioPlayer audioUrl={currentDialogue.audioUrl} />
             </div>
 
             <OptionGrid
