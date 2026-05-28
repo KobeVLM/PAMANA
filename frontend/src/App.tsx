@@ -22,6 +22,9 @@ const VocabularyModulePage = React.lazy(() =>
 const SentenceModulePage = React.lazy(() =>
   import('@/pages/modules/SentenceModulePage').then((m) => ({ default: m.SentenceModulePage }))
 )
+const HamonGamePage = React.lazy(() =>
+  import('@/pages/modules/HamonGamePage').then((m) => ({ default: m.HamonGamePage }))
+)
 
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center">
@@ -80,6 +83,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['LEARNER']}>
                   <SentenceModulePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/modules/:moduleNumber/hamon"
+              element={
+                <ProtectedRoute allowedRoles={['LEARNER']}>
+                  <HamonGamePage />
                 </ProtectedRoute>
               }
             />

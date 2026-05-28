@@ -63,9 +63,29 @@ export const SyllableModulePage: React.FC = () => {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await api.get(`/syllables/status/${user?.id}`)
-      setStatus(res.data)
-      return res.data as SyllableStatus
+      const res = await api.get(`/syllables/status?userId=${user?.id}`)
+      const data = res.data
+      
+      let currentSubLevel: SubLevel = 'pagsama'
+      if (data.pagsamaAccuracy >= 80) currentSubLevel = 'pakinggan'
+      if (data.pakingganAccuracy >= 80) currentSubLevel = 'kilalanin'
+      if (data.kilalaninAccuracy >= 80) currentSubLevel = 'rhyming'
+
+      const mappedStatus: SyllableStatus = {
+        currentSubLevel,
+        currentSetId: 1, // Defaulting to 1 for MVP mock data
+        subLevelAccuracies: {
+          pagsama: data.pagsamaAccuracy || 0,
+          pakinggan: data.pakingganAccuracy || 0,
+          kilalanin: data.kilalaninAccuracy || 0,
+          rhyming: data.rhymingAccuracy || 0
+        },
+        moduleAccuracy: data.module1Accuracy || 0,
+        module2Unlocked: data.module2Unlocked || false
+      }
+      
+      setStatus(mappedStatus)
+      return mappedStatus
     } catch {
       return null
     }
@@ -77,20 +97,25 @@ export const SyllableModulePage: React.FC = () => {
       setCurrentSet(res.data)
     } catch {
       // Fallback mock data for development
+      const mockSyllables = ['BA', 'MA', 'TA', 'SA', 'PA', 'KA', 'NA', 'LA']
+      const idx = (setId - 1) % mockSyllables.length
+      const target = mockSyllables[idx]
+      const c = target.charAt(0)
+      
       setCurrentSet({
         setId,
         subLevel,
-        targetSyllable: 'BA',
+        targetSyllable: target,
         options: [
-          { id: 'ba', label: 'BA' },
-          { id: 'be', label: 'BE' },
-          { id: 'bi', label: 'BI' },
-          { id: 'bo', label: 'BO' },
-        ],
+          { id: target.toLowerCase(), label: target },
+          { id: c.toLowerCase() + 'e', label: c + 'E' },
+          { id: c.toLowerCase() + 'i', label: c + 'I' },
+          { id: c.toLowerCase() + 'o', label: c + 'O' },
+        ].sort(() => Math.random() - 0.5),
         audioUrl: `/static/assets/audio/syllables/${subLevel}_${setId}.wav`,
-        consonant: 'B',
+        consonant: c,
         vowel: 'A',
-        consonantAudioUrl: '/static/assets/audio/consonants/b.wav',
+        consonantAudioUrl: `/static/assets/audio/consonants/${c.toLowerCase()}.wav`,
         vowelAudioUrl: '/static/assets/audio/vowels/a.wav',
       })
     }
@@ -125,22 +150,42 @@ export const SyllableModulePage: React.FC = () => {
         userId: user?.id,
         subLevel: currentSet.subLevel,
         setId: currentSet.setId,
-        selected: optionId,
+        selectedAnswer: optionId,
         correct: isCorrect,
         accuracy,
       })
 
       if (res.data.module2Unlocked) {
         setTimeout(() => setModuleComplete(true), 1200)
-      } else if (res.data.nextSet) {
+      } else if (res.data.nextSetId) {
         setTimeout(async () => {
           setSelectedId(null)
           setCorrectId(null)
           setAttempts(0)
           setFeedback(null)
-          await fetchCurrentSet(res.data.subLevel, res.data.nextSet)
+          
           const updatedStatus = await fetchStatus()
           if (updatedStatus) setStatus(updatedStatus)
+
+          // Determine if sublevel changed
+          const newActiveSub = (['pagsama', 'pakinggan', 'kilalanin', 'rhyming'] as const).find(
+            s => (updatedStatus?.[`${s}Accuracy`] ?? 0) < 80
+          ) || 'rhyming'
+
+          if (newActiveSub !== currentSet.subLevel) {
+            await fetchCurrentSet(newActiveSub, 1)
+          } else {
+            await fetchCurrentSet(currentSet.subLevel, res.data.nextSetId)
+          }
+        }, 1500)
+      } else {
+        // Fallback just in case nextSetId is missing
+        setTimeout(async () => {
+          setSelectedId(null)
+          setCorrectId(null)
+          setAttempts(0)
+          setFeedback(null)
+          await fetchCurrentSet(currentSet.subLevel, currentSet.setId + 1)
         }, 1500)
       }
     } catch {
@@ -216,7 +261,7 @@ export const SyllableModulePage: React.FC = () => {
                     {isComplete && <CheckCircle2 className="w-3 h-3" />}
                     <span>{SUB_LEVEL_LABELS[sl].split('. ')[1]}</span>
                   </div>
-                  {acc > 0 && <div className="text-center mt-0.5 opacity-70">{acc}%</div>}
+                  {acc > 0 && <div className="text-center mt-0.5 opacity-70">{Math.round(acc)}%</div>}
                 </div>
               )
             })}
@@ -229,11 +274,11 @@ export const SyllableModulePage: React.FC = () => {
             <span className="text-green-300 text-sm">Katumpakan ng Module</span>
             <div className="flex-1">
               <Progress
-                value={status.moduleAccuracy}
+                value={Math.round(status.moduleAccuracy)}
                 className="h-2 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400"
               />
             </div>
-            <span className="text-white font-bold text-sm whitespace-nowrap">{status.moduleAccuracy}%</span>
+            <span className="text-white font-bold text-sm whitespace-nowrap">{Math.round(status.moduleAccuracy)}%</span>
             <Badge variant="outline" className="text-xs border-green-500/40 text-green-300">
               Kailangan: 80%
             </Badge>
