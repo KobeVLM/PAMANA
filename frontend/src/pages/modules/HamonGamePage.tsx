@@ -6,7 +6,6 @@ import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { OptionGrid } from '@/components/game/OptionGrid'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import api from '@/lib/api'
-import { playAudio, preloadAudio } from '@/lib/audio'
 import { ArrowLeft } from 'lucide-react'
 
 interface VocabWord {
@@ -76,13 +75,6 @@ export const HamonGamePage: React.FC = () => {
     }
   }, [currentIndex, words, isComplete])
 
-  useEffect(() => {
-    preloadAudio('/audio/sfx/wrong.mp3')
-    if (currentDialogue?.audioUrl) {
-      preloadAudio(currentDialogue.audioUrl)
-    }
-  }, [currentDialogue])
-
   const submitResults = async () => {
     if (!sessionId) return
     try {
@@ -98,13 +90,15 @@ export const HamonGamePage: React.FC = () => {
     
     const isCorrect = optionLabel === currentDialogue.correctWord
     setSelectedId(optionLabel)
-    
+    setCorrectId(currentDialogue.correctWord)
+
     const currentAttempts = attempts + 1
     setAttempts(currentAttempts)
     
     if (isCorrect) {
-      if (currentDialogue.audioUrl) {
-        playAudio(currentDialogue.audioUrl)
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.currentTime = 0
+        voiceAudioRef.current.play().catch(console.warn)
       }
       // Calculate score for this word
       const accuracy = currentAttempts === 1 ? 100 : Math.max(0, 100 - ((currentAttempts - 1) * 30))
@@ -113,10 +107,14 @@ export const HamonGamePage: React.FC = () => {
       setTimeout(() => {
         setCurrentIndex(prev => prev + 1)
         setSelectedId(null)
+        setCorrectId(null)
         setAttempts(0)
       }, 1500)
     } else {
-      playAudio('/audio/sfx/wrong.mp3')
+      if (wrongAudioRef.current) {
+        wrongAudioRef.current.currentTime = 0
+        wrongAudioRef.current.play().catch(console.warn)
+      }
       setTimeout(() => {
         setSelectedId(null)
       }, 1200)
