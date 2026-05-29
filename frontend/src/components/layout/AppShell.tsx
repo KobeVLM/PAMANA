@@ -94,8 +94,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pamana-gold to-pamana-amber flex items-center justify-center shadow-lg">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src="/images/PAMANA_logo.png" alt="PAMANA Logo" className="w-full h-full object-contain drop-shadow-lg" />
             </div>
             <div>
               <h1 className="text-white font-heading font-bold text-lg leading-none">PAMANA</h1>
