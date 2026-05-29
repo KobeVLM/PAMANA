@@ -8,6 +8,7 @@ import { OptionGrid } from '@/components/game/OptionGrid'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { playAudio, preloadAudio } from '@/lib/audio'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 
 type SpiralStep = 'pakinggan' | 'kilalanin' | 'basahin' | 'gamitin'
@@ -136,17 +137,10 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     }
   }, [currentWord, currentStep, fetchMatchOptions])
 
-  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
-  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
-
   useEffect(() => {
-    if (!wrongAudioRef.current) {
-      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
-      wrongAudioRef.current.preload = 'auto'
-    }
+    preloadAudio('/audio/sfx/wrong.mp3')
     if (currentWord?.audioUrl) {
-      voiceAudioRef.current = new Audio(currentWord.audioUrl)
-      voiceAudioRef.current.preload = 'auto'
+      preloadAudio(currentWord.audioUrl)
     }
   }, [currentWord])
 
@@ -156,12 +150,10 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     setSelectedId(optionId)
     setCorrectId(currentWord.wordId)
 
-    if (isCorrect && voiceAudioRef.current) {
-      voiceAudioRef.current.currentTime = 0
-      voiceAudioRef.current.play().catch(console.warn)
-    } else if (!isCorrect && wrongAudioRef.current) {
-      wrongAudioRef.current.currentTime = 0
-      wrongAudioRef.current.play().catch(console.warn)
+    if (isCorrect && currentWord.audioUrl) {
+      playAudio(currentWord.audioUrl)
+    } else if (!isCorrect) {
+      playAudio('/audio/sfx/wrong.mp3')
     }
 
     const newAttempts = attempts + 1

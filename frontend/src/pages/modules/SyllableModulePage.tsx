@@ -8,6 +8,7 @@ import { OptionGrid } from '@/components/game/OptionGrid'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
+import { playAudio, preloadAudio } from '@/lib/audio'
 import { cn } from '@/lib/utils'
 import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 
@@ -133,17 +134,10 @@ export const SyllableModulePage: React.FC = () => {
     if (user?.id) init()
   }, [user?.id, fetchStatus, fetchCurrentSet])
 
-  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
-  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
-
   useEffect(() => {
-    if (!wrongAudioRef.current) {
-      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
-      wrongAudioRef.current.preload = 'auto'
-    }
+    preloadAudio('/audio/sfx/wrong.mp3')
     if (currentSet?.audioUrl) {
-      voiceAudioRef.current = new Audio(currentSet.audioUrl)
-      voiceAudioRef.current.preload = 'auto'
+      preloadAudio(currentSet.audioUrl)
     }
   }, [currentSet])
 
@@ -154,12 +148,10 @@ export const SyllableModulePage: React.FC = () => {
     setCorrectId(currentSet.targetSyllable.toLowerCase())
     setFeedback(isCorrect ? 'correct' : 'incorrect')
 
-    if (isCorrect && voiceAudioRef.current) {
-      voiceAudioRef.current.currentTime = 0
-      voiceAudioRef.current.play().catch(console.warn)
-    } else if (!isCorrect && wrongAudioRef.current) {
-      wrongAudioRef.current.currentTime = 0
-      wrongAudioRef.current.play().catch(console.warn)
+    if (isCorrect && currentSet.audioUrl) {
+      playAudio(currentSet.audioUrl)
+    } else if (!isCorrect) {
+      playAudio('/audio/sfx/wrong.mp3')
     }
 
     const newAttempts = attempts + 1
