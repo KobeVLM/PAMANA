@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
@@ -85,7 +85,7 @@ export const HamonGamePage: React.FC = () => {
     }
   }
 
-  const handleSelect = (optionLabel: string) => {
+  const handleSelect = useCallback((optionLabel: string) => {
     if (!currentDialogue || selectedId) return
     
     const isCorrect = optionLabel === currentDialogue.correctWord
@@ -96,8 +96,9 @@ export const HamonGamePage: React.FC = () => {
     setAttempts(currentAttempts)
     
     if (isCorrect) {
-      if (currentDialogue.audioUrl) {
-        new Audio(currentDialogue.audioUrl).play().catch(console.warn)
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.currentTime = 0
+        voiceAudioRef.current.play().catch(console.warn)
       }
       // Calculate score for this word
       const accuracy = currentAttempts === 1 ? 100 : Math.max(0, 100 - ((currentAttempts - 1) * 30))
@@ -110,12 +111,15 @@ export const HamonGamePage: React.FC = () => {
         setAttempts(0)
       }, 1500)
     } else {
-      new Audio('/audio/sfx/wrong.mp3').play().catch(console.warn)
+      if (wrongAudioRef.current) {
+        wrongAudioRef.current.currentTime = 0
+        wrongAudioRef.current.play().catch(console.warn)
+      }
       setTimeout(() => {
         setSelectedId(null)
       }, 1200)
     }
-  }
+  }, [currentDialogue, selectedId, attempts, currentDialogue?.correctWord, currentDialogue?.wordId])
 
   if (isLoading) {
     return (
