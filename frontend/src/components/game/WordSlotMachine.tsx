@@ -81,8 +81,8 @@ export const WordSlotMachine: React.FC<WordSlotMachineProps> = ({
           })}
         </div>
         
-        {/* Gradient overlays to hide top and bottom */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#185338] via-transparent to-[#185338] z-10" />
+        {/* Gradient overlays removed to make words fully visible */}
+        <div className="absolute inset-0 pointer-events-none bg-transparent z-10" />
       </div>
       
       <div className="absolute -top-6 w-full text-center text-green-300 font-bold text-sm z-20">

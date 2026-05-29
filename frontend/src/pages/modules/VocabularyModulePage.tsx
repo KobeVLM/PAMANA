@@ -65,6 +65,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [moduleComplete, setModuleComplete] = useState(false)
   const [hamonTriggered, setHamonTriggered] = useState(false)
   const [gamitinSentence, setGamitinSentence] = useState<string>("Ang aking _____ ay malaki at maliwanag.")
+  const [upcomingWords, setUpcomingWords] = useState<string[]>([
+    'Mata', 'Ilong', 'Bibig', 'Kamay', 
+    'Paa', 'Tenga', 'Ulo', 'Tiyan', 
+    'Likod', 'Buhok', 'Balikat', 'Tuhod'
+  ])
 
   const fetchNextWord = useCallback(async () => {
     setIsLoading(true)
@@ -169,6 +174,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             setAttempts(0)
           } else {
             setWordComplete(true)
+            setUpcomingWords(prev => prev.filter(w => w.toLowerCase() !== currentWord?.word.toLowerCase()))
           }
         } else {
           // If incorrect, just clear the selection so they can try again
@@ -253,7 +259,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
         
         {/* Left Side Slot Machine (Hidden on small screens) */}
         <div className="hidden lg:block w-56 mt-24">
-          <WordSlotMachine />
+          <WordSlotMachine words={upcomingWords} />
         </div>
 
         {/* Main Content Area */}
