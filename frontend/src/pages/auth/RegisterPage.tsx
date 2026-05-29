@@ -69,8 +69,8 @@ export const RegisterPage: React.FC = () => {
         <div className="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pamana-gold to-pamana-amber flex items-center justify-center shadow-lg mb-3 animate-float">
-              <Sparkles className="w-7 h-7 text-white" />
+            <div className="w-20 h-20 flex items-center justify-center mb-1 animate-float">
+              <img src="/images/PAMANA_logo.png" alt="PAMANA Logo" className="w-full h-full object-contain drop-shadow-2xl" />
             </div>
             <h1 className="text-2xl font-heading font-bold text-white">Sumali sa PAMANA</h1>
             <p className="text-green-300 text-sm mt-1">Simulan ang iyong paglalakbay</p>
