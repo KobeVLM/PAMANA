@@ -84,6 +84,7 @@ public class SentenceService extends BaseGameService {
                 return new SentenceTaskResponse(
                         task.getId(),
                         task.getScrambledWords(),
+                        task.getCorrectOrder(),
                         task.getAudioUrl(),
                         task.getTier(),
                         false
