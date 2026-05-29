@@ -75,6 +75,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     setIsLoading(true)
     try {
       const res = await api.get(`/vocabulary/next?userId=${user?.id}&moduleNumber=${moduleNumber}`)
+      
+      if (res.status === 204 || !res.data) {
+        setModuleComplete(true)
+        return
+      }
+
       setCurrentWord(res.data)
       setCurrentStep('pakinggan')
       setPakingganDone(false)
