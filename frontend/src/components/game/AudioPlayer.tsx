@@ -49,19 +49,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   }, [audioUrl, autoPlay])
 
   const playFallbackBeep = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const osc = ctx.createOscillator()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(440, ctx.currentTime)
-      osc.connect(ctx.destination)
-      osc.start()
-      osc.stop(ctx.currentTime + 0.15)
-      setIsPlaying(true)
-      setTimeout(() => setIsPlaying(false), 150)
-    } catch (e) {
-      console.error('Fallback audio failed', e)
-    }
+    console.warn('Audio playback failed or was blocked by browser autoplay policy.');
   }
 
   const play = useCallback(() => {

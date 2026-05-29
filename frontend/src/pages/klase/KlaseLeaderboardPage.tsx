@@ -26,41 +26,70 @@ export const KlaseLeaderboardPage: React.FC = () => {
   const stompRef = useRef<Client | null>(null)
 
   const fetchLeaderboard = useCallback(async () => {
-    if (!user?.klaseId) return
     try {
-      const res = await api.get(`/klase/${user.klaseId}/leaderboard`)
+      let klaseId = user?.klaseId;
+      
+      // If teacher, dynamically get their klase ID from the backend first
+      if (user?.role === 'TEACHER') {
+        const teacherKlaseRes = await api.get('/klase/teacher');
+        klaseId = teacherKlaseRes.data.id;
+      }
+
+      if (!klaseId && user?.role !== 'TEACHER') return;
+
+      const res = await api.get(`/klase/${klaseId}/leaderboard`)
       setLeaderboard(res.data)
       setLastUpdated(new Date())
     } catch {
       // silent fail
     }
-  }, [user?.klaseId])
+  }, [user?.klaseId, user?.role])
 
   // WebSocket subscription
   useEffect(() => {
-    if (!user?.klaseId) return
+    let activeKlaseId = user?.klaseId;
 
-    fetchLeaderboard().finally(() => setIsLoading(false))
+    const setupSocket = async () => {
+      if (user?.role === 'TEACHER') {
+        try {
+          const teacherKlaseRes = await api.get('/klase/teacher');
+          activeKlaseId = teacherKlaseRes.data.id;
+        } catch {
+          setIsLoading(false);
+          return; // No class created yet
+        }
+      }
 
-    const client = new Client({
-      webSocketFactory: () => new SockJS('/ws-leaderboard'),
-      onConnect: () => {
-        setIsConnected(true)
-        client.subscribe(`/topic/leaderboard/${user.klaseId}`, () => {
-          fetchLeaderboard()
-        })
-      },
-      onDisconnect: () => setIsConnected(false),
-      reconnectDelay: 3000,
-    })
+      if (!activeKlaseId) {
+        setIsLoading(false);
+        return;
+      }
 
-    client.activate()
-    stompRef.current = client
+      await fetchLeaderboard()
+      setIsLoading(false)
+
+      const client = new Client({
+        webSocketFactory: () => new SockJS('/ws-leaderboard'),
+        onConnect: () => {
+          setIsConnected(true)
+          client.subscribe(`/topic/leaderboard/${activeKlaseId}`, () => {
+            fetchLeaderboard()
+          })
+        },
+        onDisconnect: () => setIsConnected(false),
+        reconnectDelay: 3000,
+      })
+
+      client.activate()
+      stompRef.current = client
+    }
+
+    setupSocket();
 
     return () => {
-      client.deactivate()
+      stompRef.current?.deactivate()
     }
-  }, [user?.klaseId, fetchLeaderboard])
+  }, [user?.klaseId, user?.role, fetchLeaderboard])
 
   const handleJoinKlase = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,7 +100,16 @@ export const KlaseLeaderboardPage: React.FC = () => {
     setJoinLoading(true)
     setJoinError('')
     try {
-      await api.post('/klase/join', { userId: user?.id, joinCode })
+      const res = await api.post(`/klase/join?joinCode=${joinCode}`)
+      
+      // Update local storage so the reload picks up the real klaseId
+      const storedUser = sessionStorage.getItem('pamana_user')
+      if (storedUser) {
+        const userObj = JSON.parse(storedUser)
+        userObj.klaseId = res.data.klaseId 
+        sessionStorage.setItem('pamana_user', JSON.stringify(userObj))
+      }
+
       window.location.reload() // Refresh to get klaseId
     } catch {
       setJoinError('Hindi natagpuan ang klase. Suriin ang code at subukan ulit.')
@@ -80,8 +118,8 @@ export const KlaseLeaderboardPage: React.FC = () => {
     }
   }
 
-  // If user hasn't joined a klase yet
-  if (!user?.klaseId) {
+  // If user hasn't joined a klase yet (and is NOT a teacher)
+  if (user?.role !== 'TEACHER' && !user?.klaseId) {
     return (
       <AppShell>
         <div className="p-6 lg:p-8 max-w-md mx-auto">

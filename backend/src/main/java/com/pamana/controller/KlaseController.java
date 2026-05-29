@@ -67,14 +67,14 @@ public class KlaseController {
 
     @PostMapping("/join")
     @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<Void> joinKlase(
+    public ResponseEntity<java.util.Map<String, String>> joinKlase(
             @RequestParam String joinCode,
             Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
         log.info("REST API: Student {} requesting to join classroom with join code: {}", userId, joinCode);
 
-        klaseService.joinKlase(userId, joinCode);
-        return ResponseEntity.ok().build();
+        UUID klaseId = klaseService.joinKlase(userId, joinCode);
+        return ResponseEntity.ok(java.util.Map.of("klaseId", klaseId.toString()));
     }
 
     @GetMapping("/{klaseId}/leaderboard")

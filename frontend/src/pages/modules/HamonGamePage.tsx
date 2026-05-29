@@ -96,6 +96,9 @@ export const HamonGamePage: React.FC = () => {
     setAttempts(currentAttempts)
     
     if (isCorrect) {
+      if (currentDialogue.audioUrl) {
+        new Audio(currentDialogue.audioUrl).play().catch(console.warn)
+      }
       // Calculate score for this word
       const accuracy = currentAttempts === 1 ? 100 : Math.max(0, 100 - ((currentAttempts - 1) * 30))
       setResults(prev => ({ ...prev, [currentDialogue.wordId]: accuracy }))
@@ -107,6 +110,7 @@ export const HamonGamePage: React.FC = () => {
         setAttempts(0)
       }, 1500)
     } else {
+      new Audio('/audio/sfx/wrong.mp3').play().catch(console.warn)
       setTimeout(() => {
         setSelectedId(null)
       }, 1200)

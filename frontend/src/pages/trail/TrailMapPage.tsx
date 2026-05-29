@@ -37,6 +37,8 @@ export const TrailMapPage: React.FC = () => {
   const navigate = useNavigate()
   const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, node: TrailNode | null }>({ isOpen: false, node: null })
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -72,6 +74,38 @@ export const TrailMapPage: React.FC = () => {
 
   const activeNode = TRAIL_NODES.find(n => n.moduleNumber === activeModule) || TRAIL_NODES[0];
 
+  const handleModuleClick = async (node: TrailNode) => {
+    const progress = getProgress(node.moduleNumber)
+    if (!progress?.isUnlocked) return
+
+    const isModule4Complete = getProgress(4)?.isComplete ?? false;
+
+    if (progress?.isComplete) {
+      if (!isModule4Complete) {
+        setToastMessage("Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!")
+        setTimeout(() => setToastMessage(null), 4000)
+        return
+      }
+
+      setConfirmModal({ isOpen: true, node })
+    } else {
+      navigate(`/modules/${node.moduleNumber}`)
+    }
+  }
+
+  const handleConfirmRetake = async () => {
+    if (!confirmModal.node) return
+    try {
+      await api.delete(`/modules/reset/${user?.id}/${confirmModal.node.moduleNumber}`)
+      navigate(`/modules/${confirmModal.node.moduleNumber}`)
+    } catch (e) {
+      console.error("Failed to reset module", e)
+      setToastMessage("Nagkaroon ng error sa pag-reset ng module. Subukan muli.")
+      setTimeout(() => setToastMessage(null), 4000)
+    } finally {
+      setConfirmModal({ isOpen: false, node: null })
+    }
+  }
   const renderNodeButton = (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     const isUnlocked = progress?.isUnlocked ?? false
@@ -100,7 +134,7 @@ export const TrailMapPage: React.FC = () => {
         style={{ left: `${node.x}%`, top: `${node.y}%`, zIndex: 10 }}
       >
         <button
-          onClick={() => isUnlocked && navigate(`/modules/${node.moduleNumber}`)}
+          onClick={() => handleModuleClick(node)}
           disabled={!isUnlocked}
           title={node.title}
           className={cn(
@@ -215,6 +249,48 @@ export const TrailMapPage: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
+            <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+            <p className="font-medium">{toastMessage}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal */}
+      {confirmModal.isOpen && confirmModal.node && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="w-8 h-8 fill-current" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Mastery Mode</h2>
+              <p className="text-gray-600">
+                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ang iyong panibagong score ay marerekord.
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setConfirmModal({ isOpen: false, node: null })}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Kanselahin
+              </button>
+              <button 
+                onClick={handleConfirmRetake}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all active:scale-95"
+              >
+                Oo, Ulitin
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   )
 }

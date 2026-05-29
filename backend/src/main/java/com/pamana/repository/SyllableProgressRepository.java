@@ -12,4 +12,5 @@ public interface SyllableProgressRepository extends JpaRepository<SyllableProgre
     List<SyllableProgress> findByUserId(UUID userId);
     List<SyllableProgress> findByUserIdAndSubLevel(UUID userId, String subLevel);
     Optional<SyllableProgress> findByUserIdAndSubLevelAndSetId(UUID userId, String subLevel, Integer setId);
+    void deleteByUserId(UUID userId);
 }

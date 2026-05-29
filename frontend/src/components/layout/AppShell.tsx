@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import {
   Map,
-  BookOpen,
   Trophy,
   Users,
   BarChart2,
@@ -30,16 +29,10 @@ const NAV_ITEMS: NavItem[] = [
     roles: ['LEARNER'],
   },
   {
-    label: 'Mga Aralin',
-    to: '/trail',
-    icon: <BookOpen className="w-5 h-5" />,
-    roles: ['LEARNER'],
-  },
-  {
     label: 'Klase Mode',
     to: '/klase',
     icon: <Users className="w-5 h-5" />,
-    roles: ['LEARNER', 'TEACHER'],
+    roles: ['TEACHER'],
   },
   {
     label: 'Leaderboard',
