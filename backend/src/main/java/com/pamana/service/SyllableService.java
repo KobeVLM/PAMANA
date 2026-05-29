@@ -151,15 +151,15 @@ public class SyllableService extends BaseGameService {
             response.setConsonant("B");
             response.setVowel("A");
             response.setTargetSyllable("BA");
-            response.setConsonantAudioUrl("/audio/phonemes/b.mp3");
-            response.setVowelAudioUrl("/audio/phonemes/a.mp3");
+            response.setConsonantAudioUrl("/assets/audio/consonants/b.mp3");
+            response.setVowelAudioUrl("/assets/audio/vowels/a.mp3");
             options.add(new SyllableSetResponse.Option("BA", "BA"));
             options.add(new SyllableSetResponse.Option("MA", "MA"));
             options.add(new SyllableSetResponse.Option("TA", "TA"));
             options.add(new SyllableSetResponse.Option("SA", "SA"));
         } else if ("pakinggan".equals(subLevel)) {
             response.setTargetSyllable("MA");
-            response.setAudioUrl("/audio/syllables/ma.mp3");
+            response.setAudioUrl("/assets/audio/syllables/1_1.mp3");
             options.add(new SyllableSetResponse.Option("BA", "BA"));
             options.add(new SyllableSetResponse.Option("MA", "MA"));
             options.add(new SyllableSetResponse.Option("TA", "TA"));

@@ -192,7 +192,7 @@ export const SentenceModulePage: React.FC = () => {
               <p className="text-white/70 text-sm">Susunod: Tier 2 — Patanong (Tanong)</p>
               <p className="text-white/50 text-xs mt-1">Gawing tanong ang mga pangungusap!</p>
             </div>
-            <audio src="/static/assets/audio/tier2_unlock.mp3" autoPlay />
+            <audio src={`${import.meta.env.VITE_API_URL || ''}/assets/audio/tier2_unlock.mp3`} autoPlay />
             <button
               onClick={handleStartTier2}
               className="w-full py-4 rounded-xl bg-gradient-to-r from-pamana-gold to-amber-500 text-white font-bold text-base hover:opacity-90 transition-opacity"

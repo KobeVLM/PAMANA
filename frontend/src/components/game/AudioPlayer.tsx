@@ -28,7 +28,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [isPlaying, setIsPlaying] = React.useState(false)
 
   useEffect(() => {
-    audioRef.current = new Audio(audioUrl)
+    const resolveMediaUrl = (url: string) => {
+      if (url.startsWith('/')) {
+        return (import.meta.env.VITE_API_URL || '') + url
+      }
+      return url
+    }
+    
+    audioRef.current = new Audio(resolveMediaUrl(audioUrl))
     audioRef.current.onplay = () => setIsPlaying(true)
     audioRef.current.onended = () => setIsPlaying(false)
     audioRef.current.onerror = () => {
