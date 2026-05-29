@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 import {
   Map,
-  BookOpen,
   Trophy,
   Users,
   BarChart2,

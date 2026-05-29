@@ -106,7 +106,6 @@ export const TrailMapPage: React.FC = () => {
       setConfirmModal({ isOpen: false, node: null })
     }
   }
-
   const renderNodeButton = (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     const isUnlocked = progress?.isUnlocked ?? false
