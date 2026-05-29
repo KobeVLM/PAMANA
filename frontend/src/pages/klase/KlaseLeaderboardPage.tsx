@@ -43,7 +43,10 @@ export const KlaseLeaderboardPage: React.FC = () => {
     fetchLeaderboard().finally(() => setIsLoading(false))
 
     const client = new Client({
-      webSocketFactory: () => new SockJS('/ws-leaderboard'),
+      webSocketFactory: () => {
+        const baseUrl = import.meta.env.VITE_API_URL || ''
+        return new SockJS(`${baseUrl}/ws-leaderboard`)
+      },
       onConnect: () => {
         setIsConnected(true)
         client.subscribe(`/topic/leaderboard/${user.klaseId}`, () => {
