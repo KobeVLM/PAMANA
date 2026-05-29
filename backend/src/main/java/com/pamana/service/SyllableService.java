@@ -51,18 +51,23 @@ public class SyllableService extends BaseGameService {
         progress.setAccuracy(BigDecimal.valueOf(calculatedAccuracy).setScale(2, RoundingMode.HALF_UP));
         syllableProgressRepository.save(progress);
 
-        // 4. Compute overall Module 1 progress
-        double moduleAccuracy = computeModuleAccuracy(userId);
-        boolean isModule1Completed = moduleAccuracy >= 80.0 && hasAttemptedAllSubLevels(userId);
-
-        if (isModule1Completed) {
-            moduleLockService.evaluateAndUnlock(userId, 1, moduleAccuracy);
-        }
-
         // Standard logic: advance to the next set when they get it correct
         Integer nextSetId = setId;
         if (isCorrect) {
-            nextSetId = setId + 1; // Unlock next phoneme set
+            nextSetId = setId + 1;
+            if (nextSetId > 5) {
+                nextSetId = null; // No more sets for this sublevel!
+            }
+        }
+
+        // 4. Compute overall Module 1 progress
+        double moduleAccuracy = computeModuleAccuracy(userId);
+        
+        boolean isModule1Completed = false;
+        if ("rhyming".equals(subLevel) && isCorrect && nextSetId == null) {
+            // Evaluates and potentially unlocks Module 2!
+            moduleLockService.evaluateAndUnlock(userId, 1, moduleAccuracy);
+            isModule1Completed = true;
         }
 
         boolean module2Unlocked = moduleLockService.isModuleUnlocked(userId, 2);
@@ -146,45 +151,79 @@ public class SyllableService extends BaseGameService {
         response.setSubLevel(subLevel);
 
         List<SyllableSetResponse.Option> options = new ArrayList<>();
+        
+        String[] consonantsList = {"b", "d", "g", "h", "k", "l", "m", "n", "ng", "p", "r", "s", "t", "w", "y"};
+        String[] vowelsList = {"a", "e", "i", "o", "u"};
+        
+        int vIdx = (setId - 1) % vowelsList.length;
+        String vowel = vowelsList[vIdx];
+        
+        List<String> cons = new ArrayList<>(java.util.Arrays.asList(consonantsList));
+        java.util.Collections.shuffle(cons, new java.util.Random(setId + subLevel.hashCode())); 
+        
+        String targetConsonant = cons.get(0);
+        String targetSyllable = targetConsonant + vowel;
 
-        if ("pagsama".equals(subLevel)) {
-            response.setConsonant("B");
-            response.setVowel("A");
-            response.setTargetSyllable("BA");
-            response.setConsonantAudioUrl("/audio/phonemes/b.mp3");
-            response.setVowelAudioUrl("/audio/phonemes/a.mp3");
-            options.add(new SyllableSetResponse.Option("BA", "BA"));
-            options.add(new SyllableSetResponse.Option("MA", "MA"));
-            options.add(new SyllableSetResponse.Option("TA", "TA"));
-            options.add(new SyllableSetResponse.Option("SA", "SA"));
-        } else if ("pakinggan".equals(subLevel)) {
-            response.setTargetSyllable("MA");
-            response.setAudioUrl("/audio/syllables/ma.mp3");
-            options.add(new SyllableSetResponse.Option("BA", "BA"));
-            options.add(new SyllableSetResponse.Option("MA", "MA"));
-            options.add(new SyllableSetResponse.Option("TA", "TA"));
-            options.add(new SyllableSetResponse.Option("SA", "SA"));
+        if ("pagsama".equals(subLevel) || "pakinggan".equals(subLevel)) {
+            response.setConsonant(targetConsonant.toUpperCase());
+            response.setVowel(vowel.toUpperCase());
+            response.setTargetSyllable(targetSyllable.toUpperCase());
+            
+            response.setConsonantAudioUrl("/audio/phonemes/" + targetConsonant + ".mp3");
+            response.setVowelAudioUrl("/audio/phonemes/" + vowel + ".mp3");
+            response.setAudioUrl("/audio/syllables/" + targetSyllable + ".mp3");
+            
+            options.add(new SyllableSetResponse.Option(targetSyllable.toLowerCase(), targetSyllable.toUpperCase()));
+            
+            if ("pagsama".equals(subLevel)) {
+                int added = 1;
+                for (String v : vowelsList) {
+                    if (added >= 4) break;
+                    if (!v.equals(vowel)) {
+                        String opt = targetConsonant + v;
+                        options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+                        added++;
+                    }
+                }
+            } else {
+                for (int i = 1; i < 4; i++) {
+                    String opt = cons.get(i) + vowel;
+                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+                }
+            }
+            java.util.Collections.shuffle(options);
         } else if ("kilalanin".equals(subLevel)) {
-            response.setTargetSyllable("TA");
-            response.setAudioUrl("/audio/words/tao.mp3");
-            options.add(new SyllableSetResponse.Option("BA", "BA"));
-            options.add(new SyllableSetResponse.Option("MA", "MA"));
-            options.add(new SyllableSetResponse.Option("TA", "TA"));
-            options.add(new SyllableSetResponse.Option("SA", "SA"));
+            String[] words = {"mata", "bahay", "tatay", "nanay", "bibig"};
+            String[] targetSylls = {"ma", "ba", "ta", "na", "bi"};
+            int index = (setId - 1) % words.length;
+            String word = words[index];
+            String targetSyll = targetSylls[index];
+            
+            response.setTargetSyllable(targetSyll.toUpperCase());
+            response.setAudioUrl("/audio/words/" + word + ".mp3");
+            
+            options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
+            for (int i = 1; i < 4; i++) {
+                String opt = cons.get(i) + "a";
+                options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+            }
+            java.util.Collections.shuffle(options);
         } else if ("rhyming".equals(subLevel)) {
-            response.setTargetSyllable("SA");
-            response.setAudioUrl("/audio/words/basa.mp3");
-            options.add(new SyllableSetResponse.Option("BA", "BA"));
-            options.add(new SyllableSetResponse.Option("MA", "MA"));
-            options.add(new SyllableSetResponse.Option("TA", "TA"));
-            options.add(new SyllableSetResponse.Option("SA", "SA"));
-        } else {
-            // Default
-            response.setTargetSyllable("PA");
-            options.add(new SyllableSetResponse.Option("PA", "PA"));
-            options.add(new SyllableSetResponse.Option("KA", "KA"));
-            options.add(new SyllableSetResponse.Option("NA", "NA"));
-            options.add(new SyllableSetResponse.Option("LA", "LA"));
+            String[] words = {"mata", "lola", "lolo", "tenga", "kuya"};
+            String[] targetSylls = {"ta", "la", "lo", "nga", "ya"};
+            int index = (setId - 1) % words.length;
+            String word = words[index];
+            String targetSyll = targetSylls[index];
+            
+            response.setTargetSyllable(targetSyll.toUpperCase());
+            response.setAudioUrl("/audio/words/" + word + ".mp3");
+            
+            options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
+            for (int i = 1; i < 4; i++) {
+                String opt = cons.get(i) + "a";
+                options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+            }
+            java.util.Collections.shuffle(options);
         }
 
         response.setOptions(options);

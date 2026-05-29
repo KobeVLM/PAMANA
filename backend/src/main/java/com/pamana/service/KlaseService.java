@@ -129,7 +129,7 @@ public class KlaseService {
     }
 
     @Transactional
-    public void joinKlase(UUID userId, String joinCode) {
+    public UUID joinKlase(UUID userId, String joinCode) {
         log.info("Student {} attempting to join classroom with join code: {}", userId, joinCode);
 
         Klase klase = klaseRepository.findByJoinCode(joinCode)
@@ -138,12 +138,18 @@ public class KlaseService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
+        if ("TEACHER".equals(user.getRole())) {
+            throw new IllegalStateException("Teachers cannot join classrooms");
+        }
+
         user.setKlaseId(klase.getId());
         userRepository.save(user);
 
         log.info("Successfully joined student {} to classroom {}", userId, klase.getName());
 
         broadcastLeaderboardUpdate(klase.getId());
+        
+        return klase.getId();
     }
 
     @Transactional(readOnly = true)

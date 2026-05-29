@@ -12,4 +12,5 @@ public interface SentenceProgressRepository extends JpaRepository<SentenceProgre
     Optional<SentenceProgress> findByUserIdAndTierAndTaskId(UUID userId, Integer tier, UUID taskId);
     List<SentenceProgress> findByUserIdAndTier(UUID userId, Integer tier);
     List<SentenceProgress> findByUserId(UUID userId);
+    void deleteByUserId(UUID userId);
 }

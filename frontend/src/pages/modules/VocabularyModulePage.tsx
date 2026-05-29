@@ -135,6 +135,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     setSelectedId(optionId)
     setCorrectId(currentWord.wordId)
 
+    if (isCorrect && currentWord.audioUrl) {
+      new Audio(currentWord.audioUrl).play().catch(console.warn)
+    } else if (!isCorrect) {
+      new Audio('/audio/sfx/wrong.mp3').play().catch(console.warn)
+    }
+
     const newAttempts = attempts + 1
     setAttempts(newAttempts)
 
