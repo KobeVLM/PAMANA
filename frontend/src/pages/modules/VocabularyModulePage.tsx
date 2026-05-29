@@ -47,6 +47,8 @@ const NPC_LINES: Record<SpiralStep, string> = {
 
 const SPIRAL_STEPS: SpiralStep[] = ['pakinggan', 'kilalanin', 'basahin', 'gamitin']
 
+import { WordSlotMachine } from '@/components/game/WordSlotMachine'
+
 export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _domain }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -247,7 +249,15 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
 
   return (
     <AppShell>
-      <div className="p-6 lg:p-8 max-w-2xl mx-auto">
+      <div className="flex justify-center items-start gap-8 xl:gap-16 max-w-[1200px] mx-auto w-full p-6 lg:p-8">
+        
+        {/* Left Side Slot Machine (Hidden on small screens) */}
+        <div className="hidden lg:block w-56 mt-24">
+          <WordSlotMachine />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 max-w-2xl w-full">
         <button onClick={() => navigate('/trail')} className="flex items-center gap-2 text-green-300 hover:text-white transition-colors mb-6 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Pamana Trail</span>
@@ -376,6 +386,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
           </div>
         )}
       </div>
+      </div>
     </AppShell>
   )
 }
+
