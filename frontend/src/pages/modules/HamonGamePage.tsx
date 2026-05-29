@@ -43,6 +43,18 @@ export const HamonGamePage: React.FC = () => {
   
   const [finalResult, setFinalResult] = useState<{ passRate: number, masteredCount: number, reQueuedWords: string[] } | null>(null)
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!wrongAudioRef.current) {
+      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
+    }
+    if (currentDialogue?.audioUrl) {
+      voiceAudioRef.current = new Audio(currentDialogue.audioUrl)
+    }
+  }, [currentDialogue])
+
   useEffect(() => {
     const fetchSession = async () => {
       try {
