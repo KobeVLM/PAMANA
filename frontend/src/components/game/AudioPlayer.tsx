@@ -27,24 +27,24 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [hasError, setHasError] = React.useState(false)
   const [isPlaying, setIsPlaying] = React.useState(false)
 
-  const playFallbackBeep = () => {
-    console.warn('Audio playback failed or was blocked by browser autoplay policy.');
+  const playFallbackBeep = (err: any) => {
+    console.error('Audio playback failed!', err);
   }
 
   const play = useCallback(() => {
     if (!audioRef.current) return
     setHasError(false)
     audioRef.current.currentTime = 0
-    audioRef.current.play().catch(() => {
-      playFallbackBeep()
+    audioRef.current.play().catch((err) => {
+      playFallbackBeep(err)
       setHasError(true)
     })
   }, [])
 
   useEffect(() => {
     if (autoPlay && audioRef.current) {
-      audioRef.current.play().catch(() => {
-        playFallbackBeep()
+      audioRef.current.play().catch((err) => {
+        playFallbackBeep(err)
         setHasError(true)
       })
     }

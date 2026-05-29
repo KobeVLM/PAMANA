@@ -326,7 +326,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
                   className="w-40 h-40 object-contain rounded-2xl border-2 border-white/20"
                 />
                 <p className="text-white font-heading font-bold text-3xl">{currentWord.word}</p>
-                <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 <p className="text-green-300 text-sm">Pindutin para marinig ulit</p>
                 {!pakingganDone && (
                   <button
@@ -343,7 +343,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             {currentStep === 'kilalanin' && (
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                  <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 </div>
                 <OptionGrid
                   options={matchOptions}
@@ -361,7 +361,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             {currentStep === 'basahin' && (
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                  <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 </div>
                 <OptionGrid
                   options={matchOptions}
