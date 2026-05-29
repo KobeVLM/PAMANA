@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
@@ -133,17 +133,33 @@ export const SyllableModulePage: React.FC = () => {
     if (user?.id) init()
   }, [user?.id, fetchStatus, fetchCurrentSet])
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!wrongAudioRef.current) {
+      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
+      wrongAudioRef.current.preload = 'auto'
+    }
+    if (currentSet?.audioUrl) {
+      voiceAudioRef.current = new Audio(currentSet.audioUrl)
+      voiceAudioRef.current.preload = 'auto'
+    }
+  }, [currentSet])
+
   const handleSelect = useCallback(async (optionId: string) => {
-    if (isSubmitting || !currentSet || selectedId) return
+    if (!currentSet || selectedId || isSubmitting) return
     const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
     setSelectedId(optionId)
     setCorrectId(currentSet.targetSyllable.toLowerCase())
     setFeedback(isCorrect ? 'correct' : 'incorrect')
 
-    if (isCorrect && currentSet.audioUrl) {
-      new Audio(currentSet.audioUrl).play().catch(console.warn)
-    } else if (!isCorrect) {
-      new Audio('/audio/sfx/wrong.mp3').play().catch(console.warn)
+    if (isCorrect && voiceAudioRef.current) {
+      voiceAudioRef.current.currentTime = 0
+      voiceAudioRef.current.play().catch(console.warn)
+    } else if (!isCorrect && wrongAudioRef.current) {
+      wrongAudioRef.current.currentTime = 0
+      wrongAudioRef.current.play().catch(console.warn)
     }
 
     const newAttempts = attempts + 1

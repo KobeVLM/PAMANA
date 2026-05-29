@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
@@ -136,16 +136,32 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     }
   }, [currentWord, currentStep, fetchMatchOptions])
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!wrongAudioRef.current) {
+      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
+      wrongAudioRef.current.preload = 'auto'
+    }
+    if (currentWord?.audioUrl) {
+      voiceAudioRef.current = new Audio(currentWord.audioUrl)
+      voiceAudioRef.current.preload = 'auto'
+    }
+  }, [currentWord])
+
   const handleStepSelect = useCallback(async (optionId: string) => {
     if (!currentWord || selectedId || isSubmitting) return
     const isCorrect = optionId === currentWord.wordId
     setSelectedId(optionId)
     setCorrectId(currentWord.wordId)
 
-    if (isCorrect && currentWord.audioUrl) {
-      new Audio(currentWord.audioUrl).play().catch(console.warn)
-    } else if (!isCorrect) {
-      new Audio('/audio/sfx/wrong.mp3').play().catch(console.warn)
+    if (isCorrect && voiceAudioRef.current) {
+      voiceAudioRef.current.currentTime = 0
+      voiceAudioRef.current.play().catch(console.warn)
+    } else if (!isCorrect && wrongAudioRef.current) {
+      wrongAudioRef.current.currentTime = 0
+      wrongAudioRef.current.play().catch(console.warn)
     }
 
     const newAttempts = attempts + 1
