@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Sparkles, Loader2, Info } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Info } from 'lucide-react'
 
 export const RegisterPage: React.FC = () => {
   const { register, user } = useAuth()
