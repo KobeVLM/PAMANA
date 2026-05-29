@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
@@ -112,11 +112,11 @@ export const SyllableModulePage: React.FC = () => {
           { id: c.toLowerCase() + 'i', label: c + 'I' },
           { id: c.toLowerCase() + 'o', label: c + 'O' },
         ].sort(() => Math.random() - 0.5),
-        audioUrl: `/assets/audio/syllables/${subLevel}_${setId}.mp3`,
+        audioUrl: `/audio/syllables/${target.toLowerCase()}.mp3`,
         consonant: c,
         vowel: 'A',
-        consonantAudioUrl: `/assets/audio/consonants/${c.toLowerCase()}.mp3`,
-        vowelAudioUrl: '/assets/audio/vowels/a.mp3',
+        consonantAudioUrl: `/audio/phonemes/${c.toLowerCase()}.mp3`,
+        vowelAudioUrl: '/audio/phonemes/a.mp3',
       })
     }
   }, [user?.id])
@@ -133,12 +133,34 @@ export const SyllableModulePage: React.FC = () => {
     if (user?.id) init()
   }, [user?.id, fetchStatus, fetchCurrentSet])
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!wrongAudioRef.current) {
+      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
+      wrongAudioRef.current.preload = 'auto'
+    }
+    if (currentSet?.audioUrl) {
+      voiceAudioRef.current = new Audio(currentSet.audioUrl)
+      voiceAudioRef.current.preload = 'auto'
+    }
+  }, [currentSet])
+
   const handleSelect = useCallback(async (optionId: string) => {
-    if (isSubmitting || !currentSet || selectedId) return
+    if (!currentSet || selectedId || isSubmitting) return
     const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
     setSelectedId(optionId)
-    setCorrectId(currentSet.targetSyllable)
+    setCorrectId(currentSet.targetSyllable.toLowerCase())
     setFeedback(isCorrect ? 'correct' : 'incorrect')
+
+    if (isCorrect && voiceAudioRef.current) {
+      voiceAudioRef.current.currentTime = 0
+      voiceAudioRef.current.play().catch(console.warn)
+    } else if (!isCorrect && wrongAudioRef.current) {
+      wrongAudioRef.current.currentTime = 0
+      wrongAudioRef.current.play().catch(console.warn)
+    }
 
     const newAttempts = attempts + 1
     setAttempts(newAttempts)
@@ -155,7 +177,9 @@ export const SyllableModulePage: React.FC = () => {
         accuracy,
       })
 
-      if (res.data.module2Unlocked) {
+      if (currentSet.subLevel === 'rhyming' && !res.data.nextSetId) {
+        // Module is complete!
+        // We evaluate accuracy in backend and module2Unlocked tells us if they passed
         setTimeout(() => setModuleComplete(true), 1200)
       } else if (res.data.nextSetId) {
         setTimeout(async () => {
@@ -167,25 +191,25 @@ export const SyllableModulePage: React.FC = () => {
           const updatedStatus = await fetchStatus()
           if (updatedStatus) setStatus(updatedStatus)
 
-          // Determine if sublevel changed
-          const newActiveSub = (['pagsama', 'pakinggan', 'kilalanin', 'rhyming'] as const).find(
-            s => (updatedStatus?.subLevelAccuracies[s] ?? 0) < 80
-          ) || 'rhyming'
-
-          if (newActiveSub !== currentSet.subLevel) {
-            await fetchCurrentSet(newActiveSub, 1)
-          } else {
-            await fetchCurrentSet(currentSet.subLevel, res.data.nextSetId)
-          }
+          await fetchCurrentSet(currentSet.subLevel, res.data.nextSetId)
         }, 1500)
       } else {
-        // Fallback just in case nextSetId is missing
+        // nextSetId is null but we are not on rhyming. Meaning sublevel is complete!
+        // Move to the next sublevel
         setTimeout(async () => {
           setSelectedId(null)
           setCorrectId(null)
           setAttempts(0)
           setFeedback(null)
-          await fetchCurrentSet(currentSet.subLevel, currentSet.setId + 1)
+          
+          const updatedStatus = await fetchStatus()
+          if (updatedStatus) setStatus(updatedStatus)
+
+          const subLevels = ['pagsama', 'pakinggan', 'kilalanin', 'rhyming'] as const;
+          const currentIndex = subLevels.indexOf(currentSet.subLevel);
+          if (currentIndex < subLevels.length - 1) {
+            await fetchCurrentSet(subLevels[currentIndex + 1], 1);
+          }
         }, 1500)
       }
     } catch {
@@ -206,15 +230,35 @@ export const SyllableModulePage: React.FC = () => {
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
           <div className="max-w-sm text-center animate-bounce-in">
-            <div className="text-6xl mb-6">🎉</div>
+            <div className="text-6xl mb-6">{status?.module2Unlocked ? "🎉" : "💪"}</div>
             <h2 className="text-2xl font-heading font-bold text-white mb-3">Natapos mo na ang Module 1!</h2>
-            <p className="text-green-300 mb-6">Napakahusay! Na-unlock na ang susunod na aralin.</p>
-            <button
-              onClick={() => navigate('/trail')}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:opacity-90 transition-opacity"
-            >
-              Bumalik sa Pamana Trail
-            </button>
+            <p className="text-green-300 mb-6">
+              {status?.module2Unlocked 
+                ? "Napakahusay! Na-unlock na ang susunod na aralin." 
+                : "Ang iyong score ay hindi umabot sa 75%. Kailangan mong ulitin ang module upang ma-unlock ang susunod na aralin."}
+            </p>
+            {status?.module2Unlocked ? (
+              <button
+                onClick={() => navigate('/trail')}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:opacity-90 transition-opacity"
+              >
+                Bumalik sa Pamana Trail
+              </button>
+            ) : (
+              <button
+                onClick={async () => {
+                  try {
+                    await api.delete(`/modules/reset/${user?.id}/1`)
+                    window.location.reload()
+                  } catch (e) {
+                    alert("Nagkaroon ng error. Subukan muli.")
+                  }
+                }}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:opacity-90 transition-opacity"
+              >
+                Ulitin ang Module 1
+              </button>
+            )}
           </div>
         </div>
       </AppShell>
@@ -328,7 +372,6 @@ export const SyllableModulePage: React.FC = () => {
                 <div className="flex flex-col items-center gap-3">
                   <AudioPlayer
                     audioUrl={currentSet.audioUrl}
-                    autoPlay
                     size="lg"
                     label="Pakinggan ang tunog"
                   />

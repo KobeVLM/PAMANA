@@ -38,7 +38,7 @@ export const TeacherKlasePage: React.FC = () => {
     try {
       const res = await api.post('/klase', { name: klaseName })
       setKlase(res.data)
-      navigate('/dashboard')
+      // Removed navigate('/dashboard') so the teacher can see the join code!
     } catch (err: any) {
       setError(err.response?.data?.message || 'May error sa paggawa ng klase.')
     } finally {

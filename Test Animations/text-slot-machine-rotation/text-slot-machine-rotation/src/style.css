@@ -1,0 +1,81 @@
+body {
+  font-family: 'Lucida Grande', Verdana, Arial;
+  font-size: 12px;
+  background: turquoise;
+}
+#stage {
+  margin: 150px auto;
+  width: 300px;
+  height: 200px;
+  position: relative;
+  /* Setting the perspective of the contents of the stage
+        but not the stage itself */
+  -webkit-perspective: 800;
+}
+#rotate {
+  margin: 0 auto;
+  width: 300px;
+  height: 200px;
+  /* Ensure that we're in 3D space */
+  -webkit-transform-style: preserve-3d;
+}
+.ring {
+  margin: 0 auto;
+  height: 55px;
+  width: 400px;
+  -webkit-transform-style: preserve-3d;
+  -webkit-animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
+}
+#stage:after { 
+  display: block; 
+  content: ''; 
+  position: absolute; 
+  left: 0; 
+  right: 0; 
+  top: -80px; 
+  bottom: 70px; 
+  /* Permalink - use to edit and share this gradient: https://colorzilla.com/gradient-editor/#40e0d0+0,40e0d0+100&1+0,0+25,0+75,1+100 */
+background: -moz-linear-gradient(top,  rgba(64,224,208,1) 0%, rgba(64,224,208,0) 25%, rgba(64,224,208,0) 75%, rgba(64,224,208,1) 100%); /* FF3.6-15 */
+background: -webkit-linear-gradient(top,  rgba(64,224,208,1) 0%,rgba(64,224,208,0) 25%,rgba(64,224,208,0) 75%,rgba(64,224,208,1) 100%); /* Chrome10-25,Safari5.1-6 */
+background: linear-gradient(to bottom,  rgba(64,224,208,1) 0%,rgba(64,224,208,0) 25%,rgba(64,224,208,0) 75%,rgba(64,224,208,1) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#40e0d0', endColorstr='#40e0d0',GradientType=0 ); /* IE6-9 */
+}
+.poster {
+  background-color: turquoise;
+  position: absolute;
+  left: 100px;
+  width: 200px;
+  height: 54px;
+  color: #FFF;
+  font-size: 16px;
+  font-weight: bold;
+}
+/*
+      Set up each row to have a different animation duration
+      and alternating y-axis rotation directions.
+      */
+
+#ring-1 {
+  animation-name: x-spin;
+  animation-duration: 2s;
+}
+
+/*
+
+      Here we define the individual animation that we will be using to have our 3D rotation effect. It will perform a full rotation on the x-axis, we'll use that on the whole set of objects.     
+      Note that you currently have to specify an intermediate step for rotations even when you are using individual transformation constructs.
+
+      */
+
+@-webkit-keyframes x-spin {
+  0% {
+    -webkit-transform: rotateX(360deg);
+  }
+  50% {
+    -webkit-transform: rotateX(180deg);
+  }
+  100% {
+    -webkit-transform: rotateX(0deg);
+  }
+}

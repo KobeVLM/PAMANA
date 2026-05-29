@@ -22,6 +22,15 @@ import {
   Cell,
 } from 'recharts'
 
+interface ModuleAttemptHistory {
+  id: string
+  userId: string
+  moduleNumber: number
+  attemptNumber: number
+  accuracy: number
+  completedAt: string
+}
+
 const STATUS_COLORS = {
   green: { bg: 'bg-green-500/20', border: 'border-green-500/40', text: 'text-green-300', dot: 'bg-green-400' },
   yellow: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/40', text: 'text-yellow-300', dot: 'bg-yellow-400' },
@@ -104,6 +113,21 @@ export const ParentDashboardPage: React.FC = () => {
   const [learnerEmail, setLearnerEmail] = useState('')
   const [isLinking, setIsLinking] = useState(false)
   const [linkError, setLinkError] = useState('')
+  const [moduleHistory, setModuleHistory] = useState<ModuleAttemptHistory[]>([])
+
+  const formatHistoryData = (history: ModuleAttemptHistory[]) => {
+    if (!history.length) return [];
+    const maxAttempt = Math.max(...history.map(h => h.attemptNumber));
+    const data = [];
+    for (let i = 1; i <= maxAttempt; i++) {
+      const row: any = { attempt: `Attempt ${i}` };
+      history.filter(h => h.attemptNumber === i).forEach(h => {
+        row[`module${h.moduleNumber}`] = h.accuracy;
+      });
+      data.push(row);
+    }
+    return data;
+  }
 
   const loadDashboard = async () => {
     try {
@@ -113,11 +137,13 @@ export const ParentDashboardPage: React.FC = () => {
         setTargetUserId(uid)
         setLinkedLearnerName(linkedRes.data.learnerName)
 
-        const [metricsRes, progressRes] = await Promise.all([
+        const [metricsRes, progressRes, historyRes] = await Promise.all([
           api.get(`/progress/${uid}/dashboard`),
           api.get(`/modules/progress/${uid}`),
+          api.get(`/modules/history/${uid}`)
         ])
         setMetrics(metricsRes.data)
+        setModuleHistory(historyRes.data)
         const completions = [false, false, false, false]
         ;(progressRes.data as { moduleNumber: number; isComplete: boolean }[]).forEach((p) => {
           if (p.moduleNumber >= 1 && p.moduleNumber <= 4) {
@@ -315,6 +341,42 @@ export const ParentDashboardPage: React.FC = () => {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </div>
+
+        {/* Learning Curve Line Chart */}
+        <div className="bg-white/10 border border-white/20 rounded-2xl p-6 mb-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">Learning Curve</h3>
+              <p className="text-green-300 text-sm">Pag-unlad ng accuracy sa bawat attempt</p>
+            </div>
+          </div>
+          
+          {moduleHistory.length > 0 ? (
+            <div className="h-64 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={formatHistoryData(moduleHistory)} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="attempt" axisLine={false} tick={{fill: '#86efac', fontSize: 12}} />
+                  <YAxis domain={[0, 100]} axisLine={false} tick={{fill: '#86efac', fontSize: 12}} />
+                  <Tooltip 
+                    contentStyle={{background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px'}}
+                  />
+                  <Line type="monotone" connectNulls dataKey="module1" name="Module 1" stroke="#3B82F6" strokeWidth={2} dot={{r: 4}} />
+                  <Line type="monotone" connectNulls dataKey="module2" name="Module 2" stroke="#EF4444" strokeWidth={2} dot={{r: 4}} />
+                  <Line type="monotone" connectNulls dataKey="module3" name="Module 3" stroke="#F59E0B" strokeWidth={2} dot={{r: 4}} />
+                  <Line type="monotone" connectNulls dataKey="module4" name="Module 4" stroke="#10B981" strokeWidth={2} dot={{r: 4}} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-40 flex items-center justify-center text-green-300/50">
+              Wala pang history ng retake.
+            </div>
+          )}
         </div>
 
         {/* Mastered vs Needs-Review Pie + Word Mastery List */}

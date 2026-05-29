@@ -23,63 +23,32 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   label = 'Pakinggan',
   size = 'md',
 }) => {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioRef = useRef<HTMLAudioElement>(null)
   const [hasError, setHasError] = React.useState(false)
   const [isPlaying, setIsPlaying] = React.useState(false)
 
-  useEffect(() => {
-    const resolveMediaUrl = (url: string) => {
-      if (url.startsWith('/')) {
-        return (import.meta.env.VITE_API_URL || '') + url
-      }
-      return url
-    }
-    
-    audioRef.current = new Audio(resolveMediaUrl(audioUrl))
-    audioRef.current.onplay = () => setIsPlaying(true)
-    audioRef.current.onended = () => setIsPlaying(false)
-    audioRef.current.onerror = () => {
-      // For demo purposes, we ignore the error and use fallback beep
-      setIsPlaying(false)
-    }
-
-    if (autoPlay) {
-      audioRef.current.play().catch(() => {
-        playFallbackBeep()
-      })
-    }
-
-    return () => {
-      audioRef.current?.pause()
-      audioRef.current = null
-    }
-  }, [audioUrl, autoPlay])
-
-  const playFallbackBeep = () => {
-    try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const osc = ctx.createOscillator()
-      osc.type = 'sine'
-      osc.frequency.setValueAtTime(440, ctx.currentTime)
-      osc.connect(ctx.destination)
-      osc.start()
-      osc.stop(ctx.currentTime + 0.15)
-      setIsPlaying(true)
-      setTimeout(() => setIsPlaying(false), 150)
-    } catch (e) {
-      console.error('Fallback audio failed', e)
-    }
+  const playFallbackBeep = (err: any) => {
+    console.error('Audio playback failed!', err);
   }
 
   const play = useCallback(() => {
     if (!audioRef.current) return
     setHasError(false)
     audioRef.current.currentTime = 0
-    audioRef.current.play().catch(() => {
-      playFallbackBeep()
+    audioRef.current.play().catch((err) => {
+      playFallbackBeep(err)
+      setHasError(true)
     })
   }, [])
 
+  useEffect(() => {
+    if (autoPlay && audioRef.current) {
+      audioRef.current.play().catch((err) => {
+        playFallbackBeep(err)
+        setHasError(true)
+      })
+    }
+  }, [audioUrl, autoPlay])
   const sizeClasses = {
     sm: 'w-10 h-10 text-sm',
     md: 'w-14 h-14 text-base',
@@ -93,24 +62,35 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   }
 
   return (
-    <button
-      onClick={play}
-      aria-label={label}
-      className={cn(
-        'rounded-full flex flex-col items-center justify-center gap-1',
-        'bg-gradient-to-br from-pamana-gold to-pamana-amber',
-        'text-white shadow-lg transition-all duration-200',
-        'hover:scale-105 active:scale-95',
-        isPlaying && 'animate-pulse-glow',
-        sizeClasses[size],
-        className
-      )}
-    >
-      {hasError ? (
-        <RefreshCw className={iconSizes[size]} />
-      ) : (
-        <Volume2 className={iconSizes[size]} />
-      )}
-    </button>
+    <>
+      <audio 
+        ref={audioRef} 
+        src={audioUrl} 
+        autoPlay={autoPlay}
+        onPlay={() => setIsPlaying(true)} 
+        onEnded={() => setIsPlaying(false)}
+        onError={() => { setIsPlaying(false); setHasError(true); }} 
+      />
+      <button
+        onClick={play}
+        aria-label={label}
+        className={cn(
+          'rounded-full flex flex-col items-center justify-center gap-1',
+          'bg-gradient-to-br from-pamana-gold to-pamana-amber',
+          'text-white shadow-lg transition-all duration-200',
+          'hover:scale-105 active:scale-95',
+          isPlaying && 'animate-pulse-glow',
+          sizeClasses[size],
+          className
+        )}
+      >
+        {hasError ? (
+          <RefreshCw className={iconSizes[size]} />
+        ) : (
+          <Volume2 className={iconSizes[size]} />
+        )}
+      </button>
+    </>
   )
 }
+

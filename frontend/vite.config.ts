@@ -18,7 +18,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/ws-leaderboard': {
-        target: 'ws://localhost:8080',
+        target: 'http://localhost:8080',
         ws: true,
         changeOrigin: true,
       },

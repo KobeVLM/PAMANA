@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
@@ -47,6 +47,8 @@ const NPC_LINES: Record<SpiralStep, string> = {
 
 const SPIRAL_STEPS: SpiralStep[] = ['pakinggan', 'kilalanin', 'basahin', 'gamitin']
 
+import { WordSlotMachine } from '@/components/game/WordSlotMachine'
+
 export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _domain }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -63,11 +65,22 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [moduleComplete, setModuleComplete] = useState(false)
   const [hamonTriggered, setHamonTriggered] = useState(false)
   const [gamitinSentence, setGamitinSentence] = useState<string>("Ang aking _____ ay malaki at maliwanag.")
+  const [upcomingWords, setUpcomingWords] = useState<string[]>([
+    'Mata', 'Ilong', 'Bibig', 'Kamay', 
+    'Paa', 'Tenga', 'Ulo', 'Tiyan', 
+    'Likod', 'Buhok', 'Balikat', 'Tuhod'
+  ])
 
   const fetchNextWord = useCallback(async () => {
     setIsLoading(true)
     try {
       const res = await api.get(`/vocabulary/next?userId=${user?.id}&moduleNumber=${moduleNumber}`)
+      
+      if (res.status === 204 || !res.data) {
+        setModuleComplete(true)
+        return
+      }
+
       setCurrentWord(res.data)
       setCurrentStep('pakinggan')
       setPakingganDone(false)
@@ -129,11 +142,33 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     }
   }, [currentWord, currentStep, fetchMatchOptions])
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    if (!wrongAudioRef.current) {
+      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
+      wrongAudioRef.current.preload = 'auto'
+    }
+    if (currentWord?.audioUrl) {
+      voiceAudioRef.current = new Audio(currentWord.audioUrl)
+      voiceAudioRef.current.preload = 'auto'
+    }
+  }, [currentWord])
+
   const handleStepSelect = useCallback(async (optionId: string) => {
     if (!currentWord || selectedId || isSubmitting) return
     const isCorrect = optionId === currentWord.wordId
     setSelectedId(optionId)
     setCorrectId(currentWord.wordId)
+
+    if (isCorrect && voiceAudioRef.current) {
+      voiceAudioRef.current.currentTime = 0
+      voiceAudioRef.current.play().catch(console.warn)
+    } else if (!isCorrect && wrongAudioRef.current) {
+      wrongAudioRef.current.currentTime = 0
+      wrongAudioRef.current.play().catch(console.warn)
+    }
 
     const newAttempts = attempts + 1
     setAttempts(newAttempts)
@@ -161,6 +196,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             setAttempts(0)
           } else {
             setWordComplete(true)
+            setUpcomingWords(prev => prev.filter(w => w.toLowerCase() !== currentWord?.word.toLowerCase()))
           }
         } else {
           // If incorrect, just clear the selection so they can try again
@@ -241,7 +277,15 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
 
   return (
     <AppShell>
-      <div className="p-6 lg:p-8 max-w-2xl mx-auto">
+      <div className="flex justify-center items-start gap-8 xl:gap-16 max-w-[1200px] mx-auto w-full p-6 lg:p-8">
+        
+        {/* Left Side Slot Machine (Hidden on small screens) */}
+        <div className="hidden lg:block w-56 mt-24">
+          <WordSlotMachine words={upcomingWords} />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 max-w-2xl w-full">
         <button onClick={() => navigate('/trail')} className="flex items-center gap-2 text-green-300 hover:text-white transition-colors mb-6 group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span className="text-sm font-medium">Pamana Trail</span>
@@ -288,7 +332,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
                   className="w-40 h-40 object-contain rounded-2xl border-2 border-white/20"
                 />
                 <p className="text-white font-heading font-bold text-3xl">{currentWord.word}</p>
-                <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 <p className="text-green-300 text-sm">Pindutin para marinig ulit</p>
                 {!pakingganDone && (
                   <button
@@ -305,7 +349,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             {currentStep === 'kilalanin' && (
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                  <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 </div>
                 <OptionGrid
                   options={matchOptions}
@@ -323,7 +367,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             {currentStep === 'basahin' && (
               <div className="space-y-4">
                 <div className="flex justify-center">
-                  <AudioPlayer audioUrl={currentWord.audioUrl} autoPlay size="lg" label="Pakinggan ang salita" />
+                  <AudioPlayer audioUrl={currentWord.audioUrl} size="lg" label="Pakinggan ang salita" />
                 </div>
                 <OptionGrid
                   options={matchOptions}
@@ -370,6 +414,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
           </div>
         )}
       </div>
+      </div>
     </AppShell>
   )
 }
+

@@ -56,8 +56,8 @@ export const LoginPage: React.FC = () => {
         <div className="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pamana-gold to-pamana-amber flex items-center justify-center shadow-lg mb-4 animate-float">
-              <Sparkles className="w-8 h-8 text-white" />
+            <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float">
+              <img src="/images/PAMANA_logo.png" alt="PAMANA Logo" className="w-full h-full object-contain drop-shadow-2xl" />
             </div>
             <h1 className="text-3xl font-heading font-bold text-white">PAMANA</h1>
             <p className="text-green-300 text-sm mt-1">Pamanang Heritage Quest</p>
