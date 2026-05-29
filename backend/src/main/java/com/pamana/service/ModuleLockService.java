@@ -1,6 +1,8 @@
 package com.pamana.service;
 
+import com.pamana.model.ModuleAttemptHistory;
 import com.pamana.model.ModuleProgress;
+import com.pamana.repository.ModuleAttemptHistoryRepository;
 import com.pamana.repository.ModuleProgressRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +18,30 @@ public class ModuleLockService {
 
     private static final Logger log = LoggerFactory.getLogger(ModuleLockService.class);
     private final ModuleProgressRepository moduleProgressRepository;
+    private final ModuleAttemptHistoryRepository moduleAttemptHistoryRepository;
 
-    public ModuleLockService(ModuleProgressRepository moduleProgressRepository) {
+    public ModuleLockService(ModuleProgressRepository moduleProgressRepository,
+                             ModuleAttemptHistoryRepository moduleAttemptHistoryRepository) {
         this.moduleProgressRepository = moduleProgressRepository;
+        this.moduleAttemptHistoryRepository = moduleAttemptHistoryRepository;
     }
 
     @Transactional
     public void evaluateAndUnlock(UUID userId, int completedModule, double finalAccuracy) {
         log.info("Evaluating module lock status for user: {}, completedModule: {}, accuracy: {}%", 
                 userId, completedModule, finalAccuracy);
+
+        // Record Attempt History
+        Integer currentMaxAttempt = moduleAttemptHistoryRepository.findMaxAttemptNumberByUserIdAndModuleNumber(userId, completedModule);
+        ModuleAttemptHistory history = new ModuleAttemptHistory(
+                userId, 
+                completedModule, 
+                currentMaxAttempt + 1, 
+                BigDecimal.valueOf(finalAccuracy)
+        );
+        moduleAttemptHistoryRepository.save(history);
+        log.info("Recorded ModuleAttemptHistory for user: {}, module: {}, attempt: {}, accuracy: {}", 
+                userId, completedModule, currentMaxAttempt + 1, finalAccuracy);
 
         // 1. Mark completed module complete
         Optional<ModuleProgress> currentModuleOpt = moduleProgressRepository.findByUserIdAndModuleNumber(userId, completedModule);
