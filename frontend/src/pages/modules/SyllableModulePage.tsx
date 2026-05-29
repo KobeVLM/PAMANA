@@ -112,11 +112,11 @@ export const SyllableModulePage: React.FC = () => {
           { id: c.toLowerCase() + 'i', label: c + 'I' },
           { id: c.toLowerCase() + 'o', label: c + 'O' },
         ].sort(() => Math.random() - 0.5),
-        audioUrl: `/static/assets/audio/syllables/${subLevel}_${setId}.wav`,
+        audioUrl: `/assets/audio/syllables/${subLevel}_${setId}.mp3`,
         consonant: c,
         vowel: 'A',
-        consonantAudioUrl: `/static/assets/audio/consonants/${c.toLowerCase()}.wav`,
-        vowelAudioUrl: '/static/assets/audio/vowels/a.wav',
+        consonantAudioUrl: `/assets/audio/consonants/${c.toLowerCase()}.mp3`,
+        vowelAudioUrl: '/assets/audio/vowels/a.mp3',
       })
     }
   }, [user?.id])
