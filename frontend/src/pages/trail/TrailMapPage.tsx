@@ -2,70 +2,34 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
-import { Lock, CheckCircle2, PlayCircle, Star, Sparkles, Volume2 } from 'lucide-react'
+import { Lock, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TrailNode {
   moduleNumber: number
   title: string
   titleFil: string
-  location: string
-  description: string
-  icon: string
-  route: string
-  color: string
-  bgColor: string
+  x: number // left %
+  y: number // top %
 }
 
 const TRAIL_NODES: TrailNode[] = [
-  {
-    moduleNumber: 1,
-    title: 'Pakinggan at Kilalanin',
-    titleFil: 'Pinto ng Probinsya',
-    location: 'Entrance Gate',
-    description: 'Matuto ng mga tunog at pantig ng Filipino',
-    icon: '🎵',
-    route: '/modules/1',
-    color: 'from-blue-500 to-indigo-600',
-    bgColor: 'bg-blue-500/20',
-  },
-  {
-    moduleNumber: 2,
-    title: 'Basahin at Unawain',
-    titleFil: 'Hardin ni Lola',
-    location: "Lola's Garden",
-    description: 'Kilalanin ang mga salita tungkol sa katawan',
-    icon: '🌸',
-    route: '/modules/2',
-    color: 'from-pink-500 to-rose-600',
-    bgColor: 'bg-pink-500/20',
-  },
-  {
-    moduleNumber: 3,
-    title: 'Salitang Pamilya',
-    titleFil: 'Kusina ni Lolo',
-    location: "Lolo's Kitchen",
-    description: 'Alamin ang mga salita tungkol sa pamilya',
-    icon: '🍚',
-    route: '/modules/3',
-    color: 'from-orange-500 to-amber-600',
-    bgColor: 'bg-orange-500/20',
-  },
-  {
-    moduleNumber: 4,
-    title: 'Bumuo ng Pangungusap',
-    titleFil: 'Sala ng Tagpuan',
-    location: 'Living Room',
-    description: 'Buuin ang mga pangungusap para makausap ang mga magulang',
-    icon: '🗣️',
-    route: '/modules/4',
-    color: 'from-purple-500 to-violet-600',
-    bgColor: 'bg-purple-500/20',
-  },
+  { moduleNumber: 1, titleFil: 'Pantig', title: 'Pakinggan at Kilalanin', x: 20, y: 75 },
+  { moduleNumber: 2, titleFil: 'Salita', title: 'Basahin at Unawain', x: 38, y: 45 },
+  { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 65 },
+  { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 80, y: 35 },
+]
+
+const DECORATIONS = [
+  { top: '20%', left: '15%', size: 'text-4xl' },
+  { top: '65%', left: '10%', size: 'text-3xl' },
+  { top: '80%', left: '45%', size: 'text-4xl' },
+  { top: '25%', left: '55%', size: 'text-5xl' },
+  { top: '75%', left: '85%', size: 'text-3xl' },
+  { top: '45%', left: '92%', size: 'text-4xl' },
 ]
 
 export const TrailMapPage: React.FC = () => {
@@ -73,7 +37,6 @@ export const TrailMapPage: React.FC = () => {
   const navigate = useNavigate()
   const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedNode, setSelectedNode] = useState<number | null>(null)
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -102,204 +65,155 @@ export const TrailMapPage: React.FC = () => {
   const totalModules = 4
   const overallPercent = Math.round((completedCount / totalModules) * 100)
 
+  // Find the highest unlocked module that is not complete, or fallback to the max unlocked
+  const activeModule = moduleProgress.filter(p => p.isUnlocked && !p.isComplete).pop()?.moduleNumber 
+    || moduleProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
+    || 1;
+
+  const activeNode = TRAIL_NODES.find(n => n.moduleNumber === activeModule) || TRAIL_NODES[0];
+
+  const renderNodeButton = (node: TrailNode) => {
+    const progress = getProgress(node.moduleNumber)
+    const isUnlocked = progress?.isUnlocked ?? false
+    const isComplete = progress?.isComplete ?? false
+    const isActive = activeModule === node.moduleNumber
+
+    // Styles based on status matching the provided image
+    let bgColor = 'bg-[#E3D5C1]' // Locked beige
+    let icon = <Lock className="w-8 h-8 text-[#A89A86]" />
+    let ringColor = 'ring-[#D0C2AE]'
+
+    if (isComplete) {
+      bgColor = 'bg-[#2B6D4F]' // Dark green
+      icon = <Star className="w-10 h-10 text-[#FDD835] fill-[#FDD835]" />
+      ringColor = 'ring-[#1F543C]'
+    } else if (isActive && isUnlocked) {
+      bgColor = 'bg-[#E88C30]' // Orange
+      icon = <div className="text-4xl leading-none pt-1">👦🏼</div> // Boy avatar
+      ringColor = 'ring-[#D17621]'
+    }
+
+    return (
+      <div 
+        key={node.moduleNumber} 
+        className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+        style={{ left: `${node.x}%`, top: `${node.y}%`, zIndex: 10 }}
+      >
+        <button
+          onClick={() => isUnlocked && navigate(`/modules/${node.moduleNumber}`)}
+          disabled={!isUnlocked}
+          title={node.title}
+          className={cn(
+            "w-20 h-20 rounded-full flex items-center justify-center shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-300 ring-4",
+            bgColor, ringColor,
+            isUnlocked ? 'cursor-pointer hover:scale-105 active:translate-y-1 active:shadow-[0_2px_0_rgba(0,0,0,0.15)]' : 'cursor-not-allowed opacity-90'
+          )}
+        >
+          {icon}
+        </button>
+
+        <div className="bg-white px-3 py-1.5 rounded-2xl shadow-md text-center border-2 border-gray-100 min-w-[110px]">
+          <div className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Module {node.moduleNumber}</div>
+          <div className="text-sm font-extrabold text-gray-700 leading-none">{node.titleFil}</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <AppShell>
-      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-3xl font-heading font-bold text-white mb-1">
-                Pamana Trail 🗺️
-              </h1>
-              <p className="text-green-300 text-base">
-                Kamusta, <span className="text-pamana-gold font-semibold">{user?.name}</span>!
-                Ipagpatuloy ang iyong paglalakbay.
-              </p>
-            </div>
-            <Badge className="bg-pamana-gold/20 text-pamana-gold border border-pamana-gold/40 px-4 py-2 text-sm font-bold">
-              <Star className="w-4 h-4 mr-1.5" />
-              {completedCount}/{totalModules} Natapos
-            </Badge>
+      <div className="p-4 lg:p-6 max-w-5xl mx-auto flex flex-col h-full min-h-[calc(100vh-80px)]">
+        
+        {/* Top Progress Bar matching the image */}
+        <div className="bg-[#FFF8E7] rounded-3xl p-4 flex items-center gap-4 mb-6 shadow-sm border-2 border-[#EEDFB6]">
+          <div className="text-3xl drop-shadow-sm">🏡</div>
+          <div className="font-bold text-gray-800 text-lg w-16">Sala</div>
+          <div className="flex-1 px-2">
+            <Progress 
+              value={overallPercent} 
+              className="h-5 bg-[#E6D6B3] [&>div]:bg-[#F28C28] rounded-full" 
+            />
           </div>
-
-          {/* Overall progress bar */}
-          <div className="mt-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-green-300 text-sm font-medium">Kabuuang Pag-unlad</span>
-              <span className="text-white font-bold text-sm">{overallPercent}%</span>
-            </div>
-            <Progress value={overallPercent} className="h-3 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400" />
-          </div>
+          <div className="font-extrabold text-gray-800 text-lg">{overallPercent}%</div>
+          <div className="text-3xl drop-shadow-sm">🚪</div>
         </div>
 
-        {/* NPC Welcome */}
-        <div className="mb-8 p-5 bg-white/5 border border-white/10 rounded-2xl flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-2xl flex-shrink-0 animate-float">
-            👴
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-pamana-gold font-bold text-sm">Lolo</span>
-              <button className="text-green-400 hover:text-green-300 transition-colors" aria-label="Pakinggan si Lolo">
-                <Volume2 className="w-4 h-4" />
-              </button>
+        {/* The Map Container */}
+        <div className="flex-1 w-full bg-[#EAF0D8] rounded-3xl border-4 border-white/40 shadow-xl overflow-x-auto overflow-y-hidden relative">
+          {isLoading ? (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-pamana-green border-t-transparent rounded-full animate-spin"></div>
             </div>
-            <p className="text-green-100 text-sm leading-relaxed">
-              "Maligayang pagdating sa aming probinsya! Piliin ang lugar na gusto mong puntahan at matuto ng wikang Filipino. Kaya mo yan!"
-            </p>
-          </div>
-        </div>
+          ) : (
+            <div className="min-w-[800px] h-[500px] sm:h-full sm:min-h-[500px] relative w-full">
+              
+              {/* Winding Dirt Path SVG */}
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
+                {/* Thick base road */}
+                <path 
+                  d="M 15 100 
+                     Q 20 85, 20 75 
+                     Q 20 45, 38 45 
+                     Q 62 45, 62 65 
+                     Q 62 35, 80 35 
+                     Q 90 35, 90 15" 
+                  fill="none" 
+                  stroke="#E3D5C1" 
+                  strokeWidth="14" 
+                  strokeLinecap="round" 
+                />
+                {/* Inner road color */}
+                <path 
+                  d="M 15 100 
+                     Q 20 85, 20 75 
+                     Q 20 45, 38 45 
+                     Q 62 45, 62 65 
+                     Q 62 35, 80 35 
+                     Q 90 35, 90 15" 
+                  fill="none" 
+                  stroke="#D8C8B0" 
+                  strokeWidth="10" 
+                  strokeLinecap="round" 
+                />
+              </svg>
 
-        {/* Trail Nodes */}
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-white/5 rounded-2xl animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {TRAIL_NODES.map((node, idx) => {
-              const progress = getProgress(node.moduleNumber)
-              const isUnlocked = progress?.isUnlocked ?? false
-              const isComplete = progress?.isComplete ?? false
-              const accuracy = progress?.accuracy
-
-              return (
-                <div key={node.moduleNumber}>
-                  {/* Trail connector */}
-                  {idx > 0 && (
-                    <div className="flex justify-center my-1">
-                      <div
-                        className={cn(
-                          'w-0.5 h-8 rounded-full transition-colors',
-                          getProgress(idx)?.isComplete ? 'bg-pamana-green' : 'bg-white/20'
-                        )}
-                      />
-                    </div>
-                  )}
-
-                  {/* Module Card */}
-                  <button
-                    onClick={() => {
-                      if (isUnlocked) {
-                        if (selectedNode === node.moduleNumber) {
-                          navigate(node.route)
-                        } else {
-                          setSelectedNode(node.moduleNumber)
-                        }
-                      }
-                    }}
-                    disabled={!isUnlocked}
-                    className={cn(
-                      'w-full text-left p-5 rounded-2xl border transition-all duration-300',
-                      'flex items-center gap-4 group',
-                      isUnlocked
-                        ? 'bg-white/10 border-white/20 hover:bg-white/15 hover:border-white/30 hover:scale-[1.01] cursor-pointer'
-                        : 'bg-white/5 border-white/10 opacity-60 cursor-not-allowed',
-                      selectedNode === node.moduleNumber && isUnlocked && 'ring-2 ring-pamana-gold bg-white/15 scale-[1.01]'
-                    )}
-                    aria-label={isUnlocked ? `Pumunta sa ${node.titleFil}` : `Naka-lock ang ${node.titleFil}`}
-                  >
-                    {/* Module icon / status */}
-                    <div
-                      className={cn(
-                        'w-16 h-16 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0 transition-transform',
-                        `bg-gradient-to-br ${node.color}`,
-                        isUnlocked && 'group-hover:scale-110',
-                        !isUnlocked && 'grayscale'
-                      )}
-                    >
-                      {isComplete ? '✅' : node.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                        <h3 className={cn(
-                          'font-heading font-bold text-base',
-                          isUnlocked ? 'text-white' : 'text-white/50'
-                        )}>
-                          {node.titleFil}
-                        </h3>
-                        <Badge variant="outline" className={cn(
-                          'text-xs border',
-                          isComplete
-                            ? 'bg-pamana-green/20 text-green-300 border-green-500/40'
-                            : isUnlocked
-                            ? 'bg-white/10 text-green-300 border-white/20'
-                            : 'bg-white/5 text-white/30 border-white/10'
-                        )}>
-                          Module {node.moduleNumber}
-                        </Badge>
-                      </div>
-                      <p className={cn('text-xs mb-1', isUnlocked ? 'text-green-300' : 'text-white/30')}>
-                        {node.location} · {node.title}
-                      </p>
-                      <p className={cn('text-xs leading-snug', isUnlocked ? 'text-white/60' : 'text-white/20')}>
-                        {node.description}
-                      </p>
-                      {accuracy !== null && accuracy !== undefined && (
-                        <div className="mt-2 flex items-center gap-2">
-                          <Progress
-                            value={accuracy}
-                            className="h-1.5 flex-1 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400"
-                          />
-                          <span className="text-xs text-green-400 font-medium whitespace-nowrap">
-                            {accuracy}% tama
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Status icon */}
-                    <div className="flex-shrink-0">
-                      {isComplete ? (
-                        <CheckCircle2 className="w-7 h-7 text-pamana-green" />
-                      ) : isUnlocked ? (
-                        <PlayCircle className={cn(
-                          'w-7 h-7 text-pamana-gold transition-transform',
-                          'group-hover:scale-110'
-                        )} />
-                      ) : (
-                        <Lock className="w-7 h-7 text-white/30" />
-                      )}
-                    </div>
-                  </button>
-
-                  {/* Expanded start button */}
-                  {selectedNode === node.moduleNumber && isUnlocked && !isComplete && (
-                    <div className="mt-2 px-2 animate-bounce-in">
-                      <button
-                        onClick={() => navigate(node.route)}
-                        className={cn(
-                          'w-full py-3 rounded-xl font-bold text-white text-sm',
-                          `bg-gradient-to-r ${node.color}`,
-                          'shadow-lg transition-all duration-200 hover:opacity-90 active:scale-95'
-                        )}
-                      >
-                        <Sparkles className="inline w-4 h-4 mr-1.5" />
-                        Simulan ang {node.titleFil}!
-                      </button>
-                    </div>
-                  )}
+              {/* Palm Tree Decorations */}
+              {DECORATIONS.map((d, i) => (
+                <div key={i} className={`absolute drop-shadow-md ${d.size} pointer-events-none select-none`} style={{ top: d.top, left: d.left, zIndex: 5 }}>
+                  🌴
                 </div>
-              )
-            })}
-          </div>
-        )}
+              ))}
 
-        {/* Reunion ending teaser (all modules complete) */}
-        {completedCount === totalModules && (
-          <div className="mt-8 p-6 bg-gradient-to-r from-pamana-gold/20 to-amber-500/20 border border-pamana-gold/30 rounded-2xl text-center animate-bounce-in">
-            <div className="text-4xl mb-3">🎉</div>
-            <h3 className="text-white font-heading font-bold text-xl mb-2">Tagumpay! Natapos mo na!</h3>
-            <p className="text-green-200 text-sm">
-              Nakapag-usap ka na sa iyong mga magulang sa Filipino. Salamat sa pagbabahagi ng pamana!
-            </p>
-          </div>
-        )}
+              {/* Start (Pasukan) Marker */}
+              <div className="absolute transform -translate-x-1/2 flex flex-col items-center" style={{ left: '15%', top: '88%', zIndex: 10 }}>
+                <div className="bg-white px-3 py-1 rounded-full shadow-md font-bold text-gray-500 text-xs border-2 border-gray-100">
+                  Pasukan
+                </div>
+              </div>
+
+              {/* End (Sala) Marker */}
+              <div className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: '90%', top: '15%', zIndex: 10 }}>
+                <div className="text-5xl drop-shadow-lg mb-1">🏡</div>
+                <div className="bg-white px-3 py-1.5 rounded-2xl shadow-md font-extrabold text-gray-700 text-sm border-2 border-gray-100 min-w-[80px] text-center">
+                  Sala
+                </div>
+              </div>
+
+              {/* Render Modules along the path */}
+              {TRAIL_NODES.map(renderNodeButton)}
+
+              {/* Walking Character - appears next to active module */}
+              <div 
+                className="absolute text-5xl transition-all duration-1000 ease-in-out drop-shadow-xl animate-bounce pointer-events-none"
+                style={{ left: `${activeNode.x - 7}%`, top: `${activeNode.y + 4}%`, zIndex: 20 }}
+              >
+                🚶🏽
+              </div>
+
+            </div>
+          )}
+        </div>
+
       </div>
     </AppShell>
   )
