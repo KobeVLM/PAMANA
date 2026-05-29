@@ -6,6 +6,7 @@ import java.util.UUID;
 public class SentenceTaskResponse {
     private UUID taskId;
     private List<String> scrambledWords;
+    private List<String> correctOrder;
     private String audioUrl;
     private int tier;
     private boolean completed;
@@ -13,9 +14,10 @@ public class SentenceTaskResponse {
     public SentenceTaskResponse() {
     }
 
-    public SentenceTaskResponse(UUID taskId, List<String> scrambledWords, String audioUrl, int tier, boolean completed) {
+    public SentenceTaskResponse(UUID taskId, List<String> scrambledWords, List<String> correctOrder, String audioUrl, int tier, boolean completed) {
         this.taskId = taskId;
         this.scrambledWords = scrambledWords;
+        this.correctOrder = correctOrder;
         this.audioUrl = audioUrl;
         this.tier = tier;
         this.completed = completed;
@@ -36,6 +38,14 @@ public class SentenceTaskResponse {
 
     public void setScrambledWords(List<String> scrambledWords) {
         this.scrambledWords = scrambledWords;
+    }
+
+    public List<String> getCorrectOrder() {
+        return correctOrder;
+    }
+
+    public void setCorrectOrder(List<String> correctOrder) {
+        this.correctOrder = correctOrder;
     }
 
     public String getAudioUrl() {

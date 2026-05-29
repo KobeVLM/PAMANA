@@ -72,18 +72,22 @@ export const SentenceModulePage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
   const [attempts, setAttempts] = useState(0)
-  const [moduleComplete, setModuleComplete] = useState(false)
   const [showReunionEnding, setShowReunionEnding] = useState(false)
-  void moduleComplete // suppress unused warning - used via setModuleComplete
+  const [showTierAnnouncement, setShowTierAnnouncement] = useState(false)
+  const [taskIndex, setTaskIndex] = useState(0) // 0-based index within current tier
+  const TOTAL_TASKS_PER_TIER = 5
 
-  const fetchTask = useCallback(async (tierNum: 1 | 2) => {
+  const fetchTask = useCallback(async (tierNum: 1 | 2, currentIndex?: number) => {
     setIsLoading(true)
     setFeedback(null)
     setAttempts(0)
     try {
       const res = await api.get(`/sentences/task?userId=${user?.id}&tier=${tierNum}`)
-      setTask(res.data)
-      setOrderedWords([...res.data.scrambledWords])
+      if (res.data) {
+        setTask({ ...res.data, correctOrder: res.data.correctOrder ?? [] })
+        setOrderedWords([...res.data.scrambledWords])
+        if (currentIndex !== undefined) setTaskIndex(currentIndex)
+      }
     } catch {
       // Fallback mock
       const mock: SentenceTask = {
@@ -108,7 +112,7 @@ export const SentenceModulePage: React.FC = () => {
   }, [user?.id])
 
   useEffect(() => {
-    if (user?.id) fetchTask(1)
+    if (user?.id) fetchTask(1, 0)
   }, [user?.id, fetchTask])
 
   const handleMove = useCallback((from: number, to: number) => {
@@ -122,7 +126,7 @@ export const SentenceModulePage: React.FC = () => {
 
   const handleSubmit = useCallback(async () => {
     if (!task || isSubmitting) return
-    const isCorrect = orderedWords.join(' ') === task.correctOrder.join(' ')
+    const isCorrect = orderedWords.join(' ') === (task.correctOrder ?? []).join(' ')
     setFeedback(isCorrect ? 'correct' : 'incorrect')
     const newAttempts = attempts + 1
     setAttempts(newAttempts)
@@ -130,35 +134,78 @@ export const SentenceModulePage: React.FC = () => {
 
     setIsSubmitting(true)
     try {
-      const res = await api.post('/sentences/evaluate', {
+      const res = await api.post('/sentences/progress', {
         userId: user?.id,
         taskId: task.taskId,
         submittedOrder: orderedWords,
         accuracy,
       })
 
-      if (res.data.reunionUnlocked) {
+      if (res.data.moduleComplete) {
         setTimeout(() => setShowReunionEnding(true), 1500)
-      } else if (isCorrect && res.data.tier2Unlocked) {
+      } else if (isCorrect && res.data.tierComplete && tier === 1) {
+        // Tier 1 complete → show announcement before Tier 2
         setTimeout(() => {
-          setTier(2)
-          fetchTask(2)
+          setShowTierAnnouncement(true)
         }, 1500)
       } else if (isCorrect) {
-        setTimeout(() => setModuleComplete(true), 1500)
+        // More tasks in same tier - fetch next
+        const nextIndex = taskIndex + 1
+        setTimeout(() => fetchTask(tier, nextIndex), 1500)
       }
     } catch {
       if (isCorrect) {
         setTimeout(() => {
-          if (tier === 1) { setTier(2); fetchTask(2) }
-          else setModuleComplete(true)
+          if (tier === 1) { setShowTierAnnouncement(true) }
+          else setShowReunionEnding(true)
         }, 1500)
       }
     } finally {
       setIsSubmitting(false)
     }
-  }, [task, isSubmitting, orderedWords, attempts, user?.id, tier, fetchTask])
+  }, [task, isSubmitting, orderedWords, attempts, user?.id, tier, taskIndex, fetchTask])
 
+  const handleStartTier2 = useCallback(() => {
+    setShowTierAnnouncement(false)
+    setTier(2)
+    fetchTask(2, 0)
+  }, [fetchTask])
+
+  // ── Tier 2 announcement screen ──────────────────────────────────────────
+  if (showTierAnnouncement) {
+    return (
+      <AppShell>
+        <div className="min-h-full flex items-center justify-center p-8">
+          <div className="max-w-md text-center space-y-6">
+            <div className="text-6xl animate-bounce">🌟</div>
+            <div className="p-6 bg-pamana-green/20 border border-pamana-green/40 rounded-2xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-full bg-pamana-gold/30 flex items-center justify-center text-2xl">👵</div>
+                <span className="text-pamana-gold font-bold">Lola</span>
+              </div>
+              <p className="text-white text-lg font-heading font-bold leading-relaxed">
+                "Napakahusay mo, apo! Handa na tayo sa susunod na hamon!"
+              </p>
+            </div>
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+              <p className="text-green-300 font-semibold text-sm mb-1">✅ Tier 1: Paturol — Natapos na!</p>
+              <p className="text-white/70 text-sm">Susunod: Tier 2 — Patanong (Tanong)</p>
+              <p className="text-white/50 text-xs mt-1">Gawing tanong ang mga pangungusap!</p>
+            </div>
+            <audio src="/static/assets/audio/tier2_unlock.mp3" autoPlay />
+            <button
+              onClick={handleStartTier2}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-pamana-gold to-amber-500 text-white font-bold text-base hover:opacity-90 transition-opacity"
+            >
+              Simulan ang Tier 2! →
+            </button>
+          </div>
+        </div>
+      </AppShell>
+    )
+  }
+
+  // ── Reunion ending screen ────────────────────────────────────────────────
   if (showReunionEnding) {
     return (
       <AppShell>
@@ -200,23 +247,42 @@ export const SentenceModulePage: React.FC = () => {
             <p className="text-green-400 text-sm">Sala ng Tagpuan · {tier === 1 ? 'Paturol (Pahayag)' : 'Patanong (Tanong)'}</p>
           </div>
 
-          {/* Tier badges */}
-          <div className="flex gap-3 mb-6">
-            {[1, 2].map((t) => (
-              <Badge
-                key={t}
-                className={cn(
-                  'px-3 py-1.5 text-xs border',
-                  tier === t
-                    ? 'bg-pamana-gold/20 border-pamana-gold text-pamana-gold'
-                    : tier > t
-                    ? 'bg-green-500/20 border-green-500/40 text-green-300'
-                    : 'bg-white/5 border-white/10 text-white/30'
-                )}
-              >
-                {t === 1 ? 'Tier 1: Paturol' : 'Tier 2: Patanong'}
-              </Badge>
-            ))}
+          {/* Tier badges + Task counter */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-3">
+              {[1, 2].map((t) => (
+                <Badge
+                  key={t}
+                  className={cn(
+                    'px-3 py-1.5 text-xs border',
+                    tier === t
+                      ? 'bg-pamana-gold/20 border-pamana-gold text-pamana-gold'
+                      : tier > t
+                      ? 'bg-green-500/20 border-green-500/40 text-green-300'
+                      : 'bg-white/5 border-white/10 text-white/30'
+                  )}
+                >
+                  {t === 1 ? 'Tier 1: Paturol' : 'Tier 2: Patanong'}
+                </Badge>
+              ))}
+            </div>
+            {/* Task progress counter */}
+            <div className="flex items-center gap-2">
+              <span className="text-white/50 text-xs font-medium">
+                Gawain {Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER)} ng {TOTAL_TASKS_PER_TIER}
+              </span>
+              <div className="flex gap-1">
+                {Array.from({ length: TOTAL_TASKS_PER_TIER }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={cn(
+                      'w-2 h-2 rounded-full transition-all',
+                      i < taskIndex ? 'bg-green-400' : i === taskIndex ? 'bg-pamana-gold' : 'bg-white/20'
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
 
           {isLoading ? (
