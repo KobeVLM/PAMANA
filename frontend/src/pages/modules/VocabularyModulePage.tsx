@@ -137,7 +137,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
 
     const newAttempts = attempts + 1
     setAttempts(newAttempts)
-    const accuracy = isCorrect ? 100 : Math.max(0, 100 - (newAttempts * 30))
 
     setIsSubmitting(true)
     try {
