@@ -372,7 +372,6 @@ export const SyllableModulePage: React.FC = () => {
                 <div className="flex flex-col items-center gap-3">
                   <AudioPlayer
                     audioUrl={currentSet.audioUrl}
-                    autoPlay
                     size="lg"
                     label="Pakinggan ang tunog"
                   />
