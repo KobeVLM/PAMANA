@@ -43,6 +43,9 @@ export const HamonGamePage: React.FC = () => {
   
   const [finalResult, setFinalResult] = useState<{ passRate: number, masteredCount: number, reQueuedWords: string[] } | null>(null)
 
+  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
+  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
   useEffect(() => {
     const fetchSession = async () => {
       try {

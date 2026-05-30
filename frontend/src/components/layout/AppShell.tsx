@@ -11,7 +11,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react'
 
 interface NavItem {
