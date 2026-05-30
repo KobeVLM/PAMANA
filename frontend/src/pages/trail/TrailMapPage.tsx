@@ -75,8 +75,6 @@ export const TrailMapPage: React.FC = () => {
     || sortedProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
     || 1;
 
-  const activeNode = TRAIL_NODES.find(n => n.moduleNumber === activeModule) || TRAIL_NODES[0];
-
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
