@@ -92,7 +92,7 @@ public class VocabularyControllerTest {
 
                 String responseContent = loginResult.getResponse().getContentAsString();
                 token = objectMapper.readTree(responseContent).get("token").asText();
-                userId = UUID.fromString(objectMapper.readTree(responseContent).get("userId").asText());
+                userId = UUID.fromString(objectMapper.readTree(responseContent).get("user").get("id").asText());
 
                 // Explicitly unlock Module 2 (Self & Body Vocabulary) for testing
                 ModuleProgress m2 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 2)

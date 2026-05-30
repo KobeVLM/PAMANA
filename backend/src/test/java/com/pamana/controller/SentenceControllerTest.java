@@ -92,7 +92,7 @@ public class SentenceControllerTest {
 
                 String responseContent = loginResult.getResponse().getContentAsString();
                 token = objectMapper.readTree(responseContent).get("token").asText();
-                userId = UUID.fromString(objectMapper.readTree(responseContent).get("userId").asText());
+                userId = UUID.fromString(objectMapper.readTree(responseContent).get("user").get("id").asText());
 
                 // Explicitly unlock Module 4 for testing
                 ModuleProgress m4 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 4)

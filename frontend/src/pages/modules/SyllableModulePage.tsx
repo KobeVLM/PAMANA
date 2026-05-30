@@ -235,7 +235,7 @@ export const SyllableModulePage: React.FC = () => {
             <p className="text-green-300 mb-6">
               {status?.module2Unlocked 
                 ? "Napakahusay! Na-unlock na ang susunod na aralin." 
-                : "Ang iyong score ay hindi umabot sa 75%. Kailangan mong ulitin ang module upang ma-unlock ang susunod na aralin."}
+                : "Ang iyong score ay hindi umabot sa 80%. Kailangan mong ulitin ang module upang ma-unlock ang susunod na aralin."}
             </p>
             {status?.module2Unlocked ? (
               <button
