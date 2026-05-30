@@ -446,7 +446,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             )}
 
             {/* Hint text */}
-            {attempts >= 3 && (
+            {attempts >= 3 && (!selectedId || selectedId !== correctId) && (
               <p className="text-center text-pamana-gold text-xs">💡 Ang gintong kahon ang tamang sagot!</p>
             )}
           </div>
