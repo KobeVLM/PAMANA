@@ -233,7 +233,51 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     )
   }
 
+  const [isSkippingHamon, setIsSkippingHamon] = useState(false)
+  const [isSkippingHamonLoading, setIsSkippingHamonLoading] = useState(false)
+
   if (hamonTriggered) {
+    if (isSkippingHamon) {
+      return (
+        <AppShell>
+          <div className="min-h-full flex items-center justify-center p-8">
+            <div className="max-w-sm text-center animate-bounce-in bg-pamana-surface p-6 rounded-2xl shadow-xl">
+              <h2 className="text-xl font-bold text-white mb-4">Lalaktawan ang Hamon?</h2>
+              <p className="text-green-300 text-sm mb-6">Sigurado ka ba? Ang paglaktaw sa hamon ay itatala na "0%" para sa sesyon na ito.</p>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setIsSkippingHamon(false)} 
+                  className="flex-1 py-2 rounded-xl bg-gray-600 text-white font-bold hover:bg-gray-500 transition-colors"
+                  disabled={isSkippingHamonLoading}
+                >
+                  Bumalik
+                </button>
+                <button 
+                  onClick={async () => {
+                    setIsSkippingHamonLoading(true)
+                    try {
+                      await api.post('/hamon/skip')
+                      setHamonTriggered(false)
+                      fetchNextWord()
+                    } catch (e) {
+                      console.error(e)
+                    } finally {
+                      setIsSkippingHamonLoading(false)
+                      setIsSkippingHamon(false)
+                    }
+                  }} 
+                  className="flex-1 py-2 rounded-xl bg-red-500 text-white font-bold disabled:opacity-50 hover:bg-red-400 transition-colors"
+                  disabled={isSkippingHamonLoading}
+                >
+                  {isSkippingHamonLoading ? '...' : 'Oo, Laktawan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </AppShell>
+      )
+    }
+
     return (
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
@@ -243,11 +287,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
             <p className="text-green-300 mb-6">Sulitin ang iyong natutunang mga salita sa espesyal na hamon!</p>
             <button
               onClick={() => navigate(`/modules/${moduleNumber}/hamon`)}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-gold to-amber-500 text-white font-bold mb-3"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-gold to-amber-500 text-white font-bold mb-3 hover:opacity-90 transition-opacity"
             >
               Tumanggap ng Hamon!
             </button>
-            <button onClick={() => { setHamonTriggered(false); fetchNextWord() }} className="w-full py-2 text-green-400 text-sm hover:text-green-300">
+            <button onClick={() => setIsSkippingHamon(true)} className="w-full py-2 text-green-400 text-sm hover:text-green-300 transition-colors">
               Magpatuloy sa susunod na salita →
             </button>
           </div>
