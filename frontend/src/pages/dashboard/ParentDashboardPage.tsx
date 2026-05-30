@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { Progress } from '@/components/ui/progress'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -112,8 +113,25 @@ export const ParentDashboardPage: React.FC = () => {
   const [linkedLearnerName, setLinkedLearnerName] = useState<string | null>(null)
   const [learnerEmail, setLearnerEmail] = useState('')
   const [isLinking, setIsLinking] = useState(false)
+  const [isUnlinking, setIsUnlinking] = useState(false)
   const [linkError, setLinkError] = useState('')
   const [moduleHistory, setModuleHistory] = useState<ModuleAttemptHistory[]>([])
+
+  const handleUnlinkLearner = async () => {
+    setIsUnlinking(true)
+    try {
+      await api.post('/parent/unlink-learner')
+      setTargetUserId('')
+      setLinkedLearnerName(null)
+      setMetrics(null)
+      setModuleHistory([])
+      setModuleCompletion([false, false, false, false])
+    } catch (err) {
+      alert('Nagkaroon ng error sa pag-unlink. Subukan ulit.')
+    } finally {
+      setIsUnlinking(false)
+    }
+  }
 
   const formatHistoryData = (history: ModuleAttemptHistory[]) => {
     if (!history.length) return [];
@@ -205,15 +223,51 @@ export const ParentDashboardPage: React.FC = () => {
     <AppShell>
       <div className="p-6 lg:p-8 max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-heading font-bold text-white mb-1">
-            Dashboard ng Magulang 📊
-          </h1>
-          <p className="text-green-300">
-            {linkedLearnerName 
-              ? `Subaybayan ang pag-unlad ni ${linkedLearnerName} sa PAMANA.`
-              : 'Subaybayan ang pag-unlad ng iyong anak sa PAMANA.'}
-          </p>
+        {/* Header */}
+        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-heading font-bold text-white mb-1">
+              Dashboard ng Magulang 📊
+            </h1>
+            <p className="text-green-300">
+              {linkedLearnerName 
+                ? `Subaybayan ang pag-unlad ni ${linkedLearnerName} sa PAMANA.`
+                : 'Subaybayan ang pag-unlad ng iyong anak sa PAMANA.'}
+            </p>
+          </div>
+          {targetUserId && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <button
+                  disabled={isUnlinking}
+                  className="px-4 py-2 bg-red-500/20 text-red-300 border border-red-500/40 rounded-xl hover:bg-red-500/30 transition-colors text-sm font-semibold flex items-center gap-2"
+                >
+                  {isUnlinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-unlink ang Account'}
+                </button>
+              </DialogTrigger>
+              <DialogContent className="bg-[#1A2E1A] border border-white/20 text-white sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-xl font-bold font-heading text-red-400">Sigurado ka ba?</DialogTitle>
+                  <DialogDescription className="text-green-300/80">
+                    Kapag i-unlink mo ang account na ito, mawawala ang access mo sa progreso at reports ng iyong anak hanggang i-link mo ulit ito.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="mt-4 flex sm:justify-end gap-2">
+                  <DialogClose asChild>
+                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors text-sm font-semibold">
+                      I-cancel
+                    </button>
+                  </DialogClose>
+                  <button 
+                    onClick={handleUnlinkLearner}
+                    className="px-4 py-2 bg-red-500/80 hover:bg-red-500 text-white rounded-xl transition-colors text-sm font-semibold"
+                  >
+                    Oo, i-unlink ito
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
 
         {!targetUserId && (

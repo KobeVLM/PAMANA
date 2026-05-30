@@ -65,4 +65,20 @@ public class ParentController {
                 "learnerName", learner.getName()
         ));
     }
+
+    @PostMapping("/unlink-learner")
+    @PreAuthorize("hasRole('PARENT')")
+    public ResponseEntity<?> unlinkLearner(Principal principal) {
+        UUID parentId = UUID.fromString(principal.getName());
+        log.info("REST API Request: Unlink learner for parent {}", parentId);
+
+        List<User> linkedLearners = userRepository.findByParentId(parentId);
+        if (!linkedLearners.isEmpty()) {
+            User learner = linkedLearners.get(0);
+            learner.setParentId(null);
+            userRepository.save(learner);
+            return ResponseEntity.ok(Map.of("message", "Learner successfully unlinked"));
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "No linked learner found"));
+    }
 }
