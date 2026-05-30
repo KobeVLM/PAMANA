@@ -103,19 +103,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           </div>
         </div>
 
-        {/* User Info */}
-        <div className="px-4 py-4 border-b border-white/10">
-          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pamana-green to-emerald-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white font-semibold text-sm truncate">{user?.name}</p>
-              <p className="text-green-400 text-xs">{roleLabel}</p>
-            </div>
-          </div>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {filteredNav.map((item) => (
@@ -144,6 +131,19 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             </NavLink>
           ))}
         </nav>
+
+        {/* User Info */}
+        <div className="px-4 py-4 border-b border-white/10">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-pamana-green to-emerald-400 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-semibold text-sm truncate">{user?.name}</p>
+              <p className="text-green-400 text-xs">{roleLabel}</p>
+            </div>
+          </div>
+        </div>
 
         {/* Logout */}
         <div className="p-4 border-t border-white/10">

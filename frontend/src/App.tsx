@@ -7,6 +7,9 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 
+// Landing Page
+import { LandingPage } from '@/pages/landingpage/landingpage'
+
 // Game Pages
 import { TrailMapPage } from '@/pages/trail/TrailMapPage'
 import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
@@ -44,6 +47,7 @@ function App() {
         <React.Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -125,9 +129,8 @@ function App() {
               }
             />
 
-            {/* Default redirects */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </React.Suspense>
       </AuthProvider>

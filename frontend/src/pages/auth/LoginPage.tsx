@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export const LoginPage: React.FC = () => {
   const { login, user } = useAuth()
@@ -44,7 +44,17 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center p-4 relative">
+      {/* Back Button */}
+      <Link 
+        to="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+        aria-label="Bumalik sa Landing Page"
+      >
+        <ArrowLeft className="w-6 h-6" />
+        <span className="font-medium hidden sm:inline">Bumalik</span>
+      </Link>
+
       {/* Decorative background circles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-pamana-gold/10 rounded-full blur-3xl" />
@@ -53,17 +63,15 @@ export const LoginPage: React.FC = () => {
 
       <div className="relative w-full max-w-md">
         {/* Card */}
-        <div className="bg-white/15 backdrop-blur-2xl border border-white/20 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-white/5 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float">
-              <img src="/images/PAMANA_logo.png" alt="PAMANA Logo" className="w-full h-full object-contain drop-shadow-2xl" />
+            <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float overflow-hidden rounded-full p-2 bg-green-500/10 backdrop-blur-sm border border-white/20">
+              <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
             <h1 className="text-3xl font-heading font-bold text-white">PAMANA</h1>
-            <p className="text-green-300 text-sm mt-1">Pamanang Heritage Quest</p>
+            <p className="text-green-300 text-sm mt-1">Mag-login sa iyong account</p>
           </div>
-
-          <h2 className="text-xl font-semibold text-white mb-6 text-center">Mag-login sa iyong account</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
@@ -77,7 +85,7 @@ export const LoginPage: React.FC = () => {
                 placeholder="halimbawa@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-pamana-gold focus:ring-pamana-gold rounded-xl"
+                className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 autoComplete="email"
                 disabled={isLoading}
               />
@@ -95,7 +103,7 @@ export const LoginPage: React.FC = () => {
                   placeholder="Ilagay ang iyong password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-pamana-gold focus:ring-pamana-gold rounded-xl pr-12"
+                  className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
                   autoComplete="current-password"
                   disabled={isLoading}
                 />
