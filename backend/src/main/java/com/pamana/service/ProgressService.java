@@ -173,8 +173,16 @@ public class ProgressService {
             }
         }
 
-        // Sort alphabetically by word label
-        list.sort(Comparator.comparing(WordMasteryStatus::getWord));
+        // Sort by status priority (red first, then yellow, green, grey) and then alphabetically
+        Map<String, Integer> statusPriority = Map.of(
+            "red", 1,
+            "yellow", 2,
+            "green", 3,
+            "grey", 4
+        );
+
+        list.sort(Comparator.comparing((WordMasteryStatus w) -> statusPriority.getOrDefault(w.getStatus(), 99))
+                .thenComparing(WordMasteryStatus::getWord));
         return list;
     }
 }
