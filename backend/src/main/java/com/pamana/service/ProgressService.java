@@ -58,7 +58,7 @@ public class ProgressService {
         // 3. Hamon pass rate
         List<HamonSession> hamonSessions = hamonSessionRepository.findByUserId(userId);
         double hamonPassRate = hamonSessions.stream()
-                .filter(HamonSession::getIsComplete)
+                .filter(s -> s.getIsComplete() && s.getPassRate() != null)
                 .mapToDouble(s -> s.getPassRate().doubleValue())
                 .average()
                 .orElse(0.0);
