@@ -71,8 +71,8 @@ public class AuthControllerTest {
                 .content(objectMapper.writeValueAsString(loginReq)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token", notNullValue()))
-                .andExpect(jsonPath("$.role", is("LEARNER")))
-                .andExpect(jsonPath("$.userId", notNullValue()))
+                .andExpect(jsonPath("$.user.role", is("LEARNER")))
+                .andExpect(jsonPath("$.user.id", notNullValue()))
                 .andReturn();
 
         // Extract token

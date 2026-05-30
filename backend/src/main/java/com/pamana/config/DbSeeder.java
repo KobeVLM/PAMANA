@@ -66,7 +66,13 @@ public class DbSeeder implements CommandLineRunner {
                 new VocabularyItem("Ate",     "family_home", "/audio/words/ate.mp3",     "/images/ate.png",     16),
                 new VocabularyItem("bahay",   "family_home", "/audio/words/bahay.mp3",   "/images/bahay.png",   17),
                 new VocabularyItem("kain",    "family_home", "/audio/words/kain.mp3",    "/images/kain.png",    18),
-                new VocabularyItem("tulog",   "family_home", "/audio/words/tulog.mp3",   "/images/tulog.png",   19)
+                new VocabularyItem("tulog",   "family_home", "/audio/words/tulog.mp3",   "/images/tulog.png",   19),
+                new VocabularyItem("laro",    "family_home", "/audio/words/laro.mp3",    "/images/laro.png",    20),
+                new VocabularyItem("luto",    "family_home", "/audio/words/luto.mp3",    "/images/luto.png",    21),
+                new VocabularyItem("linis",   "family_home", "/audio/words/linis.mp3",   "/images/linis.png",   22),
+                new VocabularyItem("basa",    "family_home", "/audio/words/basa.mp3",    "/images/basa.png",    23),
+                new VocabularyItem("ligo",    "family_home", "/audio/words/ligo.mp3",    "/images/ligo.png",    24),
+                new VocabularyItem("kapatid", "family_home", "/audio/words/kapatid.mp3", "/images/kapatid.png", 25)
             );
 
             vocabularyItemRepository.saveAll(items);

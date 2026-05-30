@@ -75,7 +75,7 @@ public class SyllableControllerTest {
 
                 String responseContent = loginResult.getResponse().getContentAsString();
                 token = objectMapper.readTree(responseContent).get("token").asText();
-                userId = UUID.fromString(objectMapper.readTree(responseContent).get("userId").asText());
+                userId = UUID.fromString(objectMapper.readTree(responseContent).get("user").get("id").asText());
         }
 
         @Test
@@ -111,12 +111,14 @@ public class SyllableControllerTest {
                 String[] subLevels = { "pagsama", "pakinggan", "kilalanin", "rhyming" };
 
                 for (String sub : subLevels) {
-                        SyllableProgressRequest req = new SyllableProgressRequest(sub, 1, "A", true);
-                        mockMvc.perform(post("/api/syllables/progress")
-                                        .header("Authorization", "Bearer " + token)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(req)))
-                                        .andExpect(status().isCreated());
+                        for (int i = 1; i <= 5; i++) {
+                                SyllableProgressRequest req = new SyllableProgressRequest(sub, i, "A", true);
+                                mockMvc.perform(post("/api/syllables/progress")
+                                                .header("Authorization", "Bearer " + token)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(objectMapper.writeValueAsString(req)))
+                                                .andExpect(status().isCreated());
+                        }
                 }
 
                 // Fetch status - should show complete and Module 2 unlocked!
