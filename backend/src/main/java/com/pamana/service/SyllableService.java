@@ -203,9 +203,16 @@ public class SyllableService extends BaseGameService {
             response.setAudioUrl("/audio/words/" + word + ".mp3");
             
             options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
-            for (int i = 1; i < 4; i++) {
-                String opt = cons.get(i) + "a";
-                options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+            int added = 0;
+            for (int i = 0; i < cons.size(); i++) {
+                if (added >= 3) break;
+                // For kilalanin, we generate distractors ending in 'a' (or 'i' if target ends in 'i')
+                String distractorVowel = targetSyll.substring(targetSyll.length() - 1);
+                String opt = cons.get(i) + distractorVowel;
+                if (!opt.equalsIgnoreCase(targetSyll)) {
+                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+                    added++;
+                }
             }
             java.util.Collections.shuffle(options);
         } else if ("rhyming".equals(subLevel)) {
@@ -219,9 +226,15 @@ public class SyllableService extends BaseGameService {
             response.setAudioUrl("/audio/words/" + word + ".mp3");
             
             options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
-            for (int i = 1; i < 4; i++) {
-                String opt = cons.get(i) + "a";
-                options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+            int added = 0;
+            for (int i = 0; i < cons.size(); i++) {
+                if (added >= 3) break;
+                String distractorVowel = targetSyll.substring(targetSyll.length() - 1);
+                String opt = cons.get(i) + distractorVowel;
+                if (!opt.equalsIgnoreCase(targetSyll)) {
+                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
+                    added++;
+                }
             }
             java.util.Collections.shuffle(options);
         }
