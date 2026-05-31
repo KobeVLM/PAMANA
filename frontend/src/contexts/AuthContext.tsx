@@ -47,15 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   ) => {
     // 1. Register the user
     await api.post('/auth/register', { name, email, password, role, joinCode })
-    
-    // 2. Automatically log them in to get the JWT token
-    const loginResponse = await api.post('/auth/login', { email, password })
-    const { token: jwt, user: userData } = loginResponse.data
-    
-    sessionStorage.setItem('pamana_token', jwt)
-    sessionStorage.setItem('pamana_user', JSON.stringify(userData))
-    setToken(jwt)
-    setUser(userData)
   }, [])
 
   const logout = useCallback(() => {
