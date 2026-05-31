@@ -65,11 +65,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [moduleComplete, setModuleComplete] = useState(false)
   const [hamonTriggered, setHamonTriggered] = useState(false)
   const [gamitinSentence, setGamitinSentence] = useState<string>("Ang aking _____ ay malaki at maliwanag.")
-  const [upcomingWords, setUpcomingWords] = useState<string[]>([
-    'Mata', 'Ilong', 'Bibig', 'Kamay', 
-    'Paa', 'Tenga', 'Ulo', 'Tiyan', 
-    'Likod', 'Buhok', 'Balikat', 'Tuhod'
-  ])
+  const [upcomingWords, setUpcomingWords] = useState<string[]>(
+    moduleNumber === 3 
+      ? ['Nanay', 'Tatay', 'Lola', 'Lolo', 'Kuya', 'Ate', 'Bahay', 'Kain', 'Tulog', 'Laro', 'Luto', 'Linis', 'Basa', 'Ligo', 'Kapatid']
+      : ['Mata', 'Ilong', 'Bibig', 'Kamay', 'Paa', 'Tenga', 'Ulo', 'Tiyan', 'Likod', 'Buhok', 'Balikat', 'Tuhod']
+  )
 
   const fetchNextWord = useCallback(async () => {
     setIsLoading(true)

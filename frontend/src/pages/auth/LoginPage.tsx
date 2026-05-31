@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,9 +9,12 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 export const LoginPage: React.FC = () => {
   const { login, user } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  
+  const state = location.state as { registeredEmail?: string; registeredPassword?: string } | null
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState(state?.registeredEmail || '')
+  const [password, setPassword] = useState(state?.registeredPassword || '')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')

@@ -50,6 +50,8 @@ export const RegisterPage: React.FC = () => {
     try {
       localStorage.setItem('show_intro_story', 'true')
       await register(name.trim(), email.trim(), password, role, joinCode || undefined)
+      // Redirect to login page and pass credentials for auto-fill
+      navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       const msg = axiosErr?.response?.data?.message ?? 'May error. Subukan ulit.'
