@@ -82,6 +82,15 @@ public class HamonService {
     }
 
     @Transactional
+    public void skipHamonSession(UUID userId) {
+        log.info("Skipping Hamon session for user: {}", userId);
+        HamonSession session = generateHamonSession(userId);
+        session.setIsComplete(true);
+        session.setPassRate(null);
+        hamonSessionRepository.save(session);
+    }
+
+    @Transactional
     public HamonResultResponse recordHamonResult(UUID sessionId, Map<UUID, Double> results) {
         log.info("Recording Hamon session results for session: {}", sessionId);
 

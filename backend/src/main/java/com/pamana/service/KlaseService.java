@@ -94,7 +94,7 @@ public class KlaseService {
 
             List<HamonSession> hamonSessions = hamonSessionRepository.findByUserId(student.getId());
             double hamonPassRate = hamonSessions.stream()
-                    .filter(HamonSession::getIsComplete)
+                    .filter(s -> s.getIsComplete() && s.getPassRate() != null)
                     .mapToDouble(s -> s.getPassRate().doubleValue())
                     .average()
                     .orElse(0.0);

@@ -130,4 +130,14 @@ public class VocabularyController {
         HamonResultResponse response = hamonService.recordHamonResult(sessionId, results);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/hamon/skip")
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<Void> skipHamonSession(Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
+        log.info("REST API: Skip active Hamon challenge session for user: {}", userId);
+
+        hamonService.skipHamonSession(userId);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -47,15 +47,6 @@ export const HamonGamePage: React.FC = () => {
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
-    if (!wrongAudioRef.current) {
-      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
-    }
-    if (currentDialogue?.audioUrl) {
-      voiceAudioRef.current = new Audio(currentDialogue.audioUrl)
-    }
-  }, [currentDialogue])
-
-  useEffect(() => {
     const fetchSession = async () => {
       try {
         const res = await api.get('/hamon/session/active')

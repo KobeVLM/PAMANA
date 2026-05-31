@@ -67,12 +67,15 @@ export const TrailMapPage: React.FC = () => {
   const totalModules = 4
   const overallPercent = Math.round((completedCount / totalModules) * 100)
 
-  // Find the highest unlocked module that is not complete, or fallback to the max unlocked
-  const activeModule = moduleProgress.filter(p => p.isUnlocked && !p.isComplete).pop()?.moduleNumber 
-    || moduleProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
+  // Ensure moduleProgress is sorted by moduleNumber to guarantee logical progression
+  const sortedProgress = [...moduleProgress].sort((a, b) => a.moduleNumber - b.moduleNumber)
+
+  // Find the highest unlocked module that is not complete, or fallback to the highest unlocked
+  const activeModule = sortedProgress.filter(p => p.isUnlocked && !p.isComplete).pop()?.moduleNumber 
+    || sortedProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
     || 1;
 
-  const activeNode = TRAIL_NODES.find(n => n.moduleNumber === activeModule) || TRAIL_NODES[0];
+  const character = localStorage.getItem('pamana_character') || 'Lalaki'
 
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
@@ -123,7 +126,7 @@ export const TrailMapPage: React.FC = () => {
       ringColor = 'ring-[#1F543C]'
     } else if (isActive && isUnlocked) {
       bgColor = 'bg-[#E88C30]' // Orange
-      icon = <div className="text-4xl leading-none pt-1">👦🏼</div> // Boy avatar
+      icon = <img src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} alt="Character Avatar" className="w-16 h-16 object-cover object-top rounded-full scale-125 border-2 border-orange-200/50 shadow-sm" />
       ringColor = 'ring-[#D17621]'
     }
 
@@ -235,14 +238,6 @@ export const TrailMapPage: React.FC = () => {
 
               {/* Render Modules along the path */}
               {TRAIL_NODES.map(renderNodeButton)}
-
-              {/* Walking Character - appears next to active module */}
-              <div 
-                className="absolute text-5xl transition-all duration-1000 ease-in-out drop-shadow-xl animate-bounce pointer-events-none"
-                style={{ left: `${activeNode.x - 7}%`, top: `${activeNode.y + 4}%`, zIndex: 20 }}
-              >
-                🚶🏽
-              </div>
 
             </div>
           )}
