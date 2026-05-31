@@ -7,6 +7,9 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 
+// Landing Page
+import { LandingPage } from '@/pages/landingpage/landingpage'
+
 // Game Pages
 import { TrailMapPage } from '@/pages/trail/TrailMapPage'
 import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
@@ -16,6 +19,8 @@ import { KlaseLeaderboardPage } from '@/pages/klase/KlaseLeaderboardPage'
 import { TeacherKlasePage } from '@/pages/klase/TeacherKlasePage'
 import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
 import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
+import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { BGMController } from '@/components/music/BGMController'
 
 // Lazy-loaded module pages (loaded on demand to keep initial bundle small)
 const VocabularyModulePage = React.lazy(() =>
@@ -41,9 +46,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BGMController />
         <React.Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
 
@@ -115,6 +122,16 @@ function App() {
               }
             />
 
+            {/* Settings */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
+                  <SettingsPage />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Parent/Teacher dashboard */}
             <Route
               path="/dashboard"
@@ -125,9 +142,8 @@ function App() {
               }
             />
 
-            {/* Default redirects */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </React.Suspense>
       </AuthProvider>

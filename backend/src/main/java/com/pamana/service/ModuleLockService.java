@@ -80,8 +80,15 @@ public class ModuleLockService {
             log.info("Marked Module {} complete for user: {}", completedModule, userId);
         }
 
-        // 2. Unlock the next module (if completedModule is 1, 2, or 3 and accuracy >= 75)
-        if (completedModule < 4 && finalAccuracy >= 75.0) {
+        // 2. Unlock the next module (Module 1 requires >= 80%, Modules 2 & 3 require >= 75%)
+        boolean shouldUnlockNext = false;
+        if (completedModule == 1 && finalAccuracy >= 80.0) {
+            shouldUnlockNext = true;
+        } else if ((completedModule == 2 || completedModule == 3) && finalAccuracy >= 75.0) {
+            shouldUnlockNext = true;
+        }
+
+        if (completedModule < 4 && shouldUnlockNext) {
             int nextModule = completedModule + 1;
             Optional<ModuleProgress> nextModuleOpt = moduleProgressRepository.findByUserIdAndModuleNumber(userId, nextModule);
             if (nextModuleOpt.isPresent()) {
@@ -91,7 +98,7 @@ public class ModuleLockService {
                 log.info("Unlocked Module {} for user: {}", nextModule, userId);
             }
         } else if (completedModule < 4) {
-            log.info("Did NOT unlock next module for user: {} because accuracy {} is below 75%", userId, finalAccuracy);
+            log.info("Did NOT unlock next module for user: {} because accuracy {} did not meet the threshold (80% for Mod1, 75% for Mod2/3)", userId, finalAccuracy);
         }
     }
 

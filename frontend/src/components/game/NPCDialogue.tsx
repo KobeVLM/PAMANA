@@ -22,11 +22,11 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   onPlayAudio,
   className,
 }) => {
-  const emoji = npc === 'lolo' ? '👴' : '👵'
+  const imgSrc = npc === 'lolo' ? '/images/Lolo_A.png' : '/images/Lola_A.png'
   const name = npc === 'lolo' ? 'Lolo' : 'Lola'
   const gradientColor = npc === 'lolo'
     ? 'from-amber-400 to-orange-500'
-    : 'from-rose-400 to-pink-500'
+    : 'from-amber-400 to-orange-500'
 
   return (
     <div className={cn('flex items-start gap-4', className)}>
@@ -34,14 +34,14 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
       <div className="flex-shrink-0 flex flex-col items-center gap-1">
         <div
           className={cn(
-            'w-14 h-14 rounded-full flex items-center justify-center text-2xl',
+            'w-16 h-16 rounded-full flex items-center justify-center overflow-hidden',
             `bg-gradient-to-br ${gradientColor}`,
-            'shadow-lg animate-float'
+            'shadow-lg animate-float p-1 border-2 border-white/50'
           )}
         >
-          {emoji}
+          <img src={imgSrc} alt={name} className="w-full h-full object-cover object-top rounded-full scale-125" />
         </div>
-        <span className="text-xs font-bold text-pamana-gold">{name}</span>
+        <span className="text-sm font-bold text-pamana-gold">{name}</span>
       </div>
 
       {/* Speech Bubble */}
