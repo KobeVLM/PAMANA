@@ -48,6 +48,7 @@ export const RegisterPage: React.FC = () => {
     setIsLoading(true)
     setErrors({})
     try {
+      localStorage.setItem('show_intro_story', 'true')
       await register(name.trim(), email.trim(), password, role, joinCode || undefined)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }

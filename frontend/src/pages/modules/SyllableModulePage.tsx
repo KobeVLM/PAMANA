@@ -230,7 +230,9 @@ export const SyllableModulePage: React.FC = () => {
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
           <div className="max-w-sm text-center animate-bounce-in">
-            <div className="text-6xl mb-6">{status?.module2Unlocked ? "🎉" : "💪"}</div>
+            <div className="mb-6 flex justify-center">
+              <img src="/images/Lola-C.png" alt="Lola" className="w-80 h-80 px-4 object-contain drop-shadow-2xl" />
+            </div>
             <h2 className="text-2xl font-heading font-bold text-white mb-3">Natapos mo na ang Module 1!</h2>
             <p className="text-green-300 mb-6">
               {status?.module2Unlocked 
@@ -250,6 +252,7 @@ export const SyllableModulePage: React.FC = () => {
                   try {
                     await api.delete(`/modules/reset/${user?.id}/1`)
                     window.location.reload()
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   } catch (e) {
                     alert("Nagkaroon ng error. Subukan muli.")
                   }

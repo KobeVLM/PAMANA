@@ -305,7 +305,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
           <div className="max-w-sm text-center animate-bounce-in">
-            <div className="text-5xl mb-4">⭐</div>
+            <img src="/images/Lolo-C.png" alt="Lolo" className="w-80 h-80 px-4 object-contain drop-shadow-2xl" />
             <h2 className="text-xl font-heading font-bold text-white mb-2">Natuto ka ng bagong salita!</h2>
             <p className="text-green-300 mb-6">
               "<span className="text-pamana-gold font-bold">{currentWord?.word}</span>" — naitala na sa iyong talasalitaan!
