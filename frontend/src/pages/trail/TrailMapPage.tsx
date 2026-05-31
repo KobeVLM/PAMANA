@@ -75,6 +75,8 @@ export const TrailMapPage: React.FC = () => {
     || sortedProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
     || 1;
 
+  const character = localStorage.getItem('pamana_character') || 'Lalaki'
+
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
@@ -124,7 +126,7 @@ export const TrailMapPage: React.FC = () => {
       ringColor = 'ring-[#1F543C]'
     } else if (isActive && isUnlocked) {
       bgColor = 'bg-[#E88C30]' // Orange
-      icon = <div className="text-4xl leading-none pt-1">👦🏼</div> // Boy avatar
+      icon = <img src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} alt="Character Avatar" className="w-16 h-16 object-cover object-top rounded-full scale-125 border-2 border-orange-200/50 shadow-sm" />
       ringColor = 'ring-[#D17621]'
     }
 

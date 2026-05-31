@@ -19,6 +19,8 @@ import { KlaseLeaderboardPage } from '@/pages/klase/KlaseLeaderboardPage'
 import { TeacherKlasePage } from '@/pages/klase/TeacherKlasePage'
 import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
 import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
+import { SettingsPage } from '@/pages/settings/SettingsPage'
+import { BGMController } from '@/components/music/BGMController'
 
 // Lazy-loaded module pages (loaded on demand to keep initial bundle small)
 const VocabularyModulePage = React.lazy(() =>
@@ -44,6 +46,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BGMController />
         <React.Suspense fallback={<LoadingFallback />}>
           <Routes>
             {/* Public routes */}
@@ -115,6 +118,16 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
                   <KlaseLeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Settings */}
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
+                  <SettingsPage />
                 </ProtectedRoute>
               }
             />
