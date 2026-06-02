@@ -1,5 +1,8 @@
 package com.pamana.security;
 
+import com.pamana.security.JwtAuthenticationFilter;
+import com.pamana.security.SecurityConfig;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
