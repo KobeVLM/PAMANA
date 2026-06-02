@@ -54,8 +54,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const { user } = useAuth()
   const navigate = useNavigate()
   const [currentWord, setCurrentWord] = useState<VocabWord | null>(null)
-  const [currentStep, setCurrentStep] = useState<SpiralStep>('pakinggan')
+  const [currentStep, setCurrentStep] = useState<typeof SPIRAL_STEPS[number]>('pakinggan')
   const [matchOptions, setMatchOptions] = useState<MatchOption[]>([])
+  
+  const { playAudio } = useAudio()
+
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [correctId, setCorrectId] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)

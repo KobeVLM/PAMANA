@@ -23,7 +23,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const playAudio = (url: string, blockUi: boolean = true): Promise<void> => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       if (audioRef.current) {
         audioRef.current.pause();
       }

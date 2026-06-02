@@ -45,7 +45,6 @@ export const HamonGamePage: React.FC = () => {
   const [finalResult, setFinalResult] = useState<any>(null)
   const { playAudio } = useAudio()
 
-  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -162,7 +161,7 @@ export const HamonGamePage: React.FC = () => {
               <div className="bg-red-500/20 border border-red-500/30 p-4 rounded-xl mb-6">
                 <p className="text-sm text-red-200 mb-2 font-medium">Mga salitang kailangan pang pag-aralan:</p>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  {finalResult.reQueuedWords.map(word => (
+                  {finalResult.reQueuedWords.map((word: string) => (
                     <span key={word} className="px-3 py-1 bg-red-500/40 text-red-100 rounded-full text-sm">{word}</span>
                   ))}
                 </div>
