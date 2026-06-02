@@ -5,6 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { OptionGrid } from '@/components/game/OptionGrid'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
+import { useAudio } from '@/contexts/AudioContext'
 import api from '@/lib/api'
 import { ArrowLeft } from 'lucide-react'
 
@@ -41,7 +42,8 @@ export const HamonGamePage: React.FC = () => {
   const [isComplete, setIsComplete] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   
-  const [finalResult, setFinalResult] = useState<{ passRate: number, masteredCount: number, reQueuedWords: string[] } | null>(null)
+  const [finalResult, setFinalResult] = useState<any>(null)
+  const { playAudio } = useAudio()
 
   const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
@@ -88,7 +90,7 @@ export const HamonGamePage: React.FC = () => {
     }
   }
 
-  const handleSelect = useCallback((optionLabel: string) => {
+  const handleSelect = useCallback(async (optionLabel: string) => {
     if (!currentDialogue || selectedId) return
     
     const isCorrect = optionLabel === currentDialogue.correctWord
@@ -99,9 +101,11 @@ export const HamonGamePage: React.FC = () => {
     setAttempts(currentAttempts)
     
     if (isCorrect) {
-      if (voiceAudioRef.current) {
-        voiceAudioRef.current.currentTime = 0
-        voiceAudioRef.current.play().catch(console.warn)
+      // Play the completed sentence and block UI
+      try {
+        await playAudio(`/static/assets/audio/npc/sentence_${currentDialogue.correctWord.toLowerCase()}.mp3`, true)
+      } catch (e) {
+        console.warn('Failed to play hamon sentence audio', e)
       }
       // Calculate score for this word
       const accuracy = currentAttempts === 1 ? 100 : Math.max(0, 100 - ((currentAttempts - 1) * 30))

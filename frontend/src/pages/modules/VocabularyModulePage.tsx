@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
+import { useAudio } from '@/contexts/AudioContext'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
 import { Badge } from '@/components/ui/badge'
@@ -162,9 +163,18 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     setSelectedId(optionId)
     setCorrectId(currentWord.wordId)
 
-    if (isCorrect && voiceAudioRef.current) {
-      voiceAudioRef.current.currentTime = 0
-      voiceAudioRef.current.play().catch(console.warn)
+    if (isCorrect) {
+      if (currentStep === 'gamitin') {
+        // Play the completed sentence and wait for it to finish
+        try {
+          await playAudio(`/static/assets/audio/npc/sentence_${currentWord.word.toLowerCase()}.mp3`, true)
+        } catch (e) {
+          console.warn('Failed to play gamitin sentence audio', e)
+        }
+      } else if (voiceAudioRef.current) {
+        voiceAudioRef.current.currentTime = 0
+        voiceAudioRef.current.play().catch(console.warn)
+      }
     } else if (!isCorrect && wrongAudioRef.current) {
       wrongAudioRef.current.currentTime = 0
       wrongAudioRef.current.play().catch(console.warn)
@@ -365,7 +375,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
           </div>
         ) : currentWord ? (
           <div className="space-y-6">
-            <NPCDialogue npc="lolo" line={NPC_LINES[currentStep]} />
+            <NPCDialogue 
+              npc="lolo" 
+              line={NPC_LINES[currentStep]} 
+              audioUrl={`/static/assets/audio/npc/lolo_mod3_${currentStep}.mp3`}
+            />
 
             {/* Pakinggan step: word intro + auto-play */}
             {currentStep === 'pakinggan' && (

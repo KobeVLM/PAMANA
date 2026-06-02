@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
+import { useAudio } from '@/contexts/AudioContext'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
@@ -133,6 +134,15 @@ export const SentenceModulePage: React.FC = () => {
     const accuracy = isCorrect ? 100 : Math.max(0, 100 - (newAttempts * 25))
 
     setIsSubmitting(true)
+    
+    if (isCorrect && task.audioUrl) {
+      try {
+        await playAudio(task.audioUrl, true)
+      } catch (e) {
+        console.warn('Failed to play sentence audio', e)
+      }
+    }
+
     try {
       const res = await api.post('/sentences/progress', {
         userId: user?.id,
@@ -297,6 +307,7 @@ export const SentenceModulePage: React.FC = () => {
                   ? 'Ayusin ang mga salita para bumuo ng pangungusap! I-drag ang mga salita sa tamang pagkakasunod.'
                   : 'Gawing tanong ang pangungusap! Paano mo itatanong ito kay Lolo?'
                 }
+                audioUrl={`/static/assets/audio/npc/lolo_mod4_intro_tier${tier}.mp3`}
               />
 
               {/* Audio player */}
