@@ -61,4 +61,12 @@ public class ModuleController {
         moduleLockService.resetModuleGameData(userId, moduleNumber);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/reset-all/{userId}")
+    @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
+    public ResponseEntity<Void> resetAllModules(@PathVariable UUID userId) {
+        log.info("REST API: Reset entire trail for user ID: {}", userId);
+        moduleLockService.resetAllModules(userId);
+        return ResponseEntity.ok().build();
+    }
 }

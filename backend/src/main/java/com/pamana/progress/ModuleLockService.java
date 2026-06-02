@@ -7,6 +7,7 @@ import com.pamana.progress.ModuleAttemptHistoryRepository;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleAttemptHistory;
 import com.pamana.progress.ModuleProgress;
+import com.pamana.vocabulary.WordMasteryRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,15 +27,18 @@ public class ModuleLockService {
     private final ModuleAttemptHistoryRepository moduleAttemptHistoryRepository;
     private final SyllableProgressRepository syllableProgressRepository;
     private final SentenceProgressRepository sentenceProgressRepository;
+    private final WordMasteryRepository wordMasteryRepository;
 
     public ModuleLockService(ModuleProgressRepository moduleProgressRepository,
                              ModuleAttemptHistoryRepository moduleAttemptHistoryRepository,
                              SyllableProgressRepository syllableProgressRepository,
-                             SentenceProgressRepository sentenceProgressRepository) {
+                             SentenceProgressRepository sentenceProgressRepository,
+                             WordMasteryRepository wordMasteryRepository) {
         this.moduleProgressRepository = moduleProgressRepository;
         this.moduleAttemptHistoryRepository = moduleAttemptHistoryRepository;
         this.syllableProgressRepository = syllableProgressRepository;
         this.sentenceProgressRepository = sentenceProgressRepository;
+        this.wordMasteryRepository = wordMasteryRepository;
     }
 
     @Transactional
@@ -43,6 +47,10 @@ public class ModuleLockService {
         
         if (moduleNumber == 1) {
             syllableProgressRepository.deleteByUserId(userId);
+        } else if (moduleNumber == 2) {
+            wordMasteryRepository.deleteByUserIdAndDomain(userId, "self_body");
+        } else if (moduleNumber == 3) {
+            wordMasteryRepository.deleteByUserIdAndDomain(userId, "family_home");
         } else if (moduleNumber == 4) {
             sentenceProgressRepository.deleteByUserId(userId);
         }
@@ -109,5 +117,27 @@ public class ModuleLockService {
         return moduleProgressRepository.findByUserIdAndModuleNumber(userId, moduleNumber)
                 .map(ModuleProgress::getIsUnlocked)
                 .orElse(false);
+    }
+
+    @Transactional
+    public void resetAllModules(UUID userId) {
+        log.info("Resetting entire Pamana Trail for user {}", userId);
+        
+        // 1. Delete all detailed progress data
+        syllableProgressRepository.deleteByUserId(userId);
+        sentenceProgressRepository.deleteByUserId(userId);
+        wordMasteryRepository.deleteByUserIdAndDomain(userId, "self_body");
+        wordMasteryRepository.deleteByUserIdAndDomain(userId, "family_home");
+
+        // 2. Reset ModuleProgress logic
+        for (int i = 1; i <= 4; i++) {
+            final int mod = i;
+            moduleProgressRepository.findByUserIdAndModuleNumber(userId, mod).ifPresent(p -> {
+                p.setIsComplete(false);
+                p.setAccuracy(null);
+                p.setIsUnlocked(mod == 1); // Only module 1 is unlocked
+                moduleProgressRepository.save(p);
+            });
+        }
     }
 }

@@ -81,18 +81,22 @@ export const TrailMapPage: React.FC = () => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
 
-    const isModule4Complete = getProgress(4)?.isComplete ?? false;
-
     if (progress?.isComplete) {
-      if (!isModule4Complete) {
-        setToastMessage("Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!")
-        setTimeout(() => setToastMessage(null), 4000)
-        return
-      }
-
       setConfirmModal({ isOpen: true, node })
     } else {
       navigate(`/modules/${node.moduleNumber}`)
+    }
+  }
+
+  const handleResetAll = async () => {
+    if (!confirm("Sigurado ka bang gusto mong ulitin ang buong Pamana Trail mula sa simula?")) return
+    try {
+      await api.delete(`/modules/reset-all/${user?.id}`)
+      window.location.reload()
+    } catch (e) {
+      console.error("Failed to reset all", e)
+      setToastMessage("Nagkaroon ng error sa pag-reset ng trail. Subukan muli.")
+      setTimeout(() => setToastMessage(null), 4000)
     }
   }
 
@@ -241,7 +245,21 @@ export const TrailMapPage: React.FC = () => {
 
             </div>
           )}
+            </div>
+          )}
         </div>
+
+        {/* Retake Entire Trail Button */}
+        {getProgress(4)?.isComplete && (
+          <div className="mt-6 flex justify-center">
+            <button 
+              onClick={handleResetAll}
+              className="bg-red-500/90 hover:bg-red-600 border border-red-400 text-white text-sm font-bold py-3 px-8 rounded-2xl shadow-lg transition-all"
+            >
+              Ulitin ang Buong Pamana Trail (Mastery Reset)
+            </button>
+          </div>
+        )}
 
       </div>
 
