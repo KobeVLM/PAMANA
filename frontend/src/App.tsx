@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 
+import { AudioProvider } from '@/contexts/AudioContext'
+
 // Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
@@ -46,106 +48,108 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <BGMController />
-        <React.Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+        <AudioProvider>
+          <BGMController />
+          <React.Suspense fallback={<LoadingFallback />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* Learner routes */}
-            <Route
-              path="/trail"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <TrailMapPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/modules/1"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <SyllableModulePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/modules/2"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <VocabularyModulePage moduleNumber={2} domain="self_body" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/modules/3"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <VocabularyModulePage moduleNumber={3} domain="family_home" />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/modules/4"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <SentenceModulePage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/modules/:moduleNumber/hamon"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER']}>
-                  <HamonGamePage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Learner routes */}
+              <Route
+                path="/trail"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <TrailMapPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modules/1"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <SyllableModulePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modules/2"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <VocabularyModulePage moduleNumber={2} domain="self_body" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modules/3"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <VocabularyModulePage moduleNumber={3} domain="family_home" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modules/4"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <SentenceModulePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/modules/:moduleNumber/hamon"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <HamonGamePage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Shared routes (Learner + Teacher) */}
-            <Route
-              path="/klase"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                  <RoleBasedKlaseRoute />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/leaderboard"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                  <KlaseLeaderboardPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Shared routes (Learner + Teacher) */}
+              <Route
+                path="/klase"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
+                    <RoleBasedKlaseRoute />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/leaderboard"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
+                    <KlaseLeaderboardPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Settings */}
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
-                  <SettingsPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Settings */}
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
+                    <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Parent/Teacher dashboard */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['PARENT', 'TEACHER']}>
-                  <RoleBasedDashboardRoute />
-                </ProtectedRoute>
-              }
-            />
+              {/* Parent/Teacher dashboard */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute allowedRoles={['PARENT', 'TEACHER']}>
+                    <RoleBasedDashboardRoute />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Catch-all redirect */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </React.Suspense>
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </React.Suspense>
+        </AudioProvider>
       </AuthProvider>
     </BrowserRouter>
   )
