@@ -58,7 +58,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // React + Vite default dev server host is http://localhost:5173 or 5174
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174", "http://localhost:3000"));
+        // Vercel production and preview domains are also included
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173",
+            "http://localhost:5174",
+            "http://localhost:3000",
+            "https://pamana-33.vercel.app",
+            "https://pamana-nine.vercel.app",
+            "https://pamana-kobes-projects-160a40e0.vercel.app",
+            "https://pamana-git-develop-kobes-projects-160a40e0.vercel.app"
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
