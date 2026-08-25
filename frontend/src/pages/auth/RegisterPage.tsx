@@ -29,12 +29,12 @@ export const RegisterPage: React.FC = () => {
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!name.trim()) newErrors.name = 'Kailangan ang pangalan.'
-    if (!email.trim()) newErrors.email = 'Kailangan ang email.'
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Hindi valid ang email.'
-    if (!password) newErrors.password = 'Kailangan ang password.'
-    else if (password.length < 6) newErrors.password = 'Kailangan ng 6 na karakter o higit.'
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Hindi magkapantay ang mga password.'
+    if (!name.trim()) newErrors.name = 'Name is required.'
+    if (!email.trim()) newErrors.email = 'Email is required.'
+    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email address.'
+    if (!password) newErrors.password = 'Password is required.'
+    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters.'
+    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match.'
     return newErrors
   }
 
@@ -50,11 +50,10 @@ export const RegisterPage: React.FC = () => {
     try {
       localStorage.setItem('show_intro_story', 'true')
       await register(name.trim(), email.trim(), password, role, joinCode || undefined)
-      // Redirect to login page and pass credentials for auto-fill
       navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
-      const msg = axiosErr?.response?.data?.message ?? 'May error. Subukan ulit.'
+      const msg = axiosErr?.response?.data?.message ?? 'An error occurred. Please try again.'
       setErrors({ general: msg })
     } finally {
       setIsLoading(false)
@@ -67,10 +66,10 @@ export const RegisterPage: React.FC = () => {
       <Link 
         to="/"
         className="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
-        aria-label="Bumalik sa Landing Page"
+        aria-label="Back to Landing Page"
       >
         <ArrowLeft className="w-6 h-6" />
-        <span className="font-medium hidden sm:inline">Bumalik</span>
+        <span className="font-medium hidden sm:inline">Back</span>
       </Link>
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -86,13 +85,13 @@ export const RegisterPage: React.FC = () => {
               <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
             <h1 className="text-2xl font-heading font-bold text-white">PAMANA</h1>
-            <p className="text-green-300 text-sm mt-1">Simulan ang iyong paglalakbay</p>
+            <p className="text-green-300 text-sm mt-1">Start your journey</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-green-200 font-medium text-sm">Pangalan</Label>
+              <Label htmlFor="name" className="text-green-200 font-medium text-sm">Name</Label>
               <Input
                 id="name"
                 type="text"
@@ -111,7 +110,7 @@ export const RegisterPage: React.FC = () => {
               <Input
                 id="reg-email"
                 type="email"
-                placeholder="halimbawa@email.com"
+                placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
@@ -127,7 +126,7 @@ export const RegisterPage: React.FC = () => {
                 <Input
                   id="reg-password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Hindi bababa sa 6 na karakter"
+                  placeholder="At least 6 characters"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
@@ -146,11 +145,11 @@ export const RegisterPage: React.FC = () => {
 
             {/* Confirm Password */}
             <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-green-200 font-medium text-sm">Kumpirmasyon ng Password</Label>
+              <Label htmlFor="confirm-password" className="text-green-200 font-medium text-sm">Confirm Password</Label>
               <Input
                 id="confirm-password"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Ulitin ang password"
+                placeholder="Repeat your password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
@@ -174,7 +173,7 @@ export const RegisterPage: React.FC = () => {
                         : 'bg-white/10 text-white hover:bg-white/20'
                     }`}
                   >
-                    {r === 'LEARNER' ? 'Mag-aaral' : r === 'PARENT' ? 'Magulang' : 'Guro'}
+                    {r === 'LEARNER' ? 'Learner' : r === 'PARENT' ? 'Parent' : 'Teacher'}
                   </button>
                 ))}
               </div>
@@ -184,15 +183,15 @@ export const RegisterPage: React.FC = () => {
             {role === 'LEARNER' && (
               <div className="space-y-1.5">
                 <Label htmlFor="join-code" className="text-green-200 font-medium text-sm flex items-center gap-1.5">
-                  Klase Code
-                  <span className="text-green-400 text-xs font-normal">(opsyonal)</span>
+                  Class Code
+                  <span className="text-green-400 text-xs font-normal">(optional)</span>
                   <Info className="w-3.5 h-3.5 text-green-400" />
                 </Label>
 
                 <Input
                   id="join-code"
                   type="text"
-                  placeholder="6-digit na code mula sa guro"
+                  placeholder="6-digit code from your teacher"
                   value={joinCode}
                   onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
                   className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl font-mono tracking-widest"
@@ -218,18 +217,18 @@ export const RegisterPage: React.FC = () => {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Nagre-rehistro...
+                  Registering...
                 </span>
               ) : (
-                'Magrehistro'
+                'Register'
               )}
             </Button>
           </form>
 
           <p className="text-center text-green-300 text-sm mt-5">
-            May account na?{' '}
+            Already have an account?{' '}
             <Link to="/login" className="text-pamana-gold font-semibold hover:underline">
-              Mag-login dito
+              Login here
             </Link>
           </p>
         </div>

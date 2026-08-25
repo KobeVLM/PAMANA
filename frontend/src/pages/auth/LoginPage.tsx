@@ -22,7 +22,7 @@ export const LoginPage: React.FC = () => {
   // If already logged in, redirect
   React.useEffect(() => {
     if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail'
+      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/home'
       navigate(dest, { replace: true })
     }
   }, [user, navigate])
@@ -30,7 +30,7 @@ export const LoginPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) {
-      setError('Punan ang lahat ng patlang.')
+      setError('Please fill in all fields.')
       return
     }
     setIsLoading(true)
@@ -40,7 +40,7 @@ export const LoginPage: React.FC = () => {
       // AuthContext will update user, useEffect above will redirect
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr?.response?.data?.message ?? 'Mali ang email o password. Subukan ulit.')
+      setError(axiosErr?.response?.data?.message ?? 'Invalid email or password. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -52,10 +52,10 @@ export const LoginPage: React.FC = () => {
       <Link 
         to="/"
         className="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
-        aria-label="Bumalik sa Landing Page"
+        aria-label="Back to Landing Page"
       >
         <ArrowLeft className="w-6 h-6" />
-        <span className="font-medium hidden sm:inline">Bumalik</span>
+        <span className="font-medium hidden sm:inline">Back</span>
       </Link>
 
       {/* Decorative background circles */}
@@ -73,7 +73,7 @@ export const LoginPage: React.FC = () => {
               <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
             <h1 className="text-3xl font-heading font-bold text-white">PAMANA</h1>
-            <p className="text-green-300 text-sm mt-1">Mag-login sa iyong account</p>
+            <p className="text-green-300 text-sm mt-1">Login to your account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -85,7 +85,7 @@ export const LoginPage: React.FC = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="halimbawa@email.com"
+                placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
@@ -103,7 +103,7 @@ export const LoginPage: React.FC = () => {
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Ilagay ang iyong password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
@@ -114,7 +114,7 @@ export const LoginPage: React.FC = () => {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
-                  aria-label={showPassword ? 'Itago ang password' : 'Ipakita ang password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -137,19 +137,19 @@ export const LoginPage: React.FC = () => {
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Naglo-load...
+                  Loading...
                 </span>
               ) : (
-                'Mag-login'
+                'Login'
               )}
             </Button>
           </form>
 
           {/* Register link */}
           <p className="text-center text-green-300 text-sm mt-6">
-            Wala pang account?{' '}
+            Don't have an account?{' '}
             <Link to="/register" className="text-pamana-gold font-semibold hover:underline">
-              Magrehistro dito
+              Register here
             </Link>
           </p>
         </div>

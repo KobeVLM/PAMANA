@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AppShell } from '@/components/layout/AppShell'  // ✅ ADD THIS BACK
 
 import { AudioProvider } from '@/contexts/AudioContext'
 
@@ -11,6 +12,9 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 
 // Landing Page
 import { LandingPage } from '@/pages/landingpage/landingpage'
+
+// Home Page - CHALLENGES layout
+import HomePage from '@/pages/homepage/HomePage'
 
 // Game Pages
 import { TrailMapPage } from '@/pages/trail/TrailMapPage'
@@ -24,7 +28,7 @@ import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { BGMController } from '@/components/music/BGMController'
 
-// Lazy-loaded module pages (loaded on demand to keep initial bundle small)
+// Lazy-loaded module pages
 const VocabularyModulePage = React.lazy(() =>
   import('@/pages/modules/VocabularyModulePage').then((m) => ({ default: m.VocabularyModulePage }))
 )
@@ -57,7 +61,19 @@ function App() {
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
 
-              {/* Learner routes */}
+              {/* ✅ Home page WITH AppShell */}
+              <Route
+                path="/home"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <AppShell>
+                      <HomePage />
+                    </AppShell>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ✅ Learner routes - NO AppShell wrapper (pages already have AppShell) */}
               <Route
                 path="/trail"
                 element={
@@ -107,7 +123,7 @@ function App() {
                 }
               />
 
-              {/* Shared routes (Learner + Teacher) */}
+              {/* Shared routes */}
               <Route
                 path="/klase"
                 element={
