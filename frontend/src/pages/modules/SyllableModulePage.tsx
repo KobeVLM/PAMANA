@@ -341,8 +341,9 @@ export const SyllableModulePage: React.FC = () => {
           <div className="space-y-6">
             {/* NPC instruction */}
             <NPCDialogue
-              npc="lola"
+              npc="lolo"
               line={NPC_LINES[currentSet.subLevel]}
+              audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
             />
 
             {/* Pagsama: Show consonant + vowel audio pair */}

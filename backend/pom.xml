@@ -52,6 +52,13 @@
             <scope>runtime</scope>
         </dependency>
 
+         <!-- si kyle ga add ani para mo run ang  -->
+        <dependency>
+            <groupId>me.paulschwarz</groupId>
+            <artifactId>spring-dotenv</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
         <!-- JSON Web Token (JJWT) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

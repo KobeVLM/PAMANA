@@ -1,7 +1,8 @@
 package com.pamana.config;
 
-import com.pamana.model.VocabularyItem;
-import com.pamana.repository.VocabularyItemRepository;
+import com.pamana.vocabulary.VocabularyItemRepository;
+import com.pamana.vocabulary.VocabularyItem;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
