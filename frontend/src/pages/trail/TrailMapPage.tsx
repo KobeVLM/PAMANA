@@ -190,8 +190,7 @@ export const TrailMapPage: React.FC = () => {
             <div className="flex-1">
               <Progress 
                 value={overallPercent} 
-                className="h-4 bg-green-900/50 rounded-full overflow-hidden"
-                indicatorClassName="bg-gradient-to-r from-green-300 to-green-500 rounded-full transition-all duration-500"
+                className="h-4 bg-green-900/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-green-300 [&>div]:to-green-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
               />
             </div>
             <div className="font-bold text-white text-lg w-16 text-right">{overallPercent}%</div>

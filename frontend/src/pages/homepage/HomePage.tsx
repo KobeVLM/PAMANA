@@ -1,4 +1,3 @@
-import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { Map, Award, BookOpen, Star, ChevronRight, Trophy } from 'lucide-react'
