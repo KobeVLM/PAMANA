@@ -1,11 +1,13 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAudio } from '@/contexts/AudioContext'
 
 interface NPCDialogueProps {
   npc: 'lolo' | 'lola'
   line: string
   audioUrl?: string
+  autoPlay?: boolean
   onPlayAudio?: () => void
   className?: string
 }
@@ -19,14 +21,31 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   npc,
   line,
   audioUrl,
+  autoPlay = true,
   onPlayAudio,
   className,
 }) => {
+  const { playAudio } = useAudio()
+  
   const imgSrc = npc === 'lolo' ? '/images/Lolo_A.png' : '/images/Lola_A.png'
   const name = npc === 'lolo' ? 'Lolo' : 'Lola'
   const gradientColor = npc === 'lolo'
     ? 'from-amber-400 to-orange-500'
     : 'from-amber-400 to-orange-500'
+
+  useEffect(() => {
+    if (audioUrl && autoPlay) {
+      playAudio(audioUrl, true).catch(console.error)
+    }
+  }, [audioUrl, autoPlay, playAudio])
+
+  const handlePlay = () => {
+    if (audioUrl) {
+      playAudio(audioUrl, true).catch(console.error)
+    } else if (onPlayAudio) {
+      onPlayAudio()
+    }
+  }
 
   return (
     <div className={cn('flex items-start gap-4', className)}>
@@ -53,7 +72,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
           <p className="text-white text-sm leading-relaxed flex-1">{line}</p>
           {(audioUrl || onPlayAudio) && (
             <button
-              onClick={onPlayAudio}
+              onClick={handlePlay}
               aria-label="Pakinggan ang tagubilin"
               className="flex-shrink-0 w-8 h-8 rounded-full bg-pamana-gold/20 border border-pamana-gold/40 flex items-center justify-center text-pamana-gold hover:bg-pamana-gold/30 transition-colors"
             >

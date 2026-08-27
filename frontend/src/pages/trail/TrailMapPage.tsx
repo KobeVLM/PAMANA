@@ -5,7 +5,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Progress } from '@/components/ui/progress'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
-import { Lock, Star } from 'lucide-react'
+import { Lock, Star, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TrailNode {
@@ -17,19 +17,10 @@ interface TrailNode {
 }
 
 const TRAIL_NODES: TrailNode[] = [
-  { moduleNumber: 1, titleFil: 'Pantig', title: 'Pakinggan at Kilalanin', x: 20, y: 75 },
-  { moduleNumber: 2, titleFil: 'Salita', title: 'Basahin at Unawain', x: 38, y: 45 },
-  { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 65 },
-  { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 80, y: 35 },
-]
-
-const DECORATIONS = [
-  { top: '20%', left: '15%', size: 'text-4xl' },
-  { top: '65%', left: '10%', size: 'text-3xl' },
-  { top: '80%', left: '45%', size: 'text-4xl' },
-  { top: '25%', left: '55%', size: 'text-5xl' },
-  { top: '75%', left: '85%', size: 'text-3xl' },
-  { top: '45%', left: '92%', size: 'text-4xl' },
+  { moduleNumber: 1, titleFil: 'Pantig', title: 'Pakinggan at Kilalanin', x: 14, y: 49 },
+  { moduleNumber: 2, titleFil: 'Salita', title: 'Basahin at Unawain', x: 38, y: 24 },
+  { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 38 },
+  { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 87, y: 21 },
 ]
 
 export const TrailMapPage: React.FC = () => {
@@ -46,7 +37,6 @@ export const TrailMapPage: React.FC = () => {
         const response = await api.get(`/modules/progress/${user?.id}`)
         setModuleProgress(response.data)
       } catch {
-        // Default: only module 1 unlocked
         setModuleProgress([
           { moduleNumber: 1, isUnlocked: true, isComplete: false, accuracy: null },
           { moduleNumber: 2, isUnlocked: false, isComplete: false, accuracy: null },
@@ -67,13 +57,11 @@ export const TrailMapPage: React.FC = () => {
   const totalModules = 4
   const overallPercent = Math.round((completedCount / totalModules) * 100)
 
-  // Ensure moduleProgress is sorted by moduleNumber to guarantee logical progression
   const sortedProgress = [...moduleProgress].sort((a, b) => a.moduleNumber - b.moduleNumber)
 
-  // Find the highest unlocked module that is not complete, or fallback to the highest unlocked
   const activeModule = sortedProgress.filter(p => p.isUnlocked && !p.isComplete).pop()?.moduleNumber 
     || sortedProgress.filter(p => p.isUnlocked).pop()?.moduleNumber 
-    || 1;
+    || 1
 
   const character = localStorage.getItem('pamana_character') || 'Lalaki'
 
@@ -81,7 +69,7 @@ export const TrailMapPage: React.FC = () => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
 
-    const isModule4Complete = getProgress(4)?.isComplete ?? false;
+    const isModule4Complete = getProgress(4)?.isComplete ?? false
 
     if (progress?.isComplete) {
       if (!isModule4Complete) {
@@ -89,7 +77,6 @@ export const TrailMapPage: React.FC = () => {
         setTimeout(() => setToastMessage(null), 4000)
         return
       }
-
       setConfirmModal({ isOpen: true, node })
     } else {
       navigate(`/modules/${node.moduleNumber}`)
@@ -109,24 +96,30 @@ export const TrailMapPage: React.FC = () => {
       setConfirmModal({ isOpen: false, node: null })
     }
   }
+
   const renderNodeButton = (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     const isUnlocked = progress?.isUnlocked ?? false
     const isComplete = progress?.isComplete ?? false
     const isActive = activeModule === node.moduleNumber
 
-    // Styles based on status matching the provided image
-    let bgColor = 'bg-[#E3D5C1]' // Locked beige
+    let bgColor = 'bg-[#E3D5C1]'
     let icon = <Lock className="w-8 h-8 text-[#A89A86]" />
     let ringColor = 'ring-[#D0C2AE]'
 
     if (isComplete) {
-      bgColor = 'bg-[#2B6D4F]' // Dark green
+      bgColor = 'bg-[#2B6D4F]'
       icon = <Star className="w-10 h-10 text-[#FDD835] fill-[#FDD835]" />
       ringColor = 'ring-[#1F543C]'
     } else if (isActive && isUnlocked) {
-      bgColor = 'bg-[#E88C30]' // Orange
-      icon = <img src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} alt="Character Avatar" className="w-16 h-16 object-cover object-top rounded-full scale-125 border-2 border-orange-200/50 shadow-sm" />
+      bgColor = 'bg-[#E88C30]'
+      icon = (
+        <img 
+          src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} 
+          alt="Character Avatar" 
+          className="w-14 h-14 object-cover object-top rounded-full scale-110 border-2 border-orange-200/50 shadow-sm" 
+        />
+      )
       ringColor = 'ring-[#D17621]'
     }
 
@@ -159,90 +152,50 @@ export const TrailMapPage: React.FC = () => {
 
   return (
     <AppShell>
-      <div className="p-4 lg:p-6 max-w-5xl mx-auto flex flex-col h-full min-h-[calc(100vh-80px)]">
+      <div className="p-4 lg:p-6 max-w-7xl mx-auto flex flex-col h-full min-h-[calc(100vh-80px)]">
         
-        {/* Top Progress Bar matching the image */}
-        <div className="bg-[#FFF8E7] rounded-3xl p-4 flex items-center gap-4 mb-6 shadow-sm border-2 border-[#EEDFB6]">
-          <div className="text-3xl drop-shadow-sm">🏡</div>
-          <div className="font-bold text-gray-800 text-lg w-16">Sala</div>
-          <div className="flex-1 px-2">
-            <Progress 
-              value={overallPercent} 
-              className="h-5 bg-[#E6D6B3] [&>div]:bg-[#F28C28] rounded-full" 
-            />
-          </div>
-          <div className="font-extrabold text-gray-800 text-lg">{overallPercent}%</div>
-          <div className="text-3xl drop-shadow-sm">🚪</div>
+        {/* TRAIL MAP Title */}
+        <div className="text-center mb-4">
+          <h1 className="text-4xl md:text-5xl font-bold text-white font-heading tracking-tight inline-flex items-center gap-3">
+            TRAIL MAP
+          </h1>
         </div>
 
-        {/* The Map Container */}
-        <div className="flex-1 w-full bg-[#EAF0D8] rounded-3xl border-4 border-white/40 shadow-xl overflow-x-auto overflow-y-hidden relative">
+        {/* Map Container – fills available space */}
+        <div className="flex-1 w-full bg-green-900/30 border-4 border-white/10 shadow-xl overflow-hidden relative rounded-2xl">
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 border-4 border-pamana-green border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-16 h-16 border-4 border-pamana-green border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <div className="min-w-[800px] h-[500px] sm:h-full sm:min-h-[500px] relative w-full">
+            <div className="relative w-full h-full">
+              <img 
+                src="/images/TrailMap.png" 
+                alt="Trail Map"
+                className="w-full h-full object-cover object-center"
+              />
               
-              {/* Winding Dirt Path SVG */}
-              <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full pointer-events-none">
-                {/* Thick base road */}
-                <path 
-                  d="M 15 100 
-                     Q 20 85, 20 75 
-                     Q 20 45, 38 45 
-                     Q 62 45, 62 65 
-                     Q 62 35, 80 35 
-                     Q 90 35, 90 15" 
-                  fill="none" 
-                  stroke="#E3D5C1" 
-                  strokeWidth="14" 
-                  strokeLinecap="round" 
-                />
-                {/* Inner road color */}
-                <path 
-                  d="M 15 100 
-                     Q 20 85, 20 75 
-                     Q 20 45, 38 45 
-                     Q 62 45, 62 65 
-                     Q 62 35, 80 35 
-                     Q 90 35, 90 15" 
-                  fill="none" 
-                  stroke="#D8C8B0" 
-                  strokeWidth="10" 
-                  strokeLinecap="round" 
-                />
-              </svg>
-
-              {/* Palm Tree Decorations */}
-              {DECORATIONS.map((d, i) => (
-                <div key={i} className={`absolute drop-shadow-md ${d.size} pointer-events-none select-none`} style={{ top: d.top, left: d.left, zIndex: 5 }}>
-                  🌴
-                </div>
-              ))}
-
-              {/* Start (Pasukan) Marker */}
-              <div className="absolute transform -translate-x-1/2 flex flex-col items-center" style={{ left: '15%', top: '88%', zIndex: 10 }}>
-                <div className="bg-white px-3 py-1 rounded-full shadow-md font-bold text-gray-500 text-xs border-2 border-gray-100">
-                  Pasukan
-                </div>
+              {/* Overlay container for module nodes */}
+              <div className="absolute inset-0 w-full h-full">
+                {TRAIL_NODES.map(renderNodeButton)}
               </div>
-
-              {/* End (Sala) Marker */}
-              <div className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: '90%', top: '15%', zIndex: 10 }}>
-                <div className="text-5xl drop-shadow-lg mb-1">🏡</div>
-                <div className="bg-white px-3 py-1.5 rounded-2xl shadow-md font-extrabold text-gray-700 text-sm border-2 border-gray-100 min-w-[80px] text-center">
-                  Sala
-                </div>
-              </div>
-
-              {/* Render Modules along the path */}
-              {TRAIL_NODES.map(renderNodeButton)}
-
             </div>
           )}
         </div>
 
+        {/* Progress Bar Box – below map */}
+        <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg">
+          <div className="flex items-center gap-3">
+            <MapPin className="w-6 h-6 text-pamana-green flex-shrink-0" />
+            <div className="flex-1">
+              <Progress 
+                value={overallPercent} 
+                className="h-4 bg-green-900/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-green-300 [&>div]:to-green-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
+              />
+            </div>
+            <div className="font-bold text-white text-lg w-16 text-right">{overallPercent}%</div>
+          </div>
+        </div>
       </div>
 
       {/* Toast Notification */}
