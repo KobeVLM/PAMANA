@@ -61,6 +61,23 @@ public class VocabularyController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/vocabulary/all")
+    @PreAuthorize("hasAnyRole('LEARNER', 'PARENT')")
+    public ResponseEntity<List<com.pamana.vocabulary.dto.VocabularyWordResponse>> getAllVocabulary() {
+        List<com.pamana.vocabulary.VocabularyItem> items = vocabularyItemRepository.findAll();
+        List<com.pamana.vocabulary.dto.VocabularyWordResponse> responses = items.stream()
+                .map(item -> new com.pamana.vocabulary.dto.VocabularyWordResponse(
+                        item.getId(),
+                        item.getWord(),
+                        item.getDomain(),
+                        item.getAudioUrl(),
+                        item.getImageUrl(),
+                        item.getOrdinal()
+                ))
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     @GetMapping("/vocabulary/match/{wordId}")
     @PreAuthorize("hasRole('LEARNER')")
     public ResponseEntity<MatchOptionsResponse> getMatchOptions(
