@@ -83,6 +83,7 @@ export const ImagePracticePage: React.FC = () => {
   const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasPlayedIntroRef = useRef(false)
 
   const currentWord = roundWords[currentIndex] || null
 
@@ -98,15 +99,38 @@ export const ImagePracticePage: React.FC = () => {
     }
   }, [])
 
-  // Update target audio when currentWord changes
+  // Update target audio when currentWord changes and auto-play on questions 2-5
   useEffect(() => {
+    if (voiceAudioRef.current) {
+      voiceAudioRef.current.pause()
+    }
     try {
       if (currentWord?.audioUrl && typeof Audio !== 'undefined') {
-        voiceAudioRef.current = new Audio(currentWord.audioUrl)
-        voiceAudioRef.current.preload = 'auto'
+        const audio = new Audio(currentWord.audioUrl)
+        audio.preload = 'auto'
+        voiceAudioRef.current = audio
+
+        // On questions 2 through 5, play target word audio directly
+        if (currentIndex > 0) {
+          audio.play().catch(console.warn)
+        }
       }
     } catch {
       // Audio not supported in environment
+    }
+  }, [currentWord, currentIndex])
+
+  // When NPC instruction finishes on question 1, play the target word audio
+  const handleNpcAudioEnd = useCallback(() => {
+    if (hasPlayedIntroRef.current) return
+    hasPlayedIntroRef.current = true
+    if (voiceAudioRef.current) {
+      voiceAudioRef.current.currentTime = 0
+      voiceAudioRef.current.play().catch(console.warn)
+    } else if (currentWord?.audioUrl && typeof Audio !== 'undefined') {
+      const audio = new Audio(currentWord.audioUrl)
+      voiceAudioRef.current = audio
+      audio.play().catch(console.warn)
     }
   }, [currentWord])
 
@@ -272,6 +296,7 @@ export const ImagePracticePage: React.FC = () => {
     }
     const pool = allWords.length >= ROUND_TOTAL ? allWords : FALLBACK_WORDS
     const newRound = pickRoundWords(pool)
+    hasPlayedIntroRef.current = false
     setRoundWords(newRound)
     setCurrentIndex(0)
     setScore(0)
@@ -423,6 +448,8 @@ export const ImagePracticePage: React.FC = () => {
               npc="lolo"
               line={NPC_LINE}
               audioUrl={NPC_AUDIO}
+              autoPlay={currentIndex === 0 && !hasPlayedIntroRef.current}
+              onAudioEnd={handleNpcAudioEnd}
             />
 
             {/* Audio Player with currentWord.audioUrl */}
@@ -431,7 +458,7 @@ export const ImagePracticePage: React.FC = () => {
                 <AudioPlayer
                   key={currentWord.wordId}
                   audioUrl={currentWord.audioUrl}
-                  autoPlay={true}
+                  autoPlay={false}
                   size="lg"
                   label="Pakinggan ang salita"
                 />

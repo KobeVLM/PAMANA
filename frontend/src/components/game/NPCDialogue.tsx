@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAudio } from '@/contexts/AudioContext'
@@ -9,6 +9,7 @@ interface NPCDialogueProps {
   audioUrl?: string
   autoPlay?: boolean
   onPlayAudio?: () => void
+  onAudioEnd?: () => void
   className?: string
 }
 
@@ -23,6 +24,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   audioUrl,
   autoPlay = true,
   onPlayAudio,
+  onAudioEnd,
   className,
 }) => {
   const { playAudio } = useAudio()
@@ -33,15 +35,34 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
     ? 'from-amber-400 to-orange-500'
     : 'from-amber-400 to-orange-500'
 
+  const onAudioEndRef = useRef(onAudioEnd)
   useEffect(() => {
+    onAudioEndRef.current = onAudioEnd
+  }, [onAudioEnd])
+
+  useEffect(() => {
+    let isCurrent = true
     if (audioUrl && autoPlay) {
-      playAudio(audioUrl, true).catch(console.error)
+      playAudio(audioUrl, true)
+        .catch(console.error)
+        .finally(() => {
+          if (isCurrent) {
+            onAudioEndRef.current?.()
+          }
+        })
+    }
+    return () => {
+      isCurrent = false
     }
   }, [audioUrl, autoPlay, playAudio])
 
   const handlePlay = () => {
     if (audioUrl) {
-      playAudio(audioUrl, true).catch(console.error)
+      playAudio(audioUrl, true)
+        .catch(console.error)
+        .finally(() => {
+          onAudioEndRef.current?.()
+        })
     } else if (onPlayAudio) {
       onPlayAudio()
     }
