@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAudio } from '@/contexts/AudioContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
@@ -8,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, RotateCcw, Trophy, Sparkles, Home } from 'lucide-react'
+import { ArrowLeft, RotateCcw, Trophy, Sparkles, Home, CheckCircle2, XCircle } from 'lucide-react'
 
 interface VocabWord {
   wordId: string
@@ -80,6 +81,11 @@ export const WordPracticePage: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
 
+  const { isAudioPlaying } = useAudio()
+  const hasPlayedNpcRef = useRef(false)
+  const [npcIntroDone, setNpcIntroDone] = useState(false)
+  const prevIsAudioPlayingRef = useRef(false)
+
   const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -124,6 +130,33 @@ export const WordPracticePage: React.FC = () => {
       }
     }
   }, [])
+
+  // Sequence NPC dialogue first (question 1), then enable target word audio
+  useEffect(() => {
+    if (currentIndex > 0 || hasPlayedNpcRef.current) {
+      setNpcIntroDone(true)
+      return
+    }
+
+    // Safety timeout: in case NPC dialogue autoplay was blocked by browser or failed
+    const fallbackTimer = setTimeout(() => {
+      setNpcIntroDone(true)
+      hasPlayedNpcRef.current = true
+    }, 3500)
+
+    return () => clearTimeout(fallbackTimer)
+  }, [currentIndex])
+
+  useEffect(() => {
+    if (currentIndex === 0 && !hasPlayedNpcRef.current) {
+      if (prevIsAudioPlayingRef.current && !isAudioPlaying) {
+        // NPC speech finished playing
+        setNpcIntroDone(true)
+        hasPlayedNpcRef.current = true
+      }
+    }
+    prevIsAudioPlayingRef.current = isAudioPlaying
+  }, [isAudioPlaying, currentIndex])
 
   // 1. Fetch all vocabulary items on mount
   useEffect(() => {
@@ -280,6 +313,9 @@ export const WordPracticePage: React.FC = () => {
     setFeedback(null)
     setIsProcessing(false)
     setIsComplete(false)
+    hasPlayedNpcRef.current = false
+    setNpcIntroDone(false)
+    prevIsAudioPlayingRef.current = false
   }, [allWords])
 
   // Completion view after 5 questions
@@ -423,54 +459,109 @@ export const WordPracticePage: React.FC = () => {
               npc="lolo"
               line={NPC_LINE}
               audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
+              autoPlay={currentIndex === 0 && !hasPlayedNpcRef.current}
             />
 
-            {/* Audio Player with currentWord.audioUrl */}
-            <div className="flex justify-center py-2">
-              <div className="flex flex-col items-center gap-2">
-                <AudioPlayer
-                  audioUrl={currentWord.audioUrl}
-                  size="lg"
-                  label="Pakinggan ang salita"
-                />
-                <p className="text-green-300 text-xs">Pindutin para pakinggan</p>
-              </div>
-            </div>
+            {/* Central Interactive Card: Prompt before answering, Reveal + Feedback after answering */}
+            {selectedId === null ? (
+              /* Listening Prompt Card (Answer Hidden) */
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl text-center space-y-4 min-h-[260px] sm:min-h-[290px] animate-fade-in">
+                {currentWord.domain && (
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-green-300 border border-white/10">
+                    {currentWord.domain === 'self_body'
+                      ? 'Bahagi ng Katawan'
+                      : currentWord.domain === 'family_home'
+                      ? 'Pamilya at Tahanan'
+                      : currentWord.domain}
+                  </span>
+                )}
 
-            {/* Prominent Word Display Card */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl text-center space-y-3">
-              {currentWord.imageUrl && (
-                <img
-                  src={currentWord.imageUrl}
-                  alt={currentWord.word}
-                  className="w-32 h-32 sm:w-40 sm:h-40 object-contain rounded-2xl mb-2 drop-shadow-md bg-white/5 p-2 border border-white/10"
-                />
-              )}
-              <div className="text-3xl sm:text-4xl font-heading font-extrabold text-white tracking-wider uppercase">
-                {currentWord.word}
-              </div>
-              {currentWord.domain && (
-                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-green-300 border border-white/10">
-                  {currentWord.domain === 'self_body'
-                    ? 'Bahagi ng Katawan'
-                    : currentWord.domain === 'family_home'
-                    ? 'Pamilya at Tahanan'
-                    : currentWord.domain}
-                </span>
-              )}
-            </div>
+                <div className="space-y-1">
+                  <h2 className="text-2xl sm:text-3xl font-heading font-bold text-white">
+                    Pakinggan ang Salita
+                  </h2>
+                  <p className="text-green-300 text-sm max-w-sm">
+                    Makinig nang mabuti at piliin ang tamang salita sa ibaba.
+                  </p>
+                </div>
 
-            {/* Feedback Alert Banner */}
-            {feedback && (
+                {/* Large interactive speaker */}
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <AudioPlayer
+                    key={`${currentWord.wordId}-${npcIntroDone}`}
+                    audioUrl={currentWord.audioUrl}
+                    autoPlay={npcIntroDone}
+                    size="lg"
+                    label="Pakinggan ang salita"
+                  />
+                  <p className="text-green-300/80 text-xs font-medium">
+                    Pindutin para pakinggan muli
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Answer Reveal & Feedback Card (Answer Shown) */
               <div
                 className={cn(
-                  'p-3 rounded-xl text-center font-semibold text-sm animate-bounce-in',
+                  'backdrop-blur-md border rounded-3xl p-6 sm:p-8 flex flex-col items-center justify-center shadow-xl text-center space-y-3 min-h-[260px] sm:min-h-[290px] animate-fade-in transition-all',
                   feedback === 'correct'
-                    ? 'bg-green-500/20 border border-green-500/40 text-green-300'
-                    : 'bg-red-500/20 border border-red-500/40 text-red-300'
+                    ? 'bg-green-500/10 border-green-500/30'
+                    : 'bg-red-500/10 border-red-500/30'
                 )}
               >
-                {feedback === 'correct' ? '✅ Tama! Napakahusay!' : '❌ Mali. Subukan muli sa susunod!'}
+                {currentWord.domain && (
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-white/10 text-green-300 border border-white/10">
+                    {currentWord.domain === 'self_body'
+                      ? 'Bahagi ng Katawan'
+                      : currentWord.domain === 'family_home'
+                      ? 'Pamilya at Tahanan'
+                      : currentWord.domain}
+                  </span>
+                )}
+
+                {/* Revealed Image */}
+                {currentWord.imageUrl && (
+                  <img
+                    src={currentWord.imageUrl}
+                    alt={currentWord.word}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = 'none'
+                    }}
+                    className="w-32 h-32 sm:w-40 sm:h-40 object-contain rounded-2xl drop-shadow-md bg-white/5 p-2 border border-white/10 animate-bounce-in"
+                  />
+                )}
+
+                {/* Revealed Target Word */}
+                <div className="text-3xl sm:text-4xl font-heading font-extrabold text-white tracking-wider uppercase">
+                  {currentWord.word}
+                </div>
+
+                {/* Feedback Display */}
+                <div
+                  className={cn(
+                    'flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-center font-semibold text-sm animate-bounce-in w-full max-w-sm',
+                    feedback === 'correct'
+                      ? 'bg-green-500/20 border border-green-500/40 text-green-300'
+                      : 'bg-red-500/20 border border-red-500/40 text-red-300'
+                  )}
+                >
+                  {feedback === 'correct' ? (
+                    <>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                      <span>Tama! Napakahusay!</span>
+                    </>
+                  ) : (
+                    <>
+                      <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                      <span>
+                        Mali. Ang tamang salita ay:{' '}
+                        <span className="font-bold text-white underline ml-1">
+                          {currentWord.word}
+                        </span>
+                      </span>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 
