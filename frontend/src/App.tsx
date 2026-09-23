@@ -36,6 +36,20 @@ const HamonGamePage = React.lazy(() =>
   import('@/pages/modules/HamonGamePage').then((m) => ({ default: m.HamonGamePage }))
 )
 
+// Lazy-loaded mastery practice pages
+const SyllablePracticePage = React.lazy(() =>
+  import('@/pages/mastery/SyllablePracticePage').then((m) => ({ default: m.SyllablePracticePage }))
+)
+const WordPracticePage = React.lazy(() =>
+  import('@/pages/mastery/WordPracticePage').then((m) => ({ default: m.WordPracticePage }))
+)
+const ImagePracticePage = React.lazy(() =>
+  import('@/pages/mastery/ImagePracticePage').then((m) => ({ default: m.ImagePracticePage }))
+)
+const SentencePracticePage = React.lazy(() =>
+  import('@/pages/mastery/SentencePracticePage').then((m) => ({ default: m.SentencePracticePage }))
+)
+
 const LoadingFallback = () => (
   <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center">
     <div className="flex flex-col items-center gap-4">
@@ -116,6 +130,40 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['LEARNER']}>
                     <HamonGamePage />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Mastery Practice Routes */}
+              <Route
+                path="/mastery/1"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <SyllablePracticePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mastery/2"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <WordPracticePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mastery/3"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <ImagePracticePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mastery/4"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <SentencePracticePage />
                   </ProtectedRoute>
                 }
               />
