@@ -1,15 +1,14 @@
 import { useNavigate } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { Map, Award, BookOpen, Star, ChevronRight, Trophy } from 'lucide-react'
+import { Map, Award, BookOpen, ChevronRight, Trophy } from 'lucide-react'
 
 const HomePage = () => {
   const navigate = useNavigate()
 
   const masteryItems = [
-    { id: 1, title: 'Syllable Matching', completed: false, bgImage: '/images/Farm.png' },
-    { id: 2, title: 'Word Matching', completed: false, bgImage: '/images/Garden.png' },
-    { id: 3, title: 'Image Matching', completed: false, bgImage: '/images/Kitchen.png' },
-    { id: 4, title: 'Sentence Creation', completed: false, bgImage: '/images/House.png' },
+    { id: 1, title: 'Syllable Matching', route: '/mastery/1', bgImage: '/images/Farm.png' },
+    { id: 2, title: 'Word Matching', route: '/mastery/2', bgImage: '/images/Garden.png' },
+    { id: 3, title: 'Image Matching', route: '/mastery/3', bgImage: '/images/Kitchen.png' },
+    { id: 4, title: 'Sentence Creation', route: '/mastery/4', bgImage: '/images/House.png' },
   ]
 
   return (
@@ -76,47 +75,22 @@ const HomePage = () => {
               {masteryItems.map((item) => (
                 <div
                   key={item.id}
-                  className={cn(
-                    'relative overflow-hidden p-5 rounded-xl border transition-all duration-300 cursor-pointer text-center flex flex-col items-center justify-center',
-                    item.completed
-                      ? 'border-pamana-green/50 hover:border-pamana-green/80 hover:shadow-xl hover:shadow-pamana-green/20'
-                      : 'border-white/10 hover:border-white/30 hover:shadow-xl hover:shadow-white/10'
-                  )}
-                  onClick={() => console.log(`Open ${item.title}`)}
+                  className="relative overflow-hidden p-5 rounded-xl border border-white/10 hover:border-pamana-green/60 hover:shadow-xl hover:shadow-pamana-green/20 transition-all duration-300 cursor-pointer text-center flex flex-col items-center justify-center group"
+                  onClick={() => navigate(item.route)}
                 >
                   {/* Background image */}
                   <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${item.bgImage}')` }} />
                   {/* Overlay */}
-                  <div className={cn(
-                    'absolute inset-0',
-                    item.completed ? 'bg-pamana-green/70' : 'bg-green-950/60'
-                  )} />
+                  <div className="absolute inset-0 bg-green-950/60 group-hover:bg-green-950/40 transition-colors duration-300" />
 
                   {/* Content */}
                   <div className="relative z-10 flex flex-col items-center justify-center h-full">
-                    <div className={cn(
-                      'w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold transition-all duration-300',
-                      item.completed
-                        ? 'bg-pamana-green/30 text-pamana-green'
-                        : 'bg-white/10 text-green-200/80'
-                    )}>
-                      {item.completed ? (
-                        <Star className="w-8 h-8 fill-pamana-green text-pamana-green" />
-                      ) : (
-                        item.id
-                      )}
+                    <div className="w-14 h-14 rounded-full bg-white/10 group-hover:bg-pamana-green/30 flex items-center justify-center text-xl font-bold text-green-200/80 group-hover:text-white transition-all duration-300">
+                      {item.id}
                     </div>
-                    <p className={cn(
-                      'text-base font-semibold mt-2 transition-all duration-300',
-                      item.completed ? 'text-white' : 'text-green-200/80'
-                    )}>
+                    <p className="text-sm font-semibold mt-2 text-green-200/80 group-hover:text-white transition-all duration-300">
                       {item.title}
                     </p>
-                    {item.completed && (
-                      <span className="text-xs text-pamana-green mt-1 font-medium">
-                        ✓ Done
-                      </span>
-                    )}
                   </div>
                 </div>
               ))}
