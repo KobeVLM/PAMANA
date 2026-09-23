@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, RotateCcw } from 'lucide-react'
 
 type SubLevel = 'pagsama' | 'pakinggan' | 'kilalanin' | 'rhyming'
 
@@ -31,6 +31,8 @@ interface SyllableStatus {
   subLevelAccuracies: Record<SubLevel, number>
   moduleAccuracy: number
   module2Unlocked: boolean
+  overallAccuracy?: number
+  isComplete?: boolean
 }
 
 const SUB_LEVEL_LABELS: Record<SubLevel, string> = {
@@ -81,7 +83,9 @@ export const SyllableModulePage: React.FC = () => {
           rhyming: data.rhymingAccuracy || 0
         },
         moduleAccuracy: data.module1Accuracy || 0,
-        module2Unlocked: data.module2Unlocked || false
+        module2Unlocked: Boolean(data.module2Unlocked),
+        overallAccuracy: (data.overallAccuracy !== undefined ? data.overallAccuracy : data.module1Accuracy) ?? 0,
+        isComplete: Boolean(data.isComplete)
       }
       
       setStatus(mappedStatus)
@@ -180,6 +184,8 @@ export const SyllableModulePage: React.FC = () => {
       if (currentSet.subLevel === 'rhyming' && !res.data.nextSetId) {
         // Module is complete!
         // We evaluate accuracy in backend and module2Unlocked tells us if they passed
+        const updatedStatus = await fetchStatus()
+        if (updatedStatus) setStatus(updatedStatus)
         setTimeout(() => setModuleComplete(true), 1200)
       } else if (res.data.nextSetId) {
         setTimeout(async () => {
@@ -226,42 +232,65 @@ export const SyllableModulePage: React.FC = () => {
   }, [isSubmitting, currentSet, selectedId, attempts, user?.id, fetchCurrentSet, fetchStatus])
 
   if (moduleComplete) {
+    const hasPassed = Boolean(status?.module2Unlocked || (status?.overallAccuracy ?? 0) >= 80 || status?.isComplete)
+
     return (
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
-          <div className="max-w-sm text-center animate-bounce-in">
+          <div className="max-w-md w-full text-center animate-bounce-in">
             <div className="mb-6 flex justify-center">
               <img src="/images/Lola-C.png" alt="Lola" className="w-80 h-80 px-4 object-contain drop-shadow-2xl" />
             </div>
-            <h2 className="text-2xl font-heading font-bold text-white mb-3">Natapos mo na ang Module 1!</h2>
+            <h2 className="text-2xl font-heading font-bold text-white mb-2">Natapos mo na ang Module 1!</h2>
+            <div className="text-3xl font-heading font-extrabold text-pamana-gold drop-shadow-md my-2">
+              {Math.round(status?.overallAccuracy ?? 92)}% Marka
+            </div>
             <p className="text-green-300 mb-6">
-              {status?.module2Unlocked 
-                ? "Napakahusay! Na-unlock na ang susunod na aralin." 
-                : "Ang iyong score ay hindi umabot sa 80%. Kailangan mong ulitin ang module upang ma-unlock ang susunod na aralin."}
+              {hasPassed 
+                ? "Napakahusay! Na-unlock mo na ang susunod na aralin sa Pamana Trail." 
+                : "Ang iyong score ay hindi umabot sa 80%. Maaari mong subukan muli upang ma-unlock ang susunod na aralin, o magpatuloy sa Pamana Trail."}
             </p>
-            {status?.module2Unlocked ? (
+            <div className="flex flex-row items-center justify-center gap-5 mt-6">
+              {/* RETRY BUTTON (Red / Rose Jelly Pill) */}
               <button
-                onClick={() => navigate('/trail')}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:opacity-90 transition-opacity"
-              >
-                Bumalik sa Pamana Trail
-              </button>
-            ) : (
-              <button
+                type="button"
                 onClick={async () => {
                   try {
-                    await api.delete(`/modules/reset/${user?.id}/1`)
+                    await api.delete('/modules/reset/' + user?.id + '/1')
                     window.location.reload()
                   // eslint-disable-next-line @typescript-eslint/no-unused-vars
                   } catch (e) {
                     alert("Nagkaroon ng error. Subukan muli.")
                   }
                 }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:opacity-90 transition-opacity"
+                className="group relative overflow-hidden rounded-full min-w-[140px] px-7 py-3 text-white flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#ff3d77] via-[#e6005c] to-[#990033] border-[3px] border-[#ff94b8] border-b-[6px] border-b-[#660022] shadow-[0_8px_20px_rgba(153,0,51,0.5)] hover:brightness-110 active:translate-y-1 active:border-b-[3px] active:shadow-[0_4px_10px_rgba(153,0,51,0.4)] transition-all cursor-pointer"
               >
-                Ulitin ang Module 1
+                {/* Glossy specular highlight dots matching casual game buttons */}
+                <div className="absolute top-1.5 left-4 w-5 h-2 bg-white/70 rounded-full blur-[0.4px] pointer-events-none" />
+                <div className="absolute bottom-1.5 right-4 w-3.5 h-1.5 bg-white/30 rounded-full blur-[0.4px] pointer-events-none" />
+                
+                <RotateCcw className="w-5 h-5 stroke-[2.75] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]" />
+                <span className="font-heading font-black tracking-wider text-base uppercase drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">
+                  RETRY
+                </span>
               </button>
-            )}
+
+              {/* NEXT BUTTON (Juicy Green Jelly Pill) */}
+              <button
+                type="button"
+                onClick={() => navigate('/trail')}
+                className="group relative overflow-hidden rounded-full min-w-[140px] px-7 py-3 text-white flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#22c55e] via-[#16a34a] to-[#0f5128] border-[3px] border-[#86efac] border-b-[6px] border-b-[#063319] shadow-[0_8px_20px_rgba(6,51,25,0.5)] hover:brightness-110 active:translate-y-1 active:border-b-[3px] active:shadow-[0_4px_10px_rgba(6,51,25,0.4)] transition-all cursor-pointer"
+              >
+                {/* Glossy specular highlight dots matching casual game buttons */}
+                <div className="absolute top-1.5 left-4 w-5 h-2 bg-white/70 rounded-full blur-[0.4px] pointer-events-none" />
+                <div className="absolute bottom-1.5 right-4 w-3.5 h-1.5 bg-white/30 rounded-full blur-[0.4px] pointer-events-none" />
+
+                <span className="font-heading font-black tracking-wider text-base uppercase drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">
+                  NEXT
+                </span>
+                <ArrowRight className="w-5 h-5 stroke-[2.75] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]" />
+              </button>
+            </div>
           </div>
         </div>
       </AppShell>
