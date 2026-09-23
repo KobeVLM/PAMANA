@@ -42,7 +42,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     password: string,
-    role: 'LEARNER' | 'PARENT' | 'TEACHER',
+    role: 'LEARNER' | 'PARENT',
     joinCode?: string
   ) => {
     // 1. Register the user

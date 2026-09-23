@@ -1,6 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'  // ✅ ADD THIS BACK
 
@@ -21,10 +21,7 @@ import { TrailMapPage } from '@/pages/trail/TrailMapPage'
 import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
 
 // Dashboard & Support
-import { KlaseLeaderboardPage } from '@/pages/klase/KlaseLeaderboardPage'
-import { TeacherKlasePage } from '@/pages/klase/TeacherKlasePage'
 import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
-import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
 import { SettingsPage } from '@/pages/settings/SettingsPage'
 import { BGMController } from '@/components/music/BGMController'
 
@@ -123,39 +120,21 @@ function App() {
                 }
               />
 
-              {/* Shared routes */}
-              <Route
-                path="/klase"
-                element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                    <RoleBasedKlaseRoute />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/leaderboard"
-                element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                    <KlaseLeaderboardPage />
-                  </ProtectedRoute>
-                }
-              />
-
               {/* Settings */}
               <Route
                 path="/settings"
                 element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
+                  <ProtectedRoute allowedRoles={['LEARNER', 'PARENT']}>
                     <SettingsPage />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Parent/Teacher dashboard */}
+              {/* Parent dashboard */}
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={['PARENT', 'TEACHER']}>
+                  <ProtectedRoute allowedRoles={['PARENT']}>
                     <RoleBasedDashboardRoute />
                   </ProtectedRoute>
                 }
@@ -172,19 +151,7 @@ function App() {
 }
 
 function RoleBasedDashboardRoute() {
-  const { user } = useAuth()
-  if (user?.role === 'TEACHER') {
-    return <TeacherDashboardPage />
-  }
   return <ParentDashboardPage />
-}
-
-function RoleBasedKlaseRoute() {
-  const { user } = useAuth()
-  if (user?.role === 'TEACHER') {
-    return <TeacherKlasePage />
-  }
-  return <KlaseLeaderboardPage />
 }
 
 export default App

@@ -5,11 +5,18 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/api'
-import type { LeaderboardEntry } from '@/types'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
 import { cn } from '@/lib/utils'
 import { Trophy, Wifi, WifiOff, Users, Hash } from 'lucide-react'
+
+interface LeaderboardEntry {
+  rank: number
+  userId: string
+  learnerName: string
+  currentModuleName: string
+  modulesCompleted: number
+}
 
 const MODULE_NAMES = ['', 'Pakinggan at Kilalanin', 'Basahin (Katawan)', 'Salitang Pamilya', 'Pangungusap']
 const RANK_MEDALS = ['🥇', '🥈', '🥉']
@@ -30,12 +37,12 @@ export const KlaseLeaderboardPage: React.FC = () => {
       let klaseId = user?.klaseId;
       
       // If teacher, dynamically get their klase ID from the backend first
-      if (user?.role === 'TEACHER') {
+      if ((user?.role as string) === 'TEACHER') {
         const teacherKlaseRes = await api.get('/klase/teacher');
         klaseId = teacherKlaseRes.data.id;
       }
 
-      if (!klaseId && user?.role !== 'TEACHER') return;
+      if (!klaseId && (user?.role as string) !== 'TEACHER') return;
 
       const res = await api.get(`/klase/${klaseId}/leaderboard`)
       setLeaderboard(res.data)
@@ -50,7 +57,7 @@ export const KlaseLeaderboardPage: React.FC = () => {
     let activeKlaseId = user?.klaseId;
 
     const setupSocket = async () => {
-      if (user?.role === 'TEACHER') {
+      if ((user?.role as string) === 'TEACHER') {
         try {
           const teacherKlaseRes = await api.get('/klase/teacher');
           activeKlaseId = teacherKlaseRes.data.id;
@@ -119,7 +126,7 @@ export const KlaseLeaderboardPage: React.FC = () => {
   }
 
   // If user hasn't joined a klase yet (and is NOT a teacher)
-  if (user?.role !== 'TEACHER' && !user?.klaseId) {
+  if ((user?.role as string) !== 'TEACHER' && !user?.klaseId) {
     return (
       <AppShell>
         <div className="p-6 lg:p-8 max-w-md mx-auto">

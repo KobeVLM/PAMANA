@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
-  allowedRoles?: ('LEARNER' | 'PARENT' | 'TEACHER')[]
+  allowedRoles?: ('LEARNER' | 'PARENT')[]
 }
 
 /**
@@ -33,7 +33,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     // Redirect to their correct home based on role
-    const roleHome = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail'
+    const roleHome = user.role === 'PARENT' ? '/dashboard' : '/trail'
     return <Navigate to={roleHome} replace />
   }
 

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2, Info, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export const RegisterPage: React.FC = () => {
   const { register, user } = useAuth()
@@ -14,15 +14,14 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState<'LEARNER' | 'PARENT' | 'TEACHER'>('LEARNER')
-  const [joinCode, setJoinCode] = useState('')
+  const [role, setRole] = useState<'LEARNER' | 'PARENT'>('LEARNER')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   React.useEffect(() => {
     if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail'
+      const dest = user.role === 'PARENT' ? '/dashboard' : '/trail'
       navigate(dest, { replace: true })
     }
   }, [user, navigate])
@@ -49,7 +48,7 @@ export const RegisterPage: React.FC = () => {
     setErrors({})
     try {
       localStorage.setItem('show_intro_story', 'true')
-      await register(name.trim(), email.trim(), password, role, joinCode || undefined)
+      await register(name.trim(), email.trim(), password, role)
       navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -158,11 +157,11 @@ export const RegisterPage: React.FC = () => {
               {errors.confirmPassword && <p className="text-red-300 text-xs">{errors.confirmPassword}</p>}
             </div>
 
-            {/* Role Selection */}
+            {/* Role Selection — 2 columns */}
             <div className="space-y-1.5">
               <Label className="text-green-200 font-medium text-sm">Role</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['LEARNER', 'PARENT', 'TEACHER'] as const).map((r) => (
+              <div className="grid grid-cols-2 gap-2">
+                {(['LEARNER', 'PARENT'] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
@@ -173,33 +172,11 @@ export const RegisterPage: React.FC = () => {
                         : 'bg-white/10 text-white hover:bg-white/20'
                     }`}
                   >
-                    {r === 'LEARNER' ? 'Learner' : r === 'PARENT' ? 'Parent' : 'Teacher'}
+                    {r === 'LEARNER' ? 'Learner' : 'Parent'}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Join Code (optional) */}
-            {role === 'LEARNER' && (
-              <div className="space-y-1.5">
-                <Label htmlFor="join-code" className="text-green-200 font-medium text-sm flex items-center gap-1.5">
-                  Class Code
-                  <span className="text-green-400 text-xs font-normal">(optional)</span>
-                  <Info className="w-3.5 h-3.5 text-green-400" />
-                </Label>
-
-                <Input
-                  id="join-code"
-                  type="text"
-                  placeholder="6-digit code from your teacher"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
-                  className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl font-mono tracking-widest"
-                  maxLength={6}
-                  disabled={isLoading}
-                />
-              </div>
-            )}
 
             {/* General error */}
             {errors.general && (

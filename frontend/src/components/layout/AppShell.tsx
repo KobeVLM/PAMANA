@@ -5,8 +5,6 @@ import { cn } from '@/lib/utils'
 import { StoryModal } from '@/components/StoryModal'
 import {
   Map,
-  Trophy,
-  Users,
   BarChart2,
   Settings,
   LogOut,
@@ -19,39 +17,27 @@ interface NavItem {
   label: string
   to: string
   icon: React.ReactNode
-  roles: ('LEARNER' | 'PARENT' | 'TEACHER')[]
+  roles: ('LEARNER' | 'PARENT')[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   {
     label: 'Home',
-    to: '/home',  // ✅ CHANGED from '/' to '/home'
+    to: '/home',
     icon: <Map className="w-5 h-5" />,
     roles: ['LEARNER'],
-  },
-  {
-    label: 'Klase Mode',
-    to: '/klase',
-    icon: <Users className="w-5 h-5" />,
-    roles: ['TEACHER'],
-  },
-  {
-    label: 'Leaderboard',
-    to: '/leaderboard',
-    icon: <Trophy className="w-5 h-5" />,
-    roles: ['LEARNER', 'TEACHER'],
   },
   {
     label: 'Dashboard',
     to: '/dashboard',
     icon: <BarChart2 className="w-5 h-5" />,
-    roles: ['PARENT', 'TEACHER'],
+    roles: ['PARENT'],
   },
   {
     label: 'Settings',
     to: '/settings',
     icon: <Settings className="w-5 h-5" />,
-    roles: ['LEARNER', 'PARENT', 'TEACHER'],
+    roles: ['LEARNER', 'PARENT'],
   },
 ]
 
@@ -76,11 +62,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     (item) => user && item.roles.includes(user.role)
   )
 
-  const roleLabel = user?.role === 'LEARNER'
-    ? 'Mag-aaral'
-    : user?.role === 'PARENT'
-    ? 'Magulang'
-    : 'Guro'
+  const roleLabel = user?.role === 'LEARNER' ? 'Mag-aaral' : 'Magulang'
 
   return (
     <div className="h-screen w-full overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex">

@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'LEARNER' | 'PARENT' | 'TEACHER'
+  role: 'LEARNER' | 'PARENT'
   klaseId?: string
 }
 
@@ -11,7 +11,7 @@ export interface AuthContextType {
   token: string | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string, role: 'LEARNER' | 'PARENT' | 'TEACHER', joinCode?: string) => Promise<void>
+  register: (name: string, email: string, password: string, role: 'LEARNER' | 'PARENT', joinCode?: string) => Promise<void>
   logout: () => void
 }
 
@@ -36,14 +36,6 @@ export interface WordMasteryStatus {
   overallAccuracy: number
   hamonFailCount: number
   status: 'green' | 'yellow' | 'red' | 'grey'
-}
-
-export interface LeaderboardEntry {
-  rank: number
-  userId: string
-  learnerName: string
-  currentModuleName: string
-  modulesCompleted: number
 }
 
 export interface DashboardMetrics {

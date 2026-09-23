@@ -9,7 +9,7 @@ export const LandingPage: React.FC = () => {
 
   // Redirect if already logged in
   if (user) {
-    const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail';
+    const dest = user.role === 'PARENT' ? '/dashboard' : '/trail';
     return <Navigate to={dest} replace />;
   }
 
