@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import api from '@/lib/api'
 import type { DashboardMetrics, WordMasteryStatus } from '@/types'
-import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map } from 'lucide-react'
+import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map, Users, UserPlus, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   LineChart,
@@ -21,6 +21,12 @@ import {
   Pie,
   Cell,
 } from 'recharts'
+
+interface LinkedLearner {
+  id: string
+  name: string
+  email: string
+}
 
 interface ModuleAttemptHistory {
   id: string
@@ -110,9 +116,14 @@ export const ParentDashboardPage: React.FC = () => {
   const [targetUserId, setTargetUserId] = useState<string>('')
   const [moduleCompletion, setModuleCompletion] = useState<boolean[]>([false, false, false, false])
   const [linkedLearnerName, setLinkedLearnerName] = useState<string | null>(null)
-  const [learnerEmail, setLearnerEmail] = useState('')
+  const [learners, setLearners] = useState<LinkedLearner[]>([])
+  const [selectedLearnerId, setSelectedLearnerId] = useState<string>('')
+  const [isSwitchingLearner, setIsSwitchingLearner] = useState(false)
+  const [showLinkModal, setShowLinkModal] = useState(false)
+  const [learnerIdentifier, setLearnerIdentifier] = useState('')
   const [isLinking, setIsLinking] = useState(false)
   const [linkError, setLinkError] = useState('')
+  const [linkSuccess, setLinkSuccess] = useState('')
   const [moduleHistory, setModuleHistory] = useState<ModuleAttemptHistory[]>([])
 
   const formatHistoryData = (history: ModuleAttemptHistory[]) => {
@@ -129,34 +140,55 @@ export const ParentDashboardPage: React.FC = () => {
     return data;
   }
 
-  const loadDashboard = async () => {
+  const fetchLearnerData = async (uid: string) => {
+    setIsSwitchingLearner(true)
+    try {
+      const [metricsRes, progressRes, historyRes] = await Promise.all([
+        api.get(`/progress/${uid}/dashboard`),
+        api.get(`/modules/progress/${uid}`),
+        api.get(`/modules/history/${uid}`)
+      ])
+      setMetrics(metricsRes.data)
+      setModuleHistory(historyRes.data)
+      const completions = [false, false, false, false]
+      ;(progressRes.data as { moduleNumber: number; isComplete: boolean }[]).forEach((p) => {
+        if (p.moduleNumber >= 1 && p.moduleNumber <= 4) {
+          completions[p.moduleNumber - 1] = p.isComplete
+        }
+      })
+      setModuleCompletion(completions)
+    } catch (e) {
+      console.error('Error fetching learner data', e)
+    } finally {
+      setIsSwitchingLearner(false)
+    }
+  }
+
+  const loadDashboard = async (preferredLearnerId?: string) => {
     try {
       const linkedRes = await api.get('/parent/linked-learner')
-      if (linkedRes.data.hasLinkedLearner) {
-        const uid = linkedRes.data.learnerId
-        setTargetUserId(uid)
-        setLinkedLearnerName(linkedRes.data.learnerName)
+      if (linkedRes.data.hasLinkedLearner && linkedRes.data.learners && linkedRes.data.learners.length > 0) {
+        const learnerList: LinkedLearner[] = linkedRes.data.learners
+        setLearners(learnerList)
 
-        const [metricsRes, progressRes, historyRes] = await Promise.all([
-          api.get(`/progress/${uid}/dashboard`),
-          api.get(`/modules/progress/${uid}`),
-          api.get(`/modules/history/${uid}`)
-        ])
-        setMetrics(metricsRes.data)
-        setModuleHistory(historyRes.data)
-        const completions = [false, false, false, false]
-        ;(progressRes.data as { moduleNumber: number; isComplete: boolean }[]).forEach((p) => {
-          if (p.moduleNumber >= 1 && p.moduleNumber <= 4) {
-            completions[p.moduleNumber - 1] = p.isComplete
-          }
-        })
-        setModuleCompletion(completions)
+        // Select either the preferred, previously selected, or first learner
+        const activeId = preferredLearnerId || (learnerList.some(l => l.id === selectedLearnerId) ? selectedLearnerId : learnerList[0].id)
+        setSelectedLearnerId(activeId)
+        setTargetUserId(activeId)
+
+        const activeLearner = learnerList.find(l => l.id === activeId) || learnerList[0]
+        setLinkedLearnerName(activeLearner.name)
+
+        await fetchLearnerData(activeId)
       } else {
+        setLearners([])
         setMetrics(null)
         setTargetUserId('')
+        setSelectedLearnerId('')
+        setLinkedLearnerName(null)
       }
-    } catch {
-      // Ignore errors for MVP if not fully wired
+    } catch (e) {
+      console.error('Error loading dashboard', e)
     } finally {
       setIsLoading(false)
     }
@@ -166,19 +198,40 @@ export const ParentDashboardPage: React.FC = () => {
     if (user) loadDashboard()
   }, [user])
 
+  const handleSelectLearner = async (learnerId: string) => {
+    if (learnerId === targetUserId) return
+    setSelectedLearnerId(learnerId)
+    setTargetUserId(learnerId)
+    const active = learners.find(l => l.id === learnerId)
+    if (active) {
+      setLinkedLearnerName(active.name)
+    }
+    await fetchLearnerData(learnerId)
+  }
+
   const handleLinkLearner = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLinking(true)
     setLinkError('')
+    setLinkSuccess('')
     try {
-      await api.post('/parent/link-learner', { learnerEmail })
-      await loadDashboard()
+      const res = await api.post('/parent/link-learner', { identifier: learnerIdentifier.trim() })
+      setLinkSuccess(res.data?.message || 'Matagumpay na nai-link ang mag-aaral!')
+      const newLearnerId = res.data?.learnerId
+      setLearnerIdentifier('')
+      setTimeout(() => {
+        setShowLinkModal(false)
+        setLinkSuccess('')
+      }, 1000)
+      await loadDashboard(newLearnerId)
     } catch (err: any) {
-      setLinkError(err.response?.data?.error || 'Failed to link learner. Make sure the email is correct.')
+      setLinkError(err.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
     } finally {
       setIsLinking(false)
     }
   }
+
+  const activeLearner = learners.find(l => l.id === targetUserId)
 
   const atRiskWords = metrics?.wordMasteryList.filter((w) => w.status === 'red') ?? []
   const pieData = metrics
@@ -205,7 +258,7 @@ export const ParentDashboardPage: React.FC = () => {
     <AppShell>
       <div className="p-6 lg:p-8 max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-3xl font-heading font-bold text-white mb-1">
             Dashboard ng Magulang 📊
           </h1>
@@ -216,27 +269,95 @@ export const ParentDashboardPage: React.FC = () => {
           </p>
         </div>
 
+        {/* Learner Switcher Bar (when learners exist) */}
+        {learners.length > 0 && (
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Active Learner Identity */}
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pamana-green/40 to-emerald-600/30 border border-pamana-green/50 flex items-center justify-center text-pamana-gold font-heading font-black text-xl shadow-inner shrink-0">
+                {activeLearner?.name?.[0]?.toUpperCase() || 'L'}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-green-300/80 font-bold uppercase tracking-wider">Kasalukuyang Mag-aaral</span>
+                  {isSwitchingLearner && <Loader2 className="w-3.5 h-3.5 text-pamana-gold animate-spin" />}
+                </div>
+                <div className="text-xl font-heading font-bold text-white leading-tight">
+                  {activeLearner?.name}
+                </div>
+                <div className="text-xs text-green-300/60 font-mono">
+                  {activeLearner?.email}
+                </div>
+              </div>
+            </div>
+
+            {/* Switcher & Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Learner Selector Dropdown */}
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-green-200/70 font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
+                <div className="relative">
+                  <select
+                    value={targetUserId}
+                    onChange={(e) => handleSelectLearner(e.target.value)}
+                    disabled={isSwitchingLearner}
+                    className="appearance-none bg-black/40 border border-white/20 hover:border-pamana-green/50 rounded-xl px-4 py-2.5 pr-9 text-sm text-white font-medium outline-none focus:border-pamana-green transition-all cursor-pointer"
+                  >
+                    {learners.map((l) => (
+                      <option key={l.id} value={l.id} className="bg-green-950 text-white py-1">
+                        {l.name} ({l.email})
+                      </option>
+                    ))}
+                  </select>
+                  <Users className="w-4 h-4 text-green-300 absolute right-3 top-3 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Link Another Student Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  setLinkError('')
+                  setLinkSuccess('')
+                  setLearnerIdentifier('')
+                  setShowLinkModal(true)
+                }}
+                className="px-4 py-2.5 rounded-xl bg-pamana-green/20 hover:bg-pamana-green/30 border border-pamana-green/40 text-green-300 font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all hover:scale-102 active:scale-98 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>+ Mag-link ng Ibang Mag-aaral</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {!targetUserId && (
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 max-w-md mx-auto text-center mb-8">
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 sm:p-8 max-w-md mx-auto text-center mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3">
+              <UserPlus className="w-6 h-6" />
+            </div>
             <h2 className="text-xl font-bold text-white mb-2">I-link ang iyong anak</h2>
-            <p className="text-sm text-green-300 mb-6">Pakilagay ang email account ng iyong anak (Learner) upang masubaybayan ang kanilang progreso.</p>
+            <p className="text-sm text-green-300 mb-6">
+              Pakilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak (Learner) upang masubaybayan ang kanilang progreso.
+            </p>
             <form onSubmit={handleLinkLearner} className="space-y-4">
               <input
-                type="email"
-                placeholder="Email ng anak..."
-                value={learnerEmail}
-                onChange={(e) => setLearnerEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 outline-none focus:border-pamana-green"
+                type="text"
+                placeholder="Email o Student Code ng anak..."
+                value={learnerIdentifier}
+                onChange={(e) => setLearnerIdentifier(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green"
                 required
               />
               <button
                 type="submit"
                 disabled={isLinking}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:scale-105 transition-transform disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:scale-105 transition-transform disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isLinking ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'I-link ang Account'}
               </button>
               {linkError && <p className="text-red-400 text-sm mt-2">{linkError}</p>}
+              {linkSuccess && <p className="text-emerald-300 text-sm mt-2">{linkSuccess}</p>}
             </form>
           </div>
         )}
@@ -456,6 +577,76 @@ export const ParentDashboardPage: React.FC = () => {
           </p>
         </div>
         </>
+        )}
+
+        {/* Link Another Learner Modal */}
+        {showLinkModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-gradient-to-b from-green-950 via-green-900 to-emerald-950 border border-pamana-green/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="absolute top-5 right-5 text-white/50 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3 shadow-inner">
+                  <UserPlus className="w-7 h-7" />
+                </div>
+                <h3 className="text-2xl font-heading font-bold text-white">Mag-link ng Bagong Mag-aaral</h3>
+                <p className="text-xs sm:text-sm text-green-300/80 mt-1">
+                  Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
+                </p>
+              </div>
+
+              <form onSubmit={handleLinkLearner} className="space-y-4">
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs font-semibold text-green-300 uppercase tracking-wider">
+                    Email o Student Code
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Hal. maria@example.com o Student Code..."
+                    value={learnerIdentifier}
+                    onChange={(e) => setLearnerIdentifier(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green transition-all"
+                    required
+                  />
+                </div>
+
+                {linkError && (
+                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center">
+                    {linkError}
+                  </p>
+                )}
+                {linkSuccess && (
+                  <p className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2.5 text-center flex items-center justify-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span>{linkSuccess}</span>
+                  </p>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowLinkModal(false)}
+                    className="w-1/2 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 text-sm font-semibold transition-all cursor-pointer"
+                  >
+                    Kanselahin
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isLinking}
+                    className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold text-sm hover:brightness-110 active:scale-98 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         )}
       </div>
     </AppShell>

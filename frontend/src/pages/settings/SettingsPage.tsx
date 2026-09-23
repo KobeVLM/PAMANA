@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { Settings, User, Bell, Paintbrush, Check, Music } from 'lucide-react'
+import { Settings, User, Bell, Paintbrush, Check, Music, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth()
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
   const [musicEnabled, setMusicEnabled] = useState(true)
+  const [copiedCode, setCopiedCode] = useState(false)
+
+  const handleCopyCode = () => {
+    if (user?.id) {
+      navigator.clipboard.writeText(user.id)
+      setCopiedCode(true)
+      setTimeout(() => setCopiedCode(false), 2000)
+    }
+  }
 
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
@@ -56,7 +65,7 @@ export const SettingsPage: React.FC = () => {
               <User className="w-5 h-5 text-pamana-green" />
               Profile
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-1">
                 <label className="text-sm text-green-300 font-medium">Name</label>
                 <div className="p-3 bg-white/5 rounded-lg text-white">
@@ -64,9 +73,9 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Username</label>
+                <label className="text-sm text-green-300 font-medium">Email</label>
                 <div className="p-3 bg-white/5 rounded-lg text-white">
-                  {user?.name || 'Loading...'}
+                  {user?.email || 'Loading...'}
                 </div>
               </div>
               <div className="space-y-1">
@@ -76,6 +85,40 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* Student Code / Account ID for linking */}
+            {user?.role === 'LEARNER' && (
+              <div className="p-4 rounded-xl bg-pamana-green/10 border border-pamana-green/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-green-300 font-semibold uppercase tracking-wider mb-1">
+                    Student Code (ID para sa Magulang)
+                  </div>
+                  <div className="font-mono text-xs sm:text-sm text-white bg-black/30 px-3 py-1.5 rounded-lg border border-white/10 select-all inline-block break-all">
+                    {user?.id}
+                  </div>
+                  <p className="text-xs text-green-200/70 mt-1">
+                    Maaari mong ibigay ang Student Code o ang iyong email sa iyong magulang upang ma-link ang iyong dashboard.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyCode}
+                  className="px-4 py-2 rounded-lg bg-pamana-green/20 hover:bg-pamana-green/30 border border-pamana-green/40 text-green-300 font-medium text-xs flex items-center justify-center gap-1.5 transition-all self-start sm:self-center shrink-0 cursor-pointer"
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-400" />
+                      <span>Na-kopya na!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>Kopyahin ang Code</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </section>
 
           {/* 2-Column Grid: Preferences + Notifications */}
