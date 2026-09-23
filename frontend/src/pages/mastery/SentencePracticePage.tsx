@@ -5,7 +5,6 @@ import { HTML5Backend } from 'react-dnd-html5-backend'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
-import { useAudio } from '@/contexts/AudioContext'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
@@ -185,7 +184,6 @@ const DraggableWord: React.FC<DraggableWordProps> = ({
 
 export const SentencePracticePage: React.FC = () => {
   const navigate = useNavigate()
-  const { playAudio } = useAudio()
 
   const [task, setTask] = useState<SentenceTask | null>(null)
   const [arranged, setArranged] = useState<string[]>([])
@@ -199,7 +197,13 @@ export const SentencePracticePage: React.FC = () => {
   const [isComplete, setIsComplete] = useState(false)
   const [usedTaskIds, setUsedTaskIds] = useState<string[]>([])
 
+  const hasPlayedIntroRef = useRef(false)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Ensure intro is only auto-played once on initial session start
+  useEffect(() => {
+    hasPlayedIntroRef.current = true
+  }, [])
 
   // Preload wrong audio SFX
   useEffect(() => {
@@ -219,6 +223,38 @@ export const SentencePracticePage: React.FC = () => {
       if (wrongAudioRef.current) {
         wrongAudioRef.current.pause()
       }
+    }
+  }, [])
+
+  // Play subtle victory chime on correct answer without blocking UI
+  const playVictorySound = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      const now = ctx.currentTime
+
+      const playTone = (freq: number, start: number, duration: number) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(freq, start)
+
+        gain.gain.setValueAtTime(0.12, start)
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+
+        osc.start(start)
+        osc.stop(start + duration)
+      }
+
+      // Pleasant two-note subtle chime (G5 -> C6)
+      playTone(783.99, now, 0.2)
+      playTone(1046.5, now + 0.1, 0.3)
+    } catch {
+      // Audio synthesis not supported or blocked
     }
   }, [])
 
@@ -319,9 +355,7 @@ export const SentencePracticePage: React.FC = () => {
 
     if (correct) {
       setScore((s) => s + 1)
-      if (task.audioUrl) {
-        playAudio(task.audioUrl, true).catch(() => {})
-      }
+      playVictorySound()
     } else {
       try {
         wrongAudioRef.current?.play().catch(() => {})
@@ -332,6 +366,7 @@ export const SentencePracticePage: React.FC = () => {
   }
 
   const handleNext = () => {
+    hasPlayedIntroRef.current = true
     if (round >= MAX_ROUNDS) {
       setIsComplete(true)
     } else {
@@ -342,6 +377,7 @@ export const SentencePracticePage: React.FC = () => {
   }
 
   const handlePlayAgain = () => {
+    hasPlayedIntroRef.current = false
     setRound(1)
     setScore(0)
     setIsComplete(false)
@@ -475,6 +511,19 @@ export const SentencePracticePage: React.FC = () => {
             />
           </div>
 
+          {/* NPC Instruction - Lolo */}
+          <div className="mb-6">
+            <NPCDialogue
+              npc="lolo"
+              line={NPC_LINE}
+              audioUrl={NPC_AUDIO}
+              autoPlay={!hasPlayedIntroRef.current}
+              onAudioEnd={() => {
+                hasPlayedIntroRef.current = true
+              }}
+            />
+          </div>
+
           {/* Main Content Area */}
           {isLoading ? (
             <div className="flex flex-col items-center justify-center gap-4 py-16">
@@ -483,13 +532,6 @@ export const SentencePracticePage: React.FC = () => {
             </div>
           ) : task ? (
             <div className="space-y-6">
-              {/* NPC Instruction - Lolo */}
-              <NPCDialogue
-                npc="lolo"
-                line={NPC_LINE}
-                audioUrl={NPC_AUDIO}
-              />
-
               {/* Audio player if audioUrl is provided */}
               {task.audioUrl && (
                 <div className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl">
@@ -550,30 +592,41 @@ export const SentencePracticePage: React.FC = () => {
               {submitted && (
                 <div
                   className={cn(
-                    'p-4 rounded-2xl border flex items-center gap-3 animate-bounce-in',
+                    'p-4 rounded-2xl border flex items-center justify-between gap-3 animate-bounce-in',
                     isCorrect
                       ? 'bg-green-500/20 border-green-500/40 text-green-200'
                       : 'bg-red-500/20 border-red-500/40 text-red-200'
                   )}
                 >
-                  {isCorrect ? (
-                    <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-6 h-6 text-red-400 flex-shrink-0" />
-                  )}
-                  <div>
-                    <p className={cn('font-heading font-bold text-base', isCorrect ? 'text-green-300' : 'text-red-300')}>
-                      {isCorrect ? 'Tama! Napakahusay!' : 'Mali.'}
-                    </p>
-                    {!isCorrect && (
-                      <p className="text-sm text-red-100/90 mt-0.5">
-                        Tamang sagot:{' '}
-                        <span className="font-semibold text-white">
-                          {task.correctOrder.join(' ')}
-                        </span>
-                      </p>
+                  <div className="flex items-center gap-3">
+                    {isCorrect ? (
+                      <CheckCircle2 className="w-6 h-6 text-green-400 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-6 h-6 text-red-400 flex-shrink-0" />
                     )}
+                    <div>
+                      <p className={cn('font-heading font-bold text-base', isCorrect ? 'text-green-300' : 'text-red-300')}>
+                        {isCorrect ? 'Tama! Napakahusay!' : 'Mali.'}
+                      </p>
+                      {!isCorrect && (
+                        <p className="text-sm text-red-100/90 mt-0.5">
+                          Tamang sagot:{' '}
+                          <span className="font-semibold text-white">
+                            {task.correctOrder.join(' ')}
+                          </span>
+                        </p>
+                      )}
+                    </div>
                   </div>
+                  {task.audioUrl && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <AudioPlayer
+                        audioUrl={task.audioUrl}
+                        size="sm"
+                        label="Pakinggan ang pangungusap"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
