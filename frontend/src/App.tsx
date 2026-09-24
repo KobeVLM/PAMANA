@@ -32,9 +32,6 @@ const VocabularyModulePage = React.lazy(() =>
 const SentenceModulePage = React.lazy(() =>
   import('@/pages/modules/SentenceModulePage').then((m) => ({ default: m.SentenceModulePage }))
 )
-const HamonGamePage = React.lazy(() =>
-  import('@/pages/modules/HamonGamePage').then((m) => ({ default: m.HamonGamePage }))
-)
 
 // Lazy-loaded mastery practice pages
 const SyllablePracticePage = React.lazy(() =>
@@ -127,11 +124,7 @@ function App() {
               />
               <Route
                 path="/modules/:moduleNumber/hamon"
-                element={
-                  <ProtectedRoute allowedRoles={['LEARNER']}>
-                    <HamonGamePage />
-                  </ProtectedRoute>
-                }
+                element={<Navigate to="/trail" replace />}
               />
 
               {/* Mastery Practice Routes */}

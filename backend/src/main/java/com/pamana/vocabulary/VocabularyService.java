@@ -224,8 +224,8 @@ public class VocabularyService extends BaseGameService {
         // are green)
         evaluateDomainCompletion(userId);
 
-        // Evaluate Hamon ng Pamana milestones (mastered words count mod 5 == 0)
-        boolean hamonTriggered = hamonService.shouldTriggerHamon(userId);
+        // Hamon ng Pamana is disabled in favor of Mastery Practice
+        boolean hamonTriggered = false;
 
         return new WordMasteryResponse(
                 wordId,
