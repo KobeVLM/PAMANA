@@ -416,16 +416,16 @@ export const ParentDashboardPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Hamon Pass Rate */}
+          {/* Mastery Practice */}
           <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-pamana-gold/20 flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-pamana-gold" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Hamon ng Pamana</span>
+              <span className="text-green-300 font-medium text-sm">Pagsasanay sa Mastery</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-2">{metrics?.hamonPassRate ?? 0}%</div>
-            <div className="text-xs text-green-400">Pass Rate sa mga hamon</div>
+            <div className="text-3xl font-bold text-white mb-2">{metrics?.trailCompletion ?? 0}%</div>
+            <div className="text-xs text-green-400">Pangkalahatang pagsulong</div>
           </div>
 
           {/* Avg Session Duration */}
