@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import { AppShell } from '@/components/layout/AppShell'
@@ -184,6 +185,24 @@ const DraggableWord: React.FC<DraggableWordProps> = ({
 
 export const SentencePracticePage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  // Route guard: check if Module 4 is complete
+  useEffect(() => {
+    const checkPrerequisite = async () => {
+      if (!user?.id) return
+      try {
+        const res = await api.get(`/modules/progress/${user.id}`)
+        const mod = res.data.find((p: any) => p.moduleNumber === 4)
+        if (!mod || !mod.isComplete) {
+          navigate('/trail', { replace: true })
+        }
+      } catch (err) {
+        console.warn('Could not verify module 4 completion', err)
+      }
+    }
+    checkPrerequisite()
+  }, [user?.id, navigate])
 
   const [task, setTask] = useState<SentenceTask | null>(null)
   const [arranged, setArranged] = useState<string[]>([])

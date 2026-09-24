@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
@@ -65,6 +66,24 @@ const generateFallbackOptions = (word: VocabWord, pool: VocabWord[]): ImageOptio
 
 export const ImagePracticePage: React.FC = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+
+  // Route guard: check if Module 3 is complete
+  useEffect(() => {
+    const checkPrerequisite = async () => {
+      if (!user?.id) return
+      try {
+        const res = await api.get(`/modules/progress/${user.id}`)
+        const mod = res.data.find((p: any) => p.moduleNumber === 3)
+        if (!mod || !mod.isComplete) {
+          navigate('/trail', { replace: true })
+        }
+      } catch (err) {
+        console.warn('Could not verify module 3 completion', err)
+      }
+    }
+    checkPrerequisite()
+  }, [user?.id, navigate])
 
   const [allWords, setAllWords] = useState<VocabWord[]>([])
   const [roundWords, setRoundWords] = useState<VocabWord[]>([])

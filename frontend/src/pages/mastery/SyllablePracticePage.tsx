@@ -118,6 +118,22 @@ export const SyllablePracticePage: React.FC = () => {
   const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
   const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Route guard: check if Module 1 is complete
+  useEffect(() => {
+    const checkPrerequisite = async () => {
+      if (!user?.id) return
+      try {
+        const res = await api.get(`/modules/progress/${user.id}`)
+        const mod = res.data.find((p: any) => p.moduleNumber === 1)
+        if (!mod || !mod.isComplete) {
+          navigate('/trail', { replace: true })
+        }
+      } catch (err) {
+        console.warn('Could not verify module 1 completion', err)
+      }
+    }
+    checkPrerequisite()
+  }, [user?.id, navigate])
 
   // Preload sound effects
   useEffect(() => {
