@@ -9,7 +9,7 @@ import { OptionGrid } from '@/components/game/OptionGrid'
 import { Badge } from '@/components/ui/badge'
 import api from '@/lib/api'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react'
 
 type SpiralStep = 'pakinggan' | 'kilalanin' | 'basahin' | 'gamitin'
 
@@ -67,7 +67,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [pakingganDone, setPakingganDone] = useState(false)
   const [wordComplete, setWordComplete] = useState(false)
   const [moduleComplete, setModuleComplete] = useState(false)
-  const [hamonTriggered, setHamonTriggered] = useState(false)
   const [gamitinSentence, setGamitinSentence] = useState<string>("Ang aking _____ ay malaki at maliwanag.")
   const [upcomingWords, setUpcomingWords] = useState<string[]>(
     moduleNumber === 3 
@@ -188,16 +187,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
 
     setIsSubmitting(true)
     try {
-      const res = await api.post('/vocabulary/progress', {
+      await api.post('/vocabulary/progress', {
         userId: user?.id,
         wordId: currentWord.wordId,
         step: currentStep,
         correct: isCorrect,
       })
-
-      if (res.data.hamonTriggered) {
-        setHamonTriggered(true)
-      }
 
       setTimeout(() => {
         if (isCorrect) {
@@ -233,80 +228,51 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
     return (
       <AppShell>
         <div className="min-h-full flex items-center justify-center p-8">
-          <div className="max-w-sm text-center animate-bounce-in">
+          <div className="max-w-md w-full text-center animate-bounce-in">
             <div className="text-6xl mb-6">🌟</div>
             <h2 className="text-2xl font-heading font-bold text-white mb-3">Natapos ang {moduleTitle}!</h2>
             <p className="text-green-300 mb-6">Kahanga-hanga! Natuto ka ng lahat ng salita.</p>
-            <button onClick={() => navigate('/trail')} className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold">
-              Bumalik sa Pamana Trail
-            </button>
-          </div>
-        </div>
-      </AppShell>
-    )
-  }
+            <div className="flex flex-row items-center justify-center gap-5 mt-6">
+              {/* RETRY BUTTON (Red / Rose Jelly Pill) */}
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await api.delete('/modules/reset/' + user?.id + '/' + moduleNumber)
+                    window.location.reload()
+                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                  } catch (e) {
+                    alert("Nagkaroon ng error. Subukan muli.")
+                  }
+                }}
+                className="group relative overflow-hidden rounded-full min-w-[140px] px-7 py-3 text-white flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#ff3d77] via-[#e6005c] to-[#990033] border-[3px] border-[#ff94b8] border-b-[6px] border-b-[#660022] shadow-[0_8px_20px_rgba(153,0,51,0.5)] hover:brightness-110 active:translate-y-1 active:border-b-[3px] active:shadow-[0_4px_10px_rgba(153,0,51,0.4)] transition-all cursor-pointer"
+              >
+                {/* Glossy specular highlight dots matching casual game buttons */}
+                <div className="absolute top-1.5 left-4 w-5 h-2 bg-white/70 rounded-full blur-[0.4px] pointer-events-none" />
+                <div className="absolute bottom-1.5 right-4 w-3.5 h-1.5 bg-white/30 rounded-full blur-[0.4px] pointer-events-none" />
+                
+                <RotateCcw className="w-5 h-5 stroke-[2.75] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]" />
+                <span className="font-heading font-black tracking-wider text-base uppercase drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">
+                  RETRY
+                </span>
+              </button>
 
-  const [isSkippingHamon, setIsSkippingHamon] = useState(false)
-  const [isSkippingHamonLoading, setIsSkippingHamonLoading] = useState(false)
+              {/* NEXT BUTTON (Juicy Green Jelly Pill) */}
+              <button
+                type="button"
+                onClick={() => navigate('/trail')}
+                className="group relative overflow-hidden rounded-full min-w-[140px] px-7 py-3 text-white flex items-center justify-center gap-2.5 bg-gradient-to-b from-[#22c55e] via-[#16a34a] to-[#0f5128] border-[3px] border-[#86efac] border-b-[6px] border-b-[#063319] shadow-[0_8px_20px_rgba(6,51,25,0.5)] hover:brightness-110 active:translate-y-1 active:border-b-[3px] active:shadow-[0_4px_10px_rgba(6,51,25,0.4)] transition-all cursor-pointer"
+              >
+                {/* Glossy specular highlight dots matching casual game buttons */}
+                <div className="absolute top-1.5 left-4 w-5 h-2 bg-white/70 rounded-full blur-[0.4px] pointer-events-none" />
+                <div className="absolute bottom-1.5 right-4 w-3.5 h-1.5 bg-white/30 rounded-full blur-[0.4px] pointer-events-none" />
 
-  if (hamonTriggered) {
-    if (isSkippingHamon) {
-      return (
-        <AppShell>
-          <div className="min-h-full flex items-center justify-center p-8">
-            <div className="max-w-sm text-center animate-bounce-in bg-pamana-surface p-6 rounded-2xl shadow-xl">
-              <h2 className="text-xl font-bold text-white mb-4">Lalaktawan ang Hamon?</h2>
-              <p className="text-green-300 text-sm mb-6">Sigurado ka ba? Ang paglaktaw sa hamon ay itatala na "0%" para sa sesyon na ito.</p>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => setIsSkippingHamon(false)} 
-                  className="flex-1 py-2 rounded-xl bg-gray-600 text-white font-bold hover:bg-gray-500 transition-colors"
-                  disabled={isSkippingHamonLoading}
-                >
-                  Bumalik
-                </button>
-                <button 
-                  onClick={async () => {
-                    setIsSkippingHamonLoading(true)
-                    try {
-                      await api.post('/hamon/skip')
-                      setHamonTriggered(false)
-                      fetchNextWord()
-                    } catch (e) {
-                      console.error(e)
-                    } finally {
-                      setIsSkippingHamonLoading(false)
-                      setIsSkippingHamon(false)
-                    }
-                  }} 
-                  className="flex-1 py-2 rounded-xl bg-red-500 text-white font-bold disabled:opacity-50 hover:bg-red-400 transition-colors"
-                  disabled={isSkippingHamonLoading}
-                >
-                  {isSkippingHamonLoading ? '...' : 'Oo, Laktawan'}
-                </button>
-              </div>
+                <span className="font-heading font-black tracking-wider text-base uppercase drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]">
+                  NEXT
+                </span>
+                <ArrowRight className="w-5 h-5 stroke-[2.75] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]" />
+              </button>
             </div>
-          </div>
-        </AppShell>
-      )
-    }
-
-    return (
-      <AppShell>
-        <div className="min-h-full flex items-center justify-center p-8">
-          <div className="max-w-sm text-center animate-bounce-in">
-            <div className="text-6xl mb-4">🏆</div>
-            <h2 className="text-2xl font-heading font-bold text-white mb-2">Hamon ng Pamana!</h2>
-            <p className="text-green-300 mb-6">Sulitin ang iyong natutunang mga salita sa espesyal na hamon!</p>
-            <button
-              onClick={() => navigate(`/modules/${moduleNumber}/hamon`)}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-gold to-amber-500 text-white font-bold mb-3 hover:opacity-90 transition-opacity"
-            >
-              Tumanggap ng Hamon!
-            </button>
-            <button onClick={() => setIsSkippingHamon(true)} className="w-full py-2 text-green-400 text-sm hover:text-green-300 transition-colors">
-              Magpatuloy sa susunod na salita →
-            </button>
           </div>
         </div>
       </AppShell>
