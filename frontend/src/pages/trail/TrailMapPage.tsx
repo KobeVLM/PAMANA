@@ -23,6 +23,21 @@ const TRAIL_NODES: TrailNode[] = [
   { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 87, y: 21 },
 ]
 
+type MedalTier = 'bronze' | 'silver' | 'gold'
+
+const getMedalTier = (accuracy: number | null): MedalTier => {
+  if (accuracy === null) return 'bronze'
+  if (accuracy >= 95) return 'gold'
+  if (accuracy >= 85) return 'silver'
+  return 'bronze'
+}
+
+const MEDAL_STYLES: Record<MedalTier, { bgColor: string; ringColor: string }> = {
+  bronze: { bgColor: 'bg-[#8B5E3C]', ringColor: 'ring-[#CD7F32]' },
+  silver: { bgColor: 'bg-[#6B7280]', ringColor: 'ring-[#C0C0C0]' },
+  gold:   { bgColor: 'bg-[#B8860B]', ringColor: 'ring-[#FFD700]' },
+}
+
 export const TrailMapPage: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -69,14 +84,8 @@ export const TrailMapPage: React.FC = () => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
 
-    const isModule4Complete = getProgress(4)?.isComplete ?? false
-
     if (progress?.isComplete) {
-      if (!isModule4Complete) {
-        setToastMessage("Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!")
-        setTimeout(() => setToastMessage(null), 4000)
-        return
-      }
+      // Allow retry of any completed module — show confirmation modal directly
       setConfirmModal({ isOpen: true, node })
     } else {
       navigate(`/modules/${node.moduleNumber}`)
@@ -108,9 +117,11 @@ export const TrailMapPage: React.FC = () => {
     let ringColor = 'ring-[#D0C2AE]'
 
     if (isComplete) {
-      bgColor = 'bg-[#2B6D4F]'
+      const medal = getMedalTier(progress?.accuracy ?? null)
+      const medalStyle = MEDAL_STYLES[medal]
+      bgColor = medalStyle.bgColor
+      ringColor = medalStyle.ringColor
       icon = <Star className="w-10 h-10 text-[#FDD835] fill-[#FDD835]" />
-      ringColor = 'ring-[#1F543C]'
     } else if (isActive && isUnlocked) {
       bgColor = 'bg-[#E88C30]'
       icon = (
@@ -145,6 +156,16 @@ export const TrailMapPage: React.FC = () => {
         <div className="bg-white px-3 py-1.5 rounded-2xl shadow-md text-center border-2 border-gray-100 min-w-[110px]">
           <div className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Module {node.moduleNumber}</div>
           <div className="text-sm font-extrabold text-gray-700 leading-none">{node.titleFil}</div>
+          {isComplete && progress?.accuracy != null && (
+            <div className={cn(
+              "text-[10px] font-bold mt-1 leading-none",
+              getMedalTier(progress.accuracy) === 'gold' ? 'text-[#B8860B]' :
+              getMedalTier(progress.accuracy) === 'silver' ? 'text-[#6B7280]' :
+              'text-[#CD7F32]'
+            )}>
+              ⭐ {Math.round(progress.accuracy)}%
+            </div>
+          )}
         </div>
       </div>
     )
@@ -216,9 +237,9 @@ export const TrailMapPage: React.FC = () => {
               <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="w-8 h-8 fill-current" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Mastery Mode</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Ulitin ang Module</h2>
               <p className="text-gray-600">
-                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ang iyong panibagong score ay marerekord.
+                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ma-re-reset ang iyong progress at maaari mong pagbutihin ang iyong score.
               </p>
             </div>
             
