@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAudio } from '@/contexts/AudioContext'
 import { cn } from '@/lib/utils'
 import { StoryModal } from '@/components/StoryModal'
 import {
@@ -47,11 +48,13 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { user, logout } = useAuth()
+  const { stopAudio } = useAudio()
   const navigate = useNavigate()
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const handleLogout = () => {
+    stopAudio()
     logout()
     navigate('/login')
   }

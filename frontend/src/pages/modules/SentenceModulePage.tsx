@@ -65,7 +65,13 @@ const DraggableWord: React.FC<DraggableWordProps> = ({ word, index, onMove, isPl
 export const SentenceModulePage: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const { playAudio } = useAudio()
+  const { playAudio, stopAudio } = useAudio()
+
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [stopAudio])
 
   const [task, setTask] = useState<SentenceTask | null>(null)
   const [orderedWords, setOrderedWords] = useState<string[]>([])

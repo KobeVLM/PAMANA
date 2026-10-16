@@ -40,9 +40,12 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
     onAudioEndRef.current = onAudioEnd
   }, [onAudioEnd])
 
+  const lastPlayedUrlRef = useRef<string | null>(null)
+
   useEffect(() => {
     let isCurrent = true
-    if (audioUrl && autoPlay) {
+    if (audioUrl && autoPlay && lastPlayedUrlRef.current !== audioUrl) {
+      lastPlayedUrlRef.current = audioUrl
       playAudio(audioUrl, true)
         .catch(console.error)
         .finally(() => {

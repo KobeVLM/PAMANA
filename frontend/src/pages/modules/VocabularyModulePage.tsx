@@ -57,7 +57,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
   const [currentStep, setCurrentStep] = useState<typeof SPIRAL_STEPS[number]>('pakinggan')
   const [matchOptions, setMatchOptions] = useState<MatchOption[]>([])
   
-  const { playAudio } = useAudio()
+  const { playAudio, stopAudio } = useAudio()
 
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [correctId, setCorrectId] = useState<string | null>(null)
@@ -158,6 +158,20 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
       voiceAudioRef.current.preload = 'auto'
     }
   }, [currentWord])
+
+  useEffect(() => {
+    return () => {
+      stopAudio()
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.pause()
+        voiceAudioRef.current.src = ''
+      }
+      if (wrongAudioRef.current) {
+        wrongAudioRef.current.pause()
+        wrongAudioRef.current.src = ''
+      }
+    }
+  }, [stopAudio])
 
   const handleStepSelect = useCallback(async (optionId: string) => {
     if (!currentWord || selectedId || isSubmitting) return
@@ -348,6 +362,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber, domain: _d
               npc="lolo" 
               line={NPC_LINES[currentStep]} 
               audioUrl={`/static/assets/audio/npc/lolo_mod3_${currentStep}.mp3`}
+              autoPlay={!selectedId && !wordComplete}
             />
 
             {/* Pakinggan step: word intro + auto-play */}

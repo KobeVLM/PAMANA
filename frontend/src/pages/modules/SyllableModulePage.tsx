@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAudio } from '@/contexts/AudioContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
@@ -51,6 +52,7 @@ const NPC_LINES: Record<SubLevel, string> = {
 
 export const SyllableModulePage: React.FC = () => {
   const { user } = useAuth()
+  const { stopAudio } = useAudio()
   const navigate = useNavigate()
 
   const [status, setStatus] = useState<SyllableStatus | null>(null)
@@ -150,6 +152,20 @@ export const SyllableModulePage: React.FC = () => {
       voiceAudioRef.current.preload = 'auto'
     }
   }, [currentSet])
+
+  useEffect(() => {
+    return () => {
+      stopAudio()
+      if (voiceAudioRef.current) {
+        voiceAudioRef.current.pause()
+        voiceAudioRef.current.src = ''
+      }
+      if (wrongAudioRef.current) {
+        wrongAudioRef.current.pause()
+        wrongAudioRef.current.src = ''
+      }
+    }
+  }, [stopAudio])
 
   const handleSelect = useCallback(async (optionId: string) => {
     if (!currentSet || selectedId || isSubmitting) return
