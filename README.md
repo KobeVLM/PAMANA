@@ -4,8 +4,8 @@
   # 🇵🇭 PAMANA: Heritage Quest
   **A gamified web-based adventure teaching Filipino to culturally disconnected Grade 2 learners - Generation Alpha.**
 
-  [![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-  [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+  [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
+  [![Vite](https://img.shields.io/badge/Vite-8.0-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
   [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white)](https://spring.io/projects/spring-boot)
   [![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
   [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
@@ -26,11 +26,9 @@ The core game narrative follows a Grade 2 child visiting their grandparents (Lol
 * **Module 1 - Syllable Recognition:** Games like *Pagsama* (blending), *Pakinggan* (listening), and *Kilalanin* (recognition) with native Filipino audio.
 * **Modules 2 & 3 - Vocabulary Spiraling:** A 4-step learning loop (Pakinggan-Kilalanin-Basahin-Gamitin) for body parts, family members, and home items.
 * **Module 4 - Sentence Construction:** Drag-and-drop word arrangement to form declarative (*paturol*) and interrogative (*patanong*) sentences.
-* **Hamon ng Pamana:** An auto-triggered assessment mini-game (Slot Machine & Wheel of Words) to test mastery before advancing.
 
-### 👥 For Parents & Teachers
+### 👥 For Parents
 * **Parent Dashboard:** Real-time analytics, session PDF report generation, and tracking of at-risk vocabulary words.
-* **Teacher "Klase Mode":** Real-time classroom leaderboards powered by WebSockets, allowing teachers to track all students actively playing.
 
 ---
 
@@ -47,7 +45,6 @@ PAMANA leverages a modern, high-performance tech stack designed for scalability 
 * **Spring Boot 3.x (Java):** RESTful API providing core business logic, module progression locks, and JWT token validation.
 * **Spring Security & JPA:** Enterprise-grade security policies and data persistence.
 * **Apache PDFBox:** Dynamic generation of Parent Progress PDF reports.
-* **WebSockets (STOMP):** Asynchronous, event-driven updates for the live Klase Leaderboard.
 
 ### Database
 * **Local Development:** PostgreSQL 15+ for zero-latency, offline development.
