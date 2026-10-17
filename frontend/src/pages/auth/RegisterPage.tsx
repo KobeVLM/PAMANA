@@ -49,7 +49,7 @@ export const RegisterPage: React.FC = () => {
     try {
       localStorage.setItem('show_intro_story', 'true')
       await register(name.trim(), email.trim(), password, role)
-      navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
+      navigate('/login', { state: { registeredEmail: email.trim() } })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       const msg = axiosErr?.response?.data?.message ?? 'An error occurred. Please try again.'
@@ -81,7 +81,7 @@ export const RegisterPage: React.FC = () => {
           {/* Logo */}
           <div className="flex flex-col items-center mb-6">
             <div className="w-20 h-20 flex items-center justify-center mb-1 animate-float overflow-hidden rounded-full p-2 bg-green-500/10 backdrop-blur-sm border border-white/20">
-              <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
+              <img src="/images/Logo1.png" alt="PAMANA Logo" width={96} height={96} decoding="async" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
             <h1 className="text-2xl font-heading font-bold text-white">PAMANA</h1>
             <p className="text-green-300 text-sm mt-1">Start your journey</p>
@@ -99,8 +99,10 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setName(e.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 disabled={isLoading}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={errors.name ? 'name-error' : undefined}
               />
-              {errors.name && <p className="text-red-300 text-xs">{errors.name}</p>}
+              {errors.name && <p id="name-error" role="alert" className="text-red-300 text-xs">{errors.name}</p>}
             </div>
 
             {/* Email */}
@@ -114,8 +116,10 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 disabled={isLoading}
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={errors.email ? 'email-error' : undefined}
               />
-              {errors.email && <p className="text-red-300 text-xs">{errors.email}</p>}
+              {errors.email && <p id="email-error" role="alert" className="text-red-300 text-xs">{errors.email}</p>}
             </div>
 
             {/* Password */}
@@ -130,16 +134,19 @@ export const RegisterPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
                   disabled={isLoading}
+                  aria-invalid={Boolean(errors.password)}
+                  aria-describedby={errors.password ? 'password-error' : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-300 text-xs">{errors.password}</p>}
+              {errors.password && <p id="password-error" role="alert" className="text-red-300 text-xs">{errors.password}</p>}
             </div>
 
             {/* Confirm Password */}
@@ -153,18 +160,21 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 disabled={isLoading}
+                aria-invalid={Boolean(errors.confirmPassword)}
+                aria-describedby={errors.confirmPassword ? 'confirm-error' : undefined}
               />
-              {errors.confirmPassword && <p className="text-red-300 text-xs">{errors.confirmPassword}</p>}
+              {errors.confirmPassword && <p id="confirm-error" role="alert" className="text-red-300 text-xs">{errors.confirmPassword}</p>}
             </div>
 
             {/* Role Selection — 2 columns */}
             <div className="space-y-1.5">
-              <Label className="text-green-200 font-medium text-sm">Role</Label>
-              <div className="grid grid-cols-2 gap-2">
+              <span className="block text-green-200 font-medium text-sm">Role</span>
+              <div role="group" aria-label="Role" className="grid grid-cols-2 gap-2">
                 {(['LEARNER', 'PARENT'] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
+                    aria-pressed={role === r}
                     onClick={() => setRole(r)}
                     className={`h-10 text-xs font-bold rounded-xl transition-all ${
                       role === r
@@ -180,7 +190,7 @@ export const RegisterPage: React.FC = () => {
 
             {/* General error */}
             {errors.general && (
-              <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl">
+              <div role="alert" className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl">
                 <p className="text-red-300 text-sm text-center">{errors.general}</p>
               </div>
             )}

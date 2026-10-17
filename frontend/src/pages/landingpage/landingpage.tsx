@@ -20,7 +20,7 @@ export const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <img src="/images/Logo1.png" alt="PAMANA Logo" className="h-8 w-8 rounded-full object-cover" />
+              <img src="/images/Logo1.png" alt="PAMANA Logo" width={32} height={32} decoding="async" className="h-8 w-8 rounded-full object-cover" />
               <span className="text-white font-bold text-xl">PAMANA</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -49,6 +49,10 @@ export const LandingPage: React.FC = () => {
           <img 
             src="/images/LandingPage1.png" 
             alt="Filipino Heritage" 
+            width={1376}
+            height={768}
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover opacity-70"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-green-950/50 via-green-900/30 to-green-950" />

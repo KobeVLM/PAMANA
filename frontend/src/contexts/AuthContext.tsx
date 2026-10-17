@@ -21,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionStorage.removeItem('pamana_token')
         sessionStorage.removeItem('pamana_user')
       }
-    } catch (e) {
+    } catch {
       sessionStorage.removeItem('pamana_token')
       sessionStorage.removeItem('pamana_user')
     } finally {
@@ -42,11 +42,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     name: string,
     email: string,
     password: string,
-    role: 'LEARNER' | 'PARENT',
-    joinCode?: string
+    role: 'LEARNER' | 'PARENT'
   ) => {
-    // 1. Register the user
-    await api.post('/auth/register', { name, email, password, role, joinCode })
+    await api.post('/auth/register', { name, email, password, role })
   }, [])
 
   const logout = useCallback(() => {

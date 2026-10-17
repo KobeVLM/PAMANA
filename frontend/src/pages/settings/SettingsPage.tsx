@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { Settings, User, Bell, Paintbrush, Check, Music, Copy } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { Settings, User, Bell, Paintbrush, Check, Music, Copy, Languages } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth()
+  const { showEnglish, setShowEnglish } = useLanguage()
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
   const [musicEnabled, setMusicEnabled] = useState(true)
   const [copiedCode, setCopiedCode] = useState(false)
@@ -21,7 +24,6 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
     if (savedChar === 'Lalaki' || savedChar === 'Babae') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCharacter(savedChar as 'Lalaki' | 'Babae')
     }
 
@@ -37,10 +39,9 @@ export const SettingsPage: React.FC = () => {
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
-  const toggleMusic = () => {
-    const newVal = !musicEnabled
-    setMusicEnabled(newVal)
-    localStorage.setItem('pamana_bgm', newVal ? 'true' : 'false')
+  const handleMusicChange = (checked: boolean) => {
+    setMusicEnabled(checked)
+    localStorage.setItem('pamana_bgm', checked ? 'true' : 'false')
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
@@ -67,19 +68,19 @@ export const SettingsPage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Name</label>
+                <span className="text-sm text-green-300 font-medium">Name</span>
                 <div className="p-3 bg-white/5 rounded-lg text-white">
                   {user?.name || 'Loading...'}
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Email</label>
+                <span className="text-sm text-green-300 font-medium">Email</span>
                 <div className="p-3 bg-white/5 rounded-lg text-white">
                   {user?.email || 'Loading...'}
                 </div>
               </div>
               <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Role</label>
+                <span className="text-sm text-green-300 font-medium">Role</span>
                 <div className="p-3 bg-white/5 rounded-lg text-white capitalize">
                   {user?.role?.toLowerCase() || 'Loading...'}
                 </div>
@@ -133,9 +134,11 @@ export const SettingsPage: React.FC = () => {
 
                 <div className="space-y-4 max-w-sm">
                   <div className="space-y-2">
-                    <label className="text-sm text-green-300 font-medium">Choose your character</label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
+                    <span className="block text-sm text-green-300 font-medium">Choose your character</span>
+                    <div role="group" aria-label="Choose your character" className="grid grid-cols-2 gap-4 mt-2">
                       <button
+                        type="button"
+                        aria-pressed={character === 'Lalaki'}
                         onClick={() => handleCharacterChange('Lalaki')}
                         className={cn(
                           "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300",
@@ -147,6 +150,8 @@ export const SettingsPage: React.FC = () => {
                         Male {character === 'Lalaki' && <Check className="w-4 h-4 text-pamana-green" />}
                       </button>
                       <button
+                        type="button"
+                        aria-pressed={character === 'Babae'}
                         onClick={() => handleCharacterChange('Babae')}
                         className={cn(
                           "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300",
@@ -161,26 +166,32 @@ export const SettingsPage: React.FC = () => {
                   </div>
 
                   <div className="space-y-2 pt-4 border-t border-white/10">
-                    <label className="text-sm text-green-300 font-medium">Music</label>
+                    <span className="block text-sm text-green-300 font-medium">Music</span>
                     <div className="flex items-center justify-between p-4 rounded-xl border-2 border-white/10 bg-white/5">
                       <div className="flex items-center gap-3 text-green-200">
                         <Music className="w-5 h-5 text-pamana-green" />
                         <span className="font-medium">Background Music</span>
                       </div>
-                      <button
-                        onClick={toggleMusic}
-                        className={cn(
-                          "w-12 h-6 rounded-full transition-colors relative",
-                          musicEnabled ? "bg-pamana-green/80" : "bg-white/20"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-4 h-4 rounded-full bg-white absolute top-1 transition-transform",
-                            musicEnabled ? "translate-x-7" : "translate-x-1"
-                          )}
-                        />
-                      </button>
+                      <Switch
+                        checked={musicEnabled}
+                        onCheckedChange={handleMusicChange}
+                        aria-label="Background Music"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-4 border-t border-white/10">
+                    <span className="block text-sm text-green-300 font-medium">Language / Wika</span>
+                    <div className="flex items-center justify-between p-4 rounded-xl border-2 border-white/10 bg-white/5">
+                      <div className="flex items-center gap-3 text-green-200">
+                        <Languages className="w-5 h-5 text-pamana-green" />
+                        <span className="font-medium">Show English translations</span>
+                      </div>
+                      <Switch
+                        checked={showEnglish}
+                        onCheckedChange={setShowEnglish}
+                        aria-label="Show English translations"
+                      />
                     </div>
                   </div>
                 </div>

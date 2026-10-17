@@ -3,11 +3,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import {
+  Modal,
+  ModalContent,
+  ModalTitle,
+  ModalDescription,
+} from '@/components/ui/modal'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import api from '@/lib/api'
 import type { DashboardMetrics, WordMasteryStatus } from '@/types'
-import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map, Users, UserPlus, X, Check } from 'lucide-react'
+import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map, Users, UserPlus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   LineChart,
@@ -131,7 +137,7 @@ export const ParentDashboardPage: React.FC = () => {
     const maxAttempt = Math.max(...history.map(h => h.attemptNumber));
     const data = [];
     for (let i = 1; i <= maxAttempt; i++) {
-      const row: any = { attempt: `Attempt ${i}` };
+      const row: Record<string, string | number> = { attempt: `Attempt ${i}` };
       history.filter(h => h.attemptNumber === i).forEach(h => {
         row[`module${h.moduleNumber}`] = h.accuracy;
       });
@@ -196,6 +202,8 @@ export const ParentDashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (user) loadDashboard()
+    // Intentionally runs when the authenticated parent changes, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const handleSelectLearner = async (learnerId: string) => {
@@ -224,8 +232,9 @@ export const ParentDashboardPage: React.FC = () => {
         setLinkSuccess('')
       }, 1000)
       await loadDashboard(newLearnerId)
-    } catch (err: any) {
-      setLinkError(err.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setLinkError(axiosErr.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
     } finally {
       setIsLinking(false)
     }
@@ -295,9 +304,10 @@ export const ParentDashboardPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               {/* Learner Selector Dropdown */}
               <div className="flex items-center gap-2">
-                <label className="text-xs text-green-200/70 font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
+                <label htmlFor="learner-select" className="text-xs text-green-200/70 font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
                 <div className="relative">
                   <select
+                    id="learner-select"
                     value={targetUserId}
                     onChange={(e) => handleSelectLearner(e.target.value)}
                     disabled={isSwitchingLearner}
@@ -580,74 +590,65 @@ export const ParentDashboardPage: React.FC = () => {
         )}
 
         {/* Link Another Learner Modal */}
-        {showLinkModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-gradient-to-b from-green-950 via-green-900 to-emerald-950 border border-pamana-green/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(false)}
-                className="absolute top-5 right-5 text-white/50 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        <Modal open={showLinkModal} onOpenChange={setShowLinkModal}>
+          <ModalContent className="max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3 shadow-inner">
+                <UserPlus className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <ModalTitle className="text-2xl">Mag-link ng Bagong Mag-aaral</ModalTitle>
+              <ModalDescription className="text-xs sm:text-sm mt-1">
+                Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
+              </ModalDescription>
+            </div>
 
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3 shadow-inner">
-                  <UserPlus className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-heading font-bold text-white">Mag-link ng Bagong Mag-aaral</h3>
-                <p className="text-xs sm:text-sm text-green-300/80 mt-1">
-                  Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
-                </p>
+            <form onSubmit={handleLinkLearner} className="space-y-4">
+              <div className="space-y-1.5 text-left">
+                <label htmlFor="learner-identifier" className="text-xs font-semibold text-green-300 uppercase tracking-wider">
+                  Email o Student Code
+                </label>
+                <input
+                  id="learner-identifier"
+                  type="text"
+                  placeholder="Hal. maria@example.com o Student Code..."
+                  value={learnerIdentifier}
+                  onChange={(e) => setLearnerIdentifier(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green transition-all"
+                  required
+                />
               </div>
 
-              <form onSubmit={handleLinkLearner} className="space-y-4">
-                <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-green-300 uppercase tracking-wider">
-                    Email o Student Code
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Hal. maria@example.com o Student Code..."
-                    value={learnerIdentifier}
-                    onChange={(e) => setLearnerIdentifier(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green transition-all"
-                    required
-                  />
-                </div>
+              {linkError && (
+                <p role="alert" className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center">
+                  {linkError}
+                </p>
+              )}
+              {linkSuccess && (
+                <p role="status" className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2.5 text-center flex items-center justify-center gap-1.5">
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{linkSuccess}</span>
+                </p>
+              )}
 
-                {linkError && (
-                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center">
-                    {linkError}
-                  </p>
-                )}
-                {linkSuccess && (
-                  <p className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2.5 text-center flex items-center justify-center gap-1.5">
-                    <Check className="w-4 h-4 text-emerald-400" />
-                    <span>{linkSuccess}</span>
-                  </p>
-                )}
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowLinkModal(false)}
-                    className="w-1/2 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 text-sm font-semibold transition-all cursor-pointer"
-                  >
-                    Kanselahin
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLinking}
-                    className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold text-sm hover:brightness-110 active:scale-98 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="w-1/2 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Kanselahin
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLinking}
+                  className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold text-sm hover:brightness-110 active:scale-98 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
+                </button>
+              </div>
+            </form>
+          </ModalContent>
+        </Modal>
       </div>
     </AppShell>
   )

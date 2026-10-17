@@ -11,10 +11,10 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   
-  const state = location.state as { registeredEmail?: string; registeredPassword?: string } | null
+  const state = location.state as { registeredEmail?: string } | null
 
   const [email, setEmail] = useState(state?.registeredEmail || '')
-  const [password, setPassword] = useState(state?.registeredPassword || '')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
@@ -69,7 +69,7 @@ export const LoginPage: React.FC = () => {
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
             <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float overflow-hidden rounded-full p-2 bg-green-500/10 backdrop-blur-sm border border-white/20">
-              <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
+              <img src="/images/Logo1.png" alt="PAMANA Logo" width={96} height={96} decoding="async" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
             <h1 className="text-3xl font-heading font-bold text-white">PAMANA</h1>
             <p className="text-green-300 text-sm mt-1">Login to your account</p>
@@ -90,6 +90,8 @@ export const LoginPage: React.FC = () => {
                 className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 autoComplete="email"
                 disabled={isLoading}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'login-error' : undefined}
               />
             </div>
 
@@ -108,6 +110,8 @@ export const LoginPage: React.FC = () => {
                   className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
                   autoComplete="current-password"
                   disabled={isLoading}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? 'login-error' : undefined}
                 />
                 <button
                   type="button"
@@ -122,7 +126,11 @@ export const LoginPage: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl">
+              <div
+                id="login-error"
+                role="alert"
+                className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl"
+              >
                 <p className="text-red-300 text-sm text-center">{error}</p>
               </div>
             )}

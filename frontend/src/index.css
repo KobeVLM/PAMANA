@@ -23,10 +23,14 @@
     --accent-foreground: 0 0% 100%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 138 76% 8%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 26 83% 14%;
     --border: 142 30% 20%;
     --input: 142 30% 18%;
-    --ring: 142 70% 45%;
-    --radius: 0.75rem;
+    --ring: 38 92% 50%;
+    --radius: 1rem;
     --chart-1: 142 70% 45%;
     --chart-2: 38 92% 50%;
     --chart-3: 220 70% 60%;
@@ -54,6 +58,12 @@
   #root {
     min-height: 100vh;
   }
+
+  /* Consistent, high-contrast focus indicator across the app */
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
@@ -66,6 +76,11 @@
   /* Glassmorphic card */
   .glass-card {
     @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl;
+  }
+
+  /* Layered storybook surface: glass + depth + soft inner highlight */
+  .card-story {
+    @apply relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-story;
   }
 
   /* PAMANA gradient button */
@@ -81,14 +96,24 @@
            text-white font-bold rounded-xl
            hover:opacity-90 active:scale-95 transition-all duration-200;
   }
+
+  /* Parchment/paper texture for elevated storybook surfaces */
+  .texture-parchment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  /* Soft vignette used behind hero / game screens */
+  .bg-vignette {
+    background-image: radial-gradient(
+      ellipse at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.35) 100%
+    );
+  }
 }
 
 @layer utilities {
   /* Animation utilities for game feedback */
-  .animate-shake {
-    animation: shake 0.4s ease-in-out;
-  }
-
   .animate-bounce-in {
     animation: bounce-in 0.4s ease-out;
   }
@@ -103,6 +128,33 @@
 
   .animate-star-pop {
     animation: star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* Minimum touch target helpers */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Hide scrollbar while keeping scrollability (for chip rails) */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Respect safe areas on notched devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
   }
 }
 
@@ -124,4 +176,16 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* Honor OS-level motion preferences for all CSS-driven animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

@@ -1,11 +1,15 @@
 import React, { useEffect, useRef } from 'react'
 import { Volume2 } from 'lucide-react'
+import { Mascot } from './Mascot'
+import { BilingualText } from '@/components/common/BilingualText'
 import { cn } from '@/lib/utils'
 import { useAudio } from '@/contexts/AudioContext'
 
 interface NPCDialogueProps {
   npc: 'lolo' | 'lola'
   line: string
+  /** English translation shown under the Filipino line. */
+  lineEn?: string
   audioUrl?: string
   autoPlay?: boolean
   onPlayAudio?: () => void
@@ -21,6 +25,7 @@ interface NPCDialogueProps {
 export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   npc,
   line,
+  lineEn,
   audioUrl,
   autoPlay = true,
   onPlayAudio,
@@ -29,11 +34,10 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
 }) => {
   const { playAudio } = useAudio()
   
-  const imgSrc = npc === 'lolo' ? '/images/Lolo_A.png' : '/images/Lola_A.png'
   const name = npc === 'lolo' ? 'Lolo' : 'Lola'
-  const gradientColor = npc === 'lolo'
-    ? 'from-amber-400 to-orange-500'
-    : 'from-amber-400 to-orange-500'
+  const mascot = npc === 'lolo'
+    ? { directions: '/images/grandpa-directions.webp', reactions: '/images/grandpa-reactions.webp' }
+    : { directions: '/images/granny-directions.webp', reactions: '/images/granny-reactions.webp' }
 
   const onAudioEndRef = useRef(onAudioEnd)
   useEffect(() => {
@@ -75,15 +79,12 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
     <div className={cn('flex items-start gap-4', className)}>
       {/* NPC Avatar */}
       <div className="flex-shrink-0 flex flex-col items-center gap-1">
-        <div
-          className={cn(
-            'w-16 h-16 rounded-full flex items-center justify-center overflow-hidden',
-            `bg-gradient-to-br ${gradientColor}`,
-            'shadow-lg animate-float p-1 border-2 border-white/50'
-          )}
-        >
-          <img src={imgSrc} alt={name} className="w-full h-full object-cover object-top rounded-full scale-125" />
-        </div>
+        <Mascot
+          directions={mascot.directions}
+          reactions={mascot.reactions}
+          size={112}
+          label={name}
+        />
         <span className="text-sm font-bold text-pamana-gold">{name}</span>
       </div>
 
@@ -93,7 +94,13 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         <div className="absolute -left-2 top-4 w-0 h-0 border-y-4 border-y-transparent border-r-8 border-r-white/10" />
 
         <div className="flex items-start justify-between gap-3">
-          <p className="text-white text-sm leading-relaxed flex-1">{line}</p>
+          <BilingualText
+            fil={line}
+            en={lineEn ?? ''}
+            className="flex-1"
+            filClassName="text-sm leading-relaxed text-white"
+            enClassName="text-green-100/80"
+          />
           {(audioUrl || onPlayAudio) && (
             <button
               onClick={handlePlay}

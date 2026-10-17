@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'  // ✅ ADD THIS BACK
 
 import { AudioProvider } from '@/contexts/AudioContext'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 // Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -13,17 +14,26 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 // Landing Page
 import { LandingPage } from '@/pages/landingpage/landingpage'
 
-// Home Page - CHALLENGES layout
-import HomePage from '@/pages/homepage/HomePage'
-
-// Game Pages
-import { TrailMapPage } from '@/pages/trail/TrailMapPage'
-import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
-
-// Dashboard & Support
-import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
-import { SettingsPage } from '@/pages/settings/SettingsPage'
+// BGM & session shell components
 import { BGMController } from '@/components/music/BGMController'
+import { SessionTracker } from '@/components/SessionTracker'
+
+// Lazy-loaded module pages
+const HomePage = React.lazy(() => import('@/pages/homepage/HomePage'))
+const TrailMapPage = React.lazy(() =>
+  import('@/pages/trail/TrailMapPage').then((m) => ({ default: m.TrailMapPage }))
+)
+const SyllableModulePage = React.lazy(() =>
+  import('@/pages/modules/SyllableModulePage').then((m) => ({ default: m.SyllableModulePage }))
+)
+const ParentDashboardPage = React.lazy(() =>
+  import('@/pages/dashboard/ParentDashboardPage').then((m) => ({ default: m.ParentDashboardPage }))
+)
+const SettingsPage = React.lazy(() =>
+  import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+)
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 // Lazy-loaded module pages
 const VocabularyModulePage = React.lazy(() =>
@@ -59,10 +69,13 @@ const LoadingFallback = () => (
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AudioProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AudioProvider>
           <BGMController />
-          <React.Suspense fallback={<LoadingFallback />}>
+          <SessionTracker />
+          <TooltipProvider delayDuration={250}>
+            <React.Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
@@ -122,10 +135,6 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/modules/:moduleNumber/hamon"
-                element={<Navigate to="/trail" replace />}
-              />
 
               {/* Mastery Practice Routes */}
               <Route
@@ -176,7 +185,7 @@ function App() {
                 path="/dashboard"
                 element={
                   <ProtectedRoute allowedRoles={['PARENT']}>
-                    <RoleBasedDashboardRoute />
+                    <ParentDashboardPage />
                   </ProtectedRoute>
                 }
               />
@@ -185,14 +194,13 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </React.Suspense>
+          </TooltipProvider>
+          <Toaster />
         </AudioProvider>
       </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
-}
-
-function RoleBasedDashboardRoute() {
-  return <ParentDashboardPage />
 }
 
 export default App

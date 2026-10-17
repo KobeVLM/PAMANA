@@ -69,8 +69,9 @@ const HomePage = () => {
               <Map className="w-6 h-6 text-pamana-green" />
               <span className="font-semibold text-xl">Beginner</span>
             </div>
-            <div 
-              className="relative overflow-hidden rounded-2xl p-8 border border-white/10 hover:border-pamana-green/50 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.02] transition-all duration-300 cursor-pointer group h-[290px] flex items-center"
+            <button
+              type="button"
+              className="relative overflow-hidden rounded-2xl p-8 border border-white/10 hover:border-pamana-green/50 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.02] transition-all duration-300 cursor-pointer group h-[290px] flex items-center w-full text-left"
               onClick={() => navigate('/trail')}
             >
               {/* Background image */}
@@ -95,7 +96,7 @@ const HomePage = () => {
                 </div>
                 <ChevronRight className="w-7 h-7 text-green-200/60 group-hover:text-pamana-green group-hover:translate-x-3 group-hover:scale-125 transition-all duration-300" />
               </div>
-            </div>
+            </button>
           </div>
 
           {/* RIGHT: Mastery - 4 squares (takes 2 columns) - BIGGER */}
@@ -108,9 +109,10 @@ const HomePage = () => {
               {masteryItems.map((item) => {
                 const unlocked = isUnlocked(item.moduleNum)
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={item.id}
-                    className={`relative overflow-hidden p-3 rounded-xl border transition-all duration-300 cursor-pointer text-center flex flex-col items-center justify-center group ${
+                    className={`relative overflow-hidden p-3 rounded-xl border transition-all duration-300 cursor-pointer text-center flex flex-col items-center justify-center group w-full ${
                       unlocked
                         ? 'border-emerald-400/50 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02]'
                         : 'border-white/10 hover:border-amber-500/40 opacity-85 hover:opacity-100'
@@ -172,7 +174,7 @@ const HomePage = () => {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -188,8 +190,9 @@ const HomePage = () => {
             <BookOpen className="w-6 h-6 text-pamana-green" />
             <span className="font-semibold text-xl">STORY</span>
           </div>
-          <div 
-            className="bg-gradient-to-r from-pamana-green/10 to-transparent rounded-2xl p-6 border border-pamana-green/20 hover:border-pamana-green/40 hover:bg-pamana-green/10 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.01] transition-all duration-300 cursor-pointer group"
+          <button
+            type="button"
+            className="bg-gradient-to-r from-pamana-green/10 to-transparent rounded-2xl p-6 border border-pamana-green/20 hover:border-pamana-green/40 hover:bg-pamana-green/10 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.01] transition-all duration-300 cursor-pointer group w-full text-left"
             onClick={() => console.log('Open Story')}
           >
             <div className="flex items-center justify-between">
@@ -198,7 +201,7 @@ const HomePage = () => {
               </p>
               <ChevronRight className="w-7 h-7 text-pamana-green group-hover:translate-x-3 group-hover:scale-125 transition-all duration-300" />
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Toast Notification */}

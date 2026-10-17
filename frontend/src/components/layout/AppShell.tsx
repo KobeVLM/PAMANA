@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
@@ -67,11 +67,28 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   const roleLabel = user?.role === 'LEARNER' ? 'Mag-aaral' : 'Magulang'
 
+  // Keep keyboard and screen reader users on the new page after navigation.
+  useEffect(() => {
+    document
+      .getElementById('main-content')
+      ?.focus({ preventScroll: true })
+  }, [location.pathname])
+
   return (
     <div className="h-screen w-full overflow-hidden bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex">
+      {/* Skip to content for keyboard users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-pamana-gold focus:px-4 focus:py-2 focus:font-heading focus:font-bold focus:text-green-950"
+      >
+        Lumaktaw sa nilalaman
+      </a>
+
       {/* Sidebar Overlay (mobile) */}
       {!isModulePage && sidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Isara ang menu (Close menu)"
           className="fixed inset-0 bg-black/50 z-20 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -91,7 +108,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-contain drop-shadow-lg" />
+                <img src="/images/Logo1.png" alt="PAMANA Logo" width={40} height={40} decoding="async" className="w-full h-full object-contain drop-shadow-lg" />
               </div>
               <div>
                 <h1 className="text-white font-heading font-bold text-lg leading-none">PAMANA</h1>
@@ -185,7 +202,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-auto">
           {children}
         </main>
       </div>
@@ -194,9 +211,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {sidebarOpen && (
         <button
           onClick={() => setSidebarOpen(false)}
+          aria-label="Isara ang menu (Close menu)"
           className="fixed top-4 right-4 z-40 lg:hidden p-2 bg-white/10 rounded-full text-white"
         >
-          <X className="w-5 h-5" />
+          <X className="w-5 h-5" aria-hidden="true" />
         </button>
       )}
 
