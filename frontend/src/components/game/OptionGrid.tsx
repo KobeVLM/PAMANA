@@ -74,13 +74,13 @@ const OptionTile: React.FC<OptionTileProps> = ({
       disabled={disabled || lockAll}
       aria-label={option.label ?? `Opsyon ${option.id}`}
       className={cn(
-        'relative flex flex-col items-center justify-center gap-2 rounded-2xl border-2',
+        'game-tile relative flex flex-col items-center justify-center gap-2 rounded-2xl',
         'font-heading font-bold text-lg shadow-md transition-all duration-200 select-none active:scale-95',
-        isBig ? 'min-h-[140px] p-3 sm:min-h-[170px] sm:p-4' : 'min-h-[72px] p-3 lg:min-h-[88px]',
+        isBig ? 'min-h-[140px] p-3 sm:min-h-[170px] sm:p-4' : 'min-h-[56px] p-2.5 lg:min-h-[64px]',
 
         !isSelected &&
           !isHint &&
-          'border-white/20 bg-white/10 text-white hover:scale-105 hover:border-white/40 hover:bg-white/20',
+          'hover:scale-105 hover:border-white/60 hover:bg-white/30',
 
         isSelected && isCorrect &&
           'border-green-400 bg-green-500/30 text-green-200 shadow-green-900/50 scale-105',
@@ -89,7 +89,7 @@ const OptionTile: React.FC<OptionTileProps> = ({
 
         isHint && 'animate-pulse border-pamana-gold bg-pamana-gold/20 text-pamana-gold',
 
-        isDimmed && 'border-white/10 bg-white/5 opacity-40',
+        isDimmed && 'border-white/20 bg-white/10 opacity-65',
 
         disabled && 'cursor-not-allowed opacity-60'
       )}

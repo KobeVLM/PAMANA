@@ -5,7 +5,19 @@ import { cn } from "@/lib/utils"
 
 export interface PracticePageLayoutProps {
   children: React.ReactNode
+  /** Max content width; `5xl` is for the two-column Stage & Tray screens. */
+  maxWidth?: "xl" | "2xl" | "3xl" | "5xl"
   className?: string
+}
+
+const MAX_WIDTH: Record<
+  NonNullable<PracticePageLayoutProps["maxWidth"]>,
+  string
+> = {
+  xl: "max-w-xl",
+  "2xl": "max-w-2xl",
+  "3xl": "max-w-3xl",
+  "5xl": "max-w-5xl",
 }
 
 /**
@@ -15,6 +27,7 @@ export interface PracticePageLayoutProps {
  */
 export function PracticePageLayout({
   children,
+  maxWidth = "2xl",
   className,
 }: PracticePageLayoutProps) {
   return (
@@ -46,7 +59,8 @@ export function PracticePageLayout({
       </div>
       <div
         className={cn(
-          "relative z-10 mx-auto min-h-full w-full max-w-2xl p-4 pb-safe sm:p-6 lg:p-8",
+          "relative z-10 mx-auto min-h-full w-full p-2.5 pb-safe sm:p-4 lg:p-5",
+          MAX_WIDTH[maxWidth],
           className
         )}
       >

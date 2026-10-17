@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
 import { PracticeHeader } from '@/components/practice/PracticeHeader'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
@@ -13,6 +16,7 @@ import { ErrorState } from '@/components/common/ErrorState'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useRoundFlow } from '@/hooks/useRoundFlow'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { BilingualText } from '@/components/common/BilingualText'
 import { STRINGS, bi } from '@/lib/i18n'
 import type { Bi } from '@/lib/i18n'
@@ -77,16 +81,21 @@ export const SyllablePracticePage: React.FC = () => {
   const navigate = useNavigate()
 
   const [setId, setSetId] = React.useState(1)
+  const [celebrate, setCelebrate] = React.useState(0)
 
   const flow = useRoundFlow({
     totalRounds: SUB_LEVELS.length,
     onAnswer: (isCorrect) => {
-      if (isCorrect) playTarget()
-      else playWrong()
+      if (isCorrect) {
+        setCelebrate((count) => count + 1)
+        playTarget()
+      } else playWrong()
     },
   })
 
   const subLevel = SUB_LEVELS[flow.roundIndex]
+
+  useScrollToTop(`${subLevel}-${setId}`)
 
   // Route guard: the learner must have completed Module 1 first.
   const checkPrerequisite = useCallback(async () => {
@@ -183,14 +192,14 @@ export const SyllablePracticePage: React.FC = () => {
   }))
 
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Pagsasanay: Pagtutugma ng Pantig"
         subtitle="Sanayin ang iyong kakayahan sa pagkilala ng mga tunog at pantig."
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        score={flow.score}
+        accuracy={(flow.score / SUB_LEVELS.length) * 100}
         progressLabel={`${SUB_LEVEL_LABELS[subLevel].fil} (${flow.roundIndex + 1} of ${SUB_LEVELS.length})`}
         progressLabelEn={`${SUB_LEVEL_LABELS[subLevel].en} (${flow.roundIndex + 1} of ${SUB_LEVELS.length})`}
         progressValue={((flow.roundIndex + 1) / SUB_LEVELS.length) * 100}
@@ -202,119 +211,138 @@ export const SyllablePracticePage: React.FC = () => {
       ) : setError ? (
         <ErrorState onRetry={retrySet} />
       ) : currentSet ? (
-        <div className="space-y-6">
-          <NPCDialogue
-            npc="lolo"
-            line={NPC_LINES[currentSet.subLevel].fil}
-            lineEn={NPC_LINES[currentSet.subLevel].en}
-            audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
-          />
+        <PracticeStage
+          split={currentSet.subLevel !== 'pagsama'}
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={NPC_LINES[currentSet.subLevel].fil}
+                lineEn={NPC_LINES[currentSet.subLevel].en}
+                audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
+                celebrate={celebrate}
+                resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
+              />
 
-          {currentSet.subLevel === 'pagsama' && (
-            <div className="flex flex-col items-center justify-center gap-4 py-4 sm:flex-row sm:gap-6">
-              <div className="flex flex-col items-center gap-2">
-                <AudioPlayer
-                  audioUrl={currentSet.consonantAudioUrl ?? ''}
-                  size="lg"
-                  label={STRINGS.listenConsonant.fil}
-                  labelEn={STRINGS.listenConsonant.en}
-                />
-                <span className="font-heading text-2xl font-bold text-white">
-                  {currentSet.consonant}
-                </span>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.consonant.fil}
-                  en={UI_TEXT.consonant.en}
-                  className="text-center"
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-              <span className="text-3xl font-bold text-white/40" aria-hidden="true">
-                +
-              </span>
-              <div className="flex flex-col items-center gap-2">
-                <AudioPlayer
-                  audioUrl={currentSet.vowelAudioUrl ?? ''}
-                  size="lg"
-                  label={STRINGS.listenVowel.fil}
-                  labelEn={STRINGS.listenVowel.en}
-                />
-                <span className="font-heading text-2xl font-bold text-white">
-                  {currentSet.vowel}
-                </span>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.vowel.fil}
-                  en={UI_TEXT.vowel.en}
-                  className="text-center"
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-              <span className="text-3xl font-bold text-white/40" aria-hidden="true">
-                =
-              </span>
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
-                  <span className="text-3xl font-bold text-white/30">?</span>
-                </div>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.result.fil}
-                  en={UI_TEXT.result.en}
-                  className="text-center"
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-            </div>
-          )}
-
-          {currentSet.subLevel !== 'pagsama' && (
-            <div className="flex justify-center py-4">
-              <div className="flex flex-col items-center gap-3">
-                <AudioPlayer
-                  audioUrl={currentSet.audioUrl}
-                  size="lg"
-                  label={STRINGS.listenSound.fil}
-                  labelEn={STRINGS.listenSound.en}
-                />
-                <BilingualText
-                  as="p"
-                  fil={STRINGS.listenAgain.fil}
-                  en={STRINGS.listenAgain.en}
-                  className="text-center"
-                  filClassName="text-sm text-green-300"
-                  enClassName="text-xs text-green-200/70"
-                />
-              </div>
-            </div>
-          )}
-
-          {flow.feedback && (
-            <FeedbackBanner variant={flow.feedback} assertive={flow.feedback === 'incorrect'}>
-              {flow.feedback === 'correct' ? (
-                <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
-              ) : (
-                <BilingualText
-                  fil="Hindi pa tama — susunod na lang!"
-                  en="Not quite — we’ll try it again soon!"
-                />
+              {currentSet.subLevel === 'pagsama' && (
+                <PromptStage
+                  variant="equation"
+                  ariaLabel="Pagsamahin ang mga tunog (Blend the sounds)"
+                >
+                  <div className="flex flex-wrap flex-col items-center justify-center gap-4 py-2 sm:flex-row sm:gap-4">
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.consonantAudioUrl ?? ''}
+                        size="md"
+                        label={STRINGS.listenConsonant.fil}
+                        labelEn={STRINGS.listenConsonant.en}
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.consonant}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.consonant.fil}
+                        en={UI_TEXT.consonant.en}
+                        className="text-center"
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl font-bold text-white/40" aria-hidden="true">
+                      +
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.vowelAudioUrl ?? ''}
+                        size="md"
+                        label={STRINGS.listenVowel.fil}
+                        labelEn={STRINGS.listenVowel.en}
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.vowel}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.vowel.fil}
+                        en={UI_TEXT.vowel.en}
+                        className="text-center"
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl font-bold text-white/40" aria-hidden="true">
+                      =
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
+                        <span className="text-3xl font-bold text-white/30">?</span>
+                      </div>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.result.fil}
+                        en={UI_TEXT.result.en}
+                        className="text-center"
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                  </div>
+                </PromptStage>
               )}
-            </FeedbackBanner>
-          )}
 
-          <OptionGrid
-            options={currentSet.options}
-            selectedId={flow.selectedId}
-            correctId={flow.correctId}
-            onSelect={handleSelect}
-            type="text"
-            disabled={flow.isProcessing}
-          />
-        </div>
+              {currentSet.subLevel !== 'pagsama' && (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel="Pakinggan ang pantig (Listen to the syllable)"
+                >
+                  <AudioPlayer
+                    audioUrl={currentSet.audioUrl}
+                    size="lg"
+                    label={STRINGS.listenSound.fil}
+                    labelEn={STRINGS.listenSound.en}
+                  />
+                  <BilingualText
+                    as="p"
+                    fil={STRINGS.listenAgain.fil}
+                    en={STRINGS.listenAgain.en}
+                    className="text-center"
+                    filClassName="text-sm text-green-300"
+                    enClassName="text-xs text-green-200/70"
+                  />
+                </PromptStage>
+              )}
+
+              <FeedbackSlot>
+                {flow.feedback && (
+                  <FeedbackBanner
+                    variant={flow.feedback}
+                    assertive={flow.feedback === 'incorrect'}
+                  >
+                    {flow.feedback === 'correct' ? (
+                      <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
+                    ) : (
+                      <BilingualText
+                        fil="Hindi pa tama — susunod na lang!"
+                        en="Not quite — we’ll try it again soon!"
+                      />
+                    )}
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={
+            <OptionGrid
+              options={currentSet.options}
+              selectedId={flow.selectedId}
+              correctId={flow.correctId}
+              onSelect={handleSelect}
+              type="text"
+              disabled={flow.isProcessing}
+            />
+          }
+        />
       ) : (
         <ErrorState onRetry={retrySet} />
       )}

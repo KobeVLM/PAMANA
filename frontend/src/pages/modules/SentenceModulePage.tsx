@@ -9,6 +9,9 @@ import {
   type PracticeStep,
 } from '@/components/practice/PracticeHeader'
 import { WordTiles, type WordTile } from '@/components/practice/WordTiles'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { FeedbackBanner } from '@/components/feedback/FeedbackBanner'
@@ -18,8 +21,10 @@ import { ErrorState } from '@/components/common/ErrorState'
 import { Button } from '@/components/ui/button'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS } from '@/lib/i18n'
 import api from '@/lib/api'
+import type { ModuleProgress } from '@/types'
 import { Home } from 'lucide-react'
 
 interface SentenceTask {
@@ -59,6 +64,27 @@ export const SentenceModulePage: React.FC = () => {
   const [attempts, setAttempts] = useState(0)
   const [showReunionEnding, setShowReunionEnding] = useState(false)
   const [showTierAnnouncement, setShowTierAnnouncement] = useState(false)
+  const [moduleAccuracy, setModuleAccuracy] = useState<number | null>(null)
+  const [celebrate, setCelebrate] = useState(0)
+
+  useScrollToTop(`${tier}-${taskIndex}`)
+
+  /** Best-effort refresh of the live module accuracy for the star meter. */
+  const refreshAccuracy = useCallback(async () => {
+    try {
+      const res = await api.get(`/modules/progress/${user?.id}`)
+      const mod = (res.data as ModuleProgress[]).find(
+        (p) => p.moduleNumber === 4
+      )
+      setModuleAccuracy(mod?.accuracy ?? null)
+    } catch {
+      // Keep the last known accuracy
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    if (user?.id) void refreshAccuracy()
+  }, [user?.id, refreshAccuracy])
 
   const fetchTask = useCallback(
     async (tierNum: 1 | 2) => {
@@ -108,6 +134,7 @@ export const SentenceModulePage: React.FC = () => {
     const newAttempts = attempts + 1
     setFeedback(isCorrect ? 'correct' : 'incorrect')
     setAttempts(newAttempts)
+    if (isCorrect) setCelebrate((count) => count + 1)
     const accuracy = isCorrect ? 100 : Math.max(0, 100 - newAttempts * 25)
 
     setIsSubmitting(true)
@@ -129,6 +156,7 @@ export const SentenceModulePage: React.FC = () => {
         submittedOrder: orderedWords,
         accuracy,
       })
+      void refreshAccuracy()
 
       if (res.data.moduleComplete) {
         setTimeout(() => setShowReunionEnding(true), 1500)
@@ -162,17 +190,18 @@ export const SentenceModulePage: React.FC = () => {
     fetchTask,
     playAudio,
     playWrong,
+    refreshAccuracy,
   ])
 
   // ── Tier 2 announcement screen ──────────────────────────────────────────
   if (showTierAnnouncement) {
     return (
       <PracticePageLayout className="flex items-center justify-center">
-        <div className="max-w-md space-y-6 text-center">
+        <div className="card-story max-w-md space-y-6 p-6 text-center sm:p-8">
           <div className="animate-bounce text-6xl" aria-hidden="true">
             🌟
           </div>
-          <div className="card-story p-6">
+          <div>
             <div className="mb-4 flex items-center gap-3">
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-pamana-gold/30 text-2xl"
@@ -192,7 +221,7 @@ export const SentenceModulePage: React.FC = () => {
               enClassName="text-sm leading-relaxed text-white/70"
             />
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-left">
+          <div className="rounded-2xl border border-white/20 bg-white/5 p-4 text-left">
             <BilingualText
               as="p"
               fil="✅ Tier 1: Paturol — Natapos na!"
@@ -240,7 +269,7 @@ export const SentenceModulePage: React.FC = () => {
   if (showReunionEnding) {
     return (
       <PracticePageLayout className="flex items-center justify-center">
-        <div className="max-w-md animate-bounce-in text-center">
+        <div className="card-story max-w-md animate-bounce-in p-6 text-center sm:p-8">
           <div className="mb-4 text-6xl" aria-hidden="true">
             🎊
           </div>
@@ -296,9 +325,12 @@ export const SentenceModulePage: React.FC = () => {
     { label: 'Tier 2: Patanong', state: tier === 2 ? 'current' : 'pending' },
   ]
   const clampedTaskNumber = Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER)
+  const tasksLeft =
+    (tier === 1 ? TOTAL_TASKS_PER_TIER : 0) +
+    (TOTAL_TASKS_PER_TIER - clampedTaskNumber)
 
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Module 4: Bumuo ng Pangungusap"
         subtitle={`Sala ng Tagpuan · ${
@@ -306,7 +338,13 @@ export const SentenceModulePage: React.FC = () => {
         }`}
         backLabel="Pamana Trail"
         onBack={() => navigate('/trail')}
+        sticky
         steps={steps}
+        accuracy={moduleAccuracy}
+        itemsLeft={{
+          fil: `Natitira: ${tasksLeft} gawain`,
+          en: `${tasksLeft} ${tasksLeft === 1 ? 'task' : 'tasks'} left`,
+        }}
         progressLabel={`Gawain ${clampedTaskNumber} ng ${TOTAL_TASKS_PER_TIER}`}
         progressLabelEn={`Task ${clampedTaskNumber} of ${TOTAL_TASKS_PER_TIER}`}
         progressValue={(clampedTaskNumber / TOTAL_TASKS_PER_TIER) * 100}
@@ -317,105 +355,129 @@ export const SentenceModulePage: React.FC = () => {
       ) : loadError ? (
         <ErrorState onRetry={() => void fetchTask(tier)} />
       ) : task ? (
-        <div className="space-y-6">
-          <NPCDialogue
-            npc="lolo"
-            line={
-              tier === 1
-                ? 'Ayusin ang mga salita para bumuo ng pangungusap! I-drag ang mga salita sa tamang pagkakasunod.'
-                : 'Gawing tanong ang pangungusap! Paano mo itatanong ito kay Lolo?'
-            }
-            lineEn={
-              tier === 1
-                ? 'Arrange the words to build a sentence! Drag the words into the correct order.'
-                : 'Turn the sentence into a question! How would you ask this to Lolo?'
-            }
-            audioUrl={`/static/assets/audio/npc/lolo_mod4_intro_tier${tier}.mp3`}
-          />
-
-          {task.audioUrl && (
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <AudioPlayer
-                audioUrl={task.audioUrl}
-                size="sm"
-                label={STRINGS.listenSentence.fil}
-                labelEn={STRINGS.listenSentence.en}
+        <PracticeStage
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={
+                  tier === 1
+                    ? 'Ayusin ang mga salita para bumuo ng pangungusap! I-drag ang mga salita sa tamang pagkakasunod.'
+                    : 'Gawing tanong ang pangungusap! Paano mo itatanong ito kay Lolo?'
+                }
+                lineEn={
+                  tier === 1
+                    ? 'Arrange the words to build a sentence! Drag the words into the correct order.'
+                    : 'Turn the sentence into a question! How would you ask this to Lolo?'
+                }
+                audioUrl={`/static/assets/audio/npc/lolo_mod4_intro_tier${tier}.mp3`}
+                celebrate={celebrate}
+                resetKey={`${tier}-${taskIndex}`}
               />
-              <BilingualText
-                as="p"
-                fil="Pakinggan ang tamang pagkakasunod"
-                en="Listen to the correct order"
-                filClassName="text-sm text-green-300"
-                enClassName="text-xs text-green-200/70"
-              />
-            </div>
-          )}
 
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <BilingualText
-              as="p"
-              fil="I-drag ang mga salita sa tamang pagkakasunod:"
-              en="Drag the words into the correct order:"
-              filClassName="text-xs font-medium text-green-300 sm:text-sm"
-              enClassName="text-[10px] text-green-200/60"
-            />
-            <WordTiles
-              items={tiles}
-              onReorder={setTiles}
-              disabled={isSubmitting || feedback === 'correct'}
-              ariaLabel="Mga salita ng pangungusap (Sentence words)"
-            />
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="mb-1 text-xs text-white/40">Iyong pangungusap:</p>
-            <p className="font-heading text-lg font-bold text-white">
-              {tiles.map((t) => t.word).join(' ')}
-            </p>
-          </div>
-
-          {feedback && (
-            <FeedbackBanner
-              variant={feedback}
-              assertive={feedback === 'incorrect'}
-            >
-              <BilingualText
-                fil={feedback === 'correct' ? STRINGS.correct.fil : 'Hindi pa tama — subukan ulit!'}
-                en={feedback === 'correct' ? STRINGS.correct.en : 'Not quite — try again!'}
-              />
-              {feedback === 'incorrect' && attempts >= HINT_AFTER_ATTEMPTS && (
-                <div className="mt-1">
+              {task.audioUrl && (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel="Pakinggan ang tamang pagkakasunod (Listen to the correct order)"
+                >
+                  <AudioPlayer
+                    audioUrl={task.audioUrl}
+                    size="lg"
+                    label={STRINGS.listenSentence.fil}
+                    labelEn={STRINGS.listenSentence.en}
+                  />
                   <BilingualText
                     as="p"
-                    fil="Tamang sagot:"
-                    en="Correct answer:"
-                    filClassName="text-xs text-pamana-gold"
-                    enClassName="text-[10px] text-pamana-gold/70"
+                    fil="Pakinggan ang tamang pagkakasunod"
+                    en="Listen to the correct order"
+                    className="text-center"
+                    filClassName="text-sm text-green-300"
+                    enClassName="text-xs text-green-200/70"
                   />
-                  <strong className="text-white">
-                    {task.correctOrder.join(' ')}
-                  </strong>
-                </div>
+                </PromptStage>
               )}
-            </FeedbackBanner>
-          )}
 
-          <Button
-            variant="pamana"
-            onClick={handleSubmit}
-            loading={isSubmitting}
-            disabled={feedback === 'correct'}
-            className="w-full"
-          >
-            <BilingualText
-              as="span"
-              fil={isSubmitting ? 'Sinusuri...' : 'Isumite ang Pangungusap'}
-              en={isSubmitting ? 'Checking...' : 'Submit Sentence'}
-              filClassName="text-sm font-semibold"
-              enClassName="text-xs font-normal opacity-80"
-            />
-          </Button>
-        </div>
+              <PromptStage
+                variant="canvas"
+                ariaLabel="Iyong pangungusap (Your sentence)"
+              >
+                <BilingualText
+                  as="p"
+                  fil="Iyong pangungusap:"
+                  en="Your sentence:"
+                  filClassName="text-xs font-medium text-green-300 sm:text-sm"
+                  enClassName="text-[10px] text-green-200/60"
+                />
+                <p className="font-heading text-lg font-bold leading-relaxed text-white sm:text-xl">
+                  {tiles.map((t) => t.word).join(' ')}
+                </p>
+              </PromptStage>
+
+              <FeedbackSlot>
+                {feedback && (
+                  <FeedbackBanner
+                    variant={feedback}
+                    assertive={feedback === 'incorrect'}
+                  >
+                    <BilingualText
+                      fil={feedback === 'correct' ? STRINGS.correct.fil : 'Hindi pa tama — subukan ulit!'}
+                      en={feedback === 'correct' ? STRINGS.correct.en : 'Not quite — try again!'}
+                    />
+                    {feedback === 'incorrect' && attempts >= HINT_AFTER_ATTEMPTS && (
+                      <div className="mt-1">
+                        <BilingualText
+                          as="p"
+                          fil="Tamang sagot:"
+                          en="Correct answer:"
+                          filClassName="text-xs text-pamana-gold"
+                          enClassName="text-[10px] text-pamana-gold/70"
+                        />
+                        <strong className="text-white">
+                          {task.correctOrder.join(' ')}
+                        </strong>
+                      </div>
+                    )}
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={
+            <div className="space-y-4">
+              <div className="card-story space-y-3 p-5">
+                <BilingualText
+                  as="p"
+                  fil="I-drag ang mga salita sa tamang pagkakasunod:"
+                  en="Drag the words into the correct order:"
+                  filClassName="text-xs font-medium text-green-300 sm:text-sm"
+                  enClassName="text-[10px] text-green-200/60"
+                />
+                <WordTiles
+                  items={tiles}
+                  onReorder={setTiles}
+                  disabled={isSubmitting || feedback === 'correct'}
+                  ariaLabel="Mga salita ng pangungusap (Sentence words)"
+                />
+              </div>
+
+              <Button
+                variant="pamana"
+                onClick={handleSubmit}
+                loading={isSubmitting}
+                disabled={feedback === 'correct'}
+                className="w-full"
+              >
+                <BilingualText
+                  as="span"
+                  fil={isSubmitting ? 'Sinusuri...' : 'Isumite ang Pangungusap'}
+                  en={isSubmitting ? 'Checking...' : 'Submit Sentence'}
+                  filClassName="text-sm font-semibold"
+                  enClassName="text-xs font-normal opacity-80"
+                />
+              </Button>
+            </div>
+          }
+        />
       ) : null}
     </PracticePageLayout>
   )

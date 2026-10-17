@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { Home, RotateCcw, Sparkles, Trophy } from "lucide-react"
+import { ArrowRight, Home, RotateCcw, Sparkles, Trophy } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Celebration } from "@/components/feedback/Celebration"
 import { BilingualText } from "@/components/common/BilingualText"
@@ -18,6 +18,10 @@ export interface PracticeCompletionProps {
   retryLabelEn?: string
   /** Show a spinner on the retry button (e.g. while resetting a module). */
   retrying?: boolean
+  /** Primary "next module" action; when set it becomes the gold button. */
+  onContinue?: () => void
+  continueLabel?: string
+  continueLabelEn?: string
   onExit?: () => void
   exitLabel?: string
   /** Override the automatic encouragement line. */
@@ -45,6 +49,9 @@ export function PracticeCompletion({
   retryLabel = STRINGS.playAgain.fil,
   retryLabelEn = STRINGS.playAgain.en,
   retrying = false,
+  onContinue,
+  continueLabel = 'Magpatuloy',
+  continueLabelEn = 'Continue',
   onExit,
   exitLabel = STRINGS.backHome.fil,
   encouragement,
@@ -133,11 +140,30 @@ export function PracticeCompletion({
         )}
 
         <div className="space-y-3">
+          {onContinue && (
+            <Button
+              variant="gold"
+              onClick={onContinue}
+              className="w-full text-stone-900 [&_svg]:text-stone-900"
+            >
+              <BilingualText
+                as="span"
+                fil={continueLabel}
+                en={continueLabelEn}
+                filClassName="text-sm font-semibold"
+                enClassName="text-xs font-normal opacity-80"
+              />
+              <ArrowRight aria-hidden="true" />
+            </Button>
+          )}
           <Button
-            variant="gold"
+            variant={onContinue ? "pamana" : "gold"}
             onClick={onRetry}
             loading={retrying}
-            className="w-full text-stone-900 [&_svg]:text-stone-900"
+            className={cn(
+              "w-full",
+              !onContinue && "text-stone-900 [&_svg]:text-stone-900"
+            )}
           >
             {!retrying && <RotateCcw aria-hidden="true" />}
             <BilingualText

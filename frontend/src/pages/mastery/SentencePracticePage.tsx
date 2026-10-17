@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
 import { PracticeHeader } from '@/components/practice/PracticeHeader'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { WordTiles, type WordTile } from '@/components/practice/WordTiles'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
@@ -13,6 +16,7 @@ import { ErrorState } from '@/components/common/ErrorState'
 import { Button } from '@/components/ui/button'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { BilingualText } from '@/components/common/BilingualText'
 import { STRINGS, bi } from '@/lib/i18n'
 import api from '@/lib/api'
@@ -65,6 +69,9 @@ export const SentencePracticePage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [introPlayed, setIntroPlayed] = useState(false)
+  const [celebrate, setCelebrate] = useState(0)
+
+  useScrollToTop(String(round))
 
   // Route guard: Module 4 must be complete first.
   const checkPrerequisite = useCallback(async () => {
@@ -189,6 +196,7 @@ export const SentencePracticePage: React.FC = () => {
 
     if (correct) {
       setScore((s) => s + 1)
+      setCelebrate((count) => count + 1)
       playVictorySound()
     } else {
       playWrong()
@@ -252,188 +260,203 @@ export const SentencePracticePage: React.FC = () => {
   }
 
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Pagsasanay: Pagbuo ng Pangungusap"
         subtitle="Sanayin ang iyong kakayahan sa pagbuo ng mga tamang pangungusap sa Filipino."
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        score={score}
+        accuracy={(score / MAX_ROUNDS) * 100}
         progressLabel={`Pangungusap ${round} ng ${MAX_ROUNDS}`}
         progressLabelEn={`Sentence ${round} of ${MAX_ROUNDS}`}
         progressValue={(round / MAX_ROUNDS) * 100}
       />
-
-      <div className="mb-6">
-        <NPCDialogue
-          npc="lolo"
-          line={NPC_LINE.fil}
-          lineEn={NPC_LINE.en}
-          audioUrl={NPC_AUDIO}
-          autoPlay={!introPlayed}
-          onAudioEnd={() => setIntroPlayed(true)}
-        />
-      </div>
 
       {taskLoading ? (
         <LoadingState message="Inihahanda ang gawain..." />
       ) : taskError ? (
         <ErrorState onRetry={retryTask} />
       ) : task ? (
-        <div className="space-y-6">
-          {task.audioUrl && (
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
-              <AudioPlayer
-                audioUrl={task.audioUrl}
-                size="sm"
-                label={STRINGS.listenSentence.fil}
-                labelEn={STRINGS.listenSentence.en}
+        <PracticeStage
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={NPC_LINE.fil}
+                lineEn={NPC_LINE.en}
+                audioUrl={NPC_AUDIO}
+                autoPlay={!introPlayed}
+                onAudioEnd={() => setIntroPlayed(true)}
+                celebrate={celebrate}
+                resetKey={round}
               />
-              <BilingualText
-                as="p"
-                fil="Pakinggan ang tamang pagkakasunod ng pangungusap"
-                en="Listen to the correct order of the sentence"
-                filClassName="text-sm text-green-300"
-                enClassName="text-xs text-green-200/70"
-              />
-            </div>
-          )}
 
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-5">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1.5 text-xs font-medium text-green-300 sm:text-sm">
-                <MousePointerClick
-                  className="h-4 w-4 text-pamana-gold"
-                  aria-hidden="true"
-                />
-                <BilingualText
-                  as="span"
-                  fil="I-drag o i-click ang dalawang salita para pagpalitin:"
-                  en="Drag or click two words to swap them:"
-                  filClassName="text-xs font-medium text-green-300 sm:text-sm"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-              {!submitted && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleResetOrder}
-                  title="I-reset ang pagkakasunod (Reset the order)"
-                  className="text-white/60 hover:text-white"
+              {task.audioUrl && (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel="Pakinggan ang tamang pagkakasunod (Listen to the correct order)"
                 >
-                  <Undo2 aria-hidden="true" />
-                  <BilingualText
-                    as="span"
-                    fil="I-reset"
-                    en="Reset"
-                    filClassName="text-sm"
-                    enClassName="text-[10px] opacity-70"
-                  />
-                </Button>
-              )}
-            </div>
-
-            <WordTiles
-              items={arranged}
-              onReorder={handleReorder}
-              selectedIndex={selectedSwapIndex}
-              onSelectIndex={handleSelectWord}
-              disabled={submitted}
-              ariaLabel="Mga salita ng pangungusap (Sentence words)"
-            />
-
-            {selectedSwapIndex !== null && !submitted && (
-              <BilingualText
-                as="p"
-                fil="Pumili ng isa pang salita na nais mong ipalit sa napiling salita."
-                en="Choose another word to swap with the selected word."
-                className="animate-pulse"
-                filClassName="text-xs text-amber-300"
-                enClassName="text-[10px] text-amber-200/70"
-              />
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="mb-1 text-xs font-medium text-white/40">
-              Iyong pangungusap:
-            </p>
-            <p className="min-h-[28px] font-heading text-lg font-bold tracking-wide text-white sm:text-xl">
-              {arrangedSentence}
-            </p>
-          </div>
-
-          {submitted && (
-            <FeedbackBanner
-              variant={isCorrect ? 'correct' : 'incorrect'}
-              assertive={!isCorrect}
-              className="items-start"
-            >
-              <div className="flex w-full items-center justify-between gap-3">
-                <div>
-                  <BilingualText
-                    fil={isCorrect ? STRINGS.correct.fil : 'Hindi pa tama — subukan ulit!'}
-                    en={isCorrect ? STRINGS.correct.en : 'Not quite — try again!'}
-                    filClassName="font-heading text-base font-bold"
-                  />
-                  {!isCorrect && (
-                    <BilingualText
-                      as="p"
-                      fil="Tamang sagot:"
-                      en="Correct answer:"
-                      className="mt-0.5"
-                      filClassName="text-sm text-pamana-gold"
-                      enClassName="text-xs text-pamana-gold/70"
-                    />
-                  )}
-                  {!isCorrect && (
-                    <p className="font-semibold text-white">
-                      {task.correctOrder.join(' ')}
-                    </p>
-                  )}
-                </div>
-                {task.audioUrl && (
                   <AudioPlayer
                     audioUrl={task.audioUrl}
-                    size="sm"
+                    size="lg"
                     label={STRINGS.listenSentence.fil}
                     labelEn={STRINGS.listenSentence.en}
                   />
+                  <BilingualText
+                    as="p"
+                    fil="Pakinggan ang tamang pagkakasunod ng pangungusap"
+                    en="Listen to the correct order of the sentence"
+                    className="text-center"
+                    filClassName="text-sm text-green-300"
+                    enClassName="text-xs text-green-200/70"
+                  />
+                </PromptStage>
+              )}
+
+              <PromptStage
+                variant="canvas"
+                ariaLabel="Iyong pangungusap (Your sentence)"
+              >
+                <p className="text-xs font-medium text-green-300 sm:text-sm">
+                  Iyong pangungusap:
+                </p>
+                <p className="min-h-[28px] font-heading text-lg font-bold tracking-wide text-white sm:text-xl">
+                  {arrangedSentence}
+                </p>
+              </PromptStage>
+
+              <FeedbackSlot>
+                {submitted && (
+                  <FeedbackBanner
+                    variant={isCorrect ? 'correct' : 'incorrect'}
+                    assertive={!isCorrect}
+                  >
+                    <div className="flex w-full items-center justify-between gap-3">
+                      <div>
+                        <BilingualText
+                          fil={isCorrect ? STRINGS.correct.fil : 'Hindi pa tama — subukan ulit!'}
+                          en={isCorrect ? STRINGS.correct.en : 'Not quite — try again!'}
+                          filClassName="font-heading text-base font-bold"
+                        />
+                        {!isCorrect && (
+                          <BilingualText
+                            as="p"
+                            fil="Tamang sagot:"
+                            en="Correct answer:"
+                            className="mt-0.5"
+                            filClassName="text-sm text-pamana-gold"
+                            enClassName="text-xs text-pamana-gold/70"
+                          />
+                        )}
+                        {!isCorrect && (
+                          <p className="font-semibold text-white">
+                            {task.correctOrder.join(' ')}
+                          </p>
+                        )}
+                      </div>
+                      {task.audioUrl && (
+                        <AudioPlayer
+                          audioUrl={task.audioUrl}
+                          size="sm"
+                          label={STRINGS.listenSentence.fil}
+                          labelEn={STRINGS.listenSentence.en}
+                        />
+                      )}
+                    </div>
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={
+            <div className="space-y-4">
+              <div className="card-story space-y-3 p-5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-green-300 sm:text-sm">
+                    <MousePointerClick
+                      className="h-4 w-4 text-pamana-gold"
+                      aria-hidden="true"
+                    />
+                    <BilingualText
+                      as="span"
+                      fil="I-drag o i-click ang dalawang salita para pagpalitin:"
+                      en="Drag or click two words to swap them:"
+                      filClassName="text-xs font-medium text-green-300 sm:text-sm"
+                      enClassName="text-[10px] text-green-200/60"
+                    />
+                  </div>
+                  {!submitted && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleResetOrder}
+                      title="I-reset ang pagkakasunod (Reset the order)"
+                      className="text-white/60 hover:text-white"
+                    >
+                      <Undo2 aria-hidden="true" />
+                      <BilingualText
+                        as="span"
+                        fil="I-reset"
+                        en="Reset"
+                        filClassName="text-sm"
+                        enClassName="text-[10px] opacity-70"
+                      />
+                    </Button>
+                  )}
+                </div>
+
+                <WordTiles
+                  items={arranged}
+                  onReorder={handleReorder}
+                  selectedIndex={selectedSwapIndex}
+                  onSelectIndex={handleSelectWord}
+                  disabled={submitted}
+                  ariaLabel="Mga salita ng pangungusap (Sentence words)"
+                />
+
+                {selectedSwapIndex !== null && !submitted && (
+                  <BilingualText
+                    as="p"
+                    fil="Pumili ng isa pang salita na nais mong ipalit sa napiling salita."
+                    en="Choose another word to swap with the selected word."
+                    className="animate-pulse"
+                    filClassName="text-xs text-amber-300"
+                    enClassName="text-[10px] text-amber-200/70"
+                  />
                 )}
               </div>
-            </FeedbackBanner>
-          )}
 
-          {!submitted ? (
-            <Button
-              variant="pamana"
-              onClick={handleSubmit}
-              disabled={taskLoading || arranged.length === 0}
-              className="w-full"
-            >
-              <BilingualText
-                as="span"
-                fil="Isumite"
-                en="Submit"
-                filClassName="text-sm font-semibold"
-                enClassName="text-xs font-normal opacity-80"
-              />
-            </Button>
-          ) : (
-            <Button variant="gold" onClick={handleNext} className="w-full text-stone-900 [&_svg]:text-stone-900">
-              <BilingualText
-                as="span"
-                fil={round >= MAX_ROUNDS ? 'Tapusin' : 'Susunod'}
-                en={round >= MAX_ROUNDS ? 'Finish' : 'Next'}
-                filClassName="text-sm font-semibold"
-                enClassName="text-xs font-normal opacity-80"
-              />
-              <ChevronRight aria-hidden="true" />
-            </Button>
-          )}
-        </div>
+              {!submitted ? (
+                <Button
+                  variant="pamana"
+                  onClick={handleSubmit}
+                  disabled={taskLoading || arranged.length === 0}
+                  className="w-full"
+                >
+                  <BilingualText
+                    as="span"
+                    fil="Isumite"
+                    en="Submit"
+                    filClassName="text-sm font-semibold"
+                    enClassName="text-xs font-normal opacity-80"
+                  />
+                </Button>
+              ) : (
+                <Button variant="gold" onClick={handleNext} className="w-full text-stone-900 [&_svg]:text-stone-900">
+                  <BilingualText
+                    as="span"
+                    fil={round >= MAX_ROUNDS ? 'Tapusin' : 'Susunod'}
+                    en={round >= MAX_ROUNDS ? 'Finish' : 'Next'}
+                    filClassName="text-sm font-semibold"
+                    enClassName="text-xs font-normal opacity-80"
+                  />
+                  <ChevronRight aria-hidden="true" />
+                </Button>
+              )}
+            </div>
+          }
+        />
       ) : (
         <ErrorState onRetry={retryTask} />
       )}
