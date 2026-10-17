@@ -1,6 +1,15 @@
 # Maven target directory
 target/
 **/target/
+maven.zip
+backend/package-lock.json
+
+# Node
+node_modules/
+**/node_modules/
+
+# Archives
+*.zip
 
 # IDE files and settings
 .idea/
