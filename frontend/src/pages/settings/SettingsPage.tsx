@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-<<<<<<< Updated upstream
-import { Settings, User, Bell, Paintbrush, Check, Music } from 'lucide-react'
-=======
 import { Settings, User, Bell, Paintbrush, Check, Music, Copy, Star } from 'lucide-react'
->>>>>>> Stashed changes
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth()
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
   const [musicEnabled, setMusicEnabled] = useState(true)
+  const [copiedCode, setCopiedCode] = useState(false)
+
+  const handleCopyCode = () => {
+    if (user?.id) {
+      navigator.clipboard.writeText(user.id)
+      setCopiedCode(true)
+      setTimeout(() => setCopiedCode(false), 2000)
+    }
+  }
 
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
@@ -38,16 +43,13 @@ export const SettingsPage: React.FC = () => {
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
-  // Custom chunky header text style
   const headerStyle = "text-4xl md:text-6xl font-black text-[#FFC107] tracking-wider uppercase [-webkit-text-stroke:2px_#5D4037] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#5D4037] flex items-center gap-4";
 
   return (
     <AppShell>
-      {/* Background: Soft sky blue to grass green gradient */}
       <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] p-4 md:p-8 pb-20">
         <div className="max-w-5xl mx-auto relative z-10 pt-4">
           
-          {/* SETTINGS Header */}
           <div className="mb-10 flex flex-col items-center justify-center text-center">
             <h1 className={headerStyle}>
               <Settings className="w-12 h-12 md:w-16 md:h-16 text-white drop-shadow-[0_4px_0_#5D4037]" strokeWidth={3} />
@@ -58,52 +60,9 @@ export const SettingsPage: React.FC = () => {
             </p>
           </div>
 
-<<<<<<< Updated upstream
-          {/* Profile Section (Full Width) */}
-          <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-pamana-green/30 hover:bg-white/10 transition-all duration-300 mb-8">
-            <h2 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-pamana-green" />
-              Profile
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Name</label>
-                <div className="p-3 bg-white/5 rounded-lg text-white">
-                  {user?.name || 'Loading...'}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Username</label>
-                <div className="p-3 bg-white/5 rounded-lg text-white">
-                  {user?.name || 'Loading...'}
-                </div>
-              </div>
-              <div className="space-y-1">
-                <label className="text-sm text-green-300 font-medium">Role</label>
-                <div className="p-3 bg-white/5 rounded-lg text-white capitalize">
-                  {user?.role?.toLowerCase() || 'Loading...'}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* 2-Column Grid: Preferences + Notifications */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            {/* LEFT: Preferences (3 columns) */}
-            <div className="md:col-span-3">
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-pamana-green/30 hover:bg-white/10 transition-all duration-300 h-full">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
-                  <Paintbrush className="w-5 h-5 text-pamana-green" />
-                  Change Preference
-                </h2>
-
-                <div className="space-y-4 max-w-sm">
-=======
           <div className="space-y-8">
             
-            {/* --- PROFILE SECTION (Wood/Green Panel) --- */}
             <section className="bg-[#8dc26f] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#5b8f40] relative overflow-hidden">
-              {/* Glossy top highlight */}
               <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
               
               <div className="relative z-10">
@@ -118,7 +77,6 @@ export const SettingsPage: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
->>>>>>> Stashed changes
                   <div className="space-y-2">
                     <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Name</label>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-black text-lg shadow-inner">
@@ -139,7 +97,6 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Student Code Box */}
                 {user?.role === 'LEARNER' && (
                   <div className="p-5 md:p-6 rounded-[1.5rem] bg-[#FFF8E1] border-[5px] border-[#FFC107] flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_6px_0_#D4A017]">
                     <div className="w-full">
@@ -179,10 +136,8 @@ export const SettingsPage: React.FC = () => {
               </div>
             </section>
 
-            {/* --- 2-COLUMN GRID: PREFERENCES & NOTIFICATIONS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
-              {/* LEFT: Preferences (Blue Panel) */}
               <section className="bg-[#5BC0EB] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2A8EAB] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 
@@ -193,7 +148,6 @@ export const SettingsPage: React.FC = () => {
                   </h2>
 
                   <div className="space-y-8 flex-1">
-                    {/* Character Selection */}
                     <div className="space-y-3">
                       <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Choose your character</label>
                       <div className="grid grid-cols-2 gap-4">
@@ -226,7 +180,6 @@ export const SettingsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Music Toggle */}
                     <div className="space-y-3 pt-6 border-t-4 border-white/30 mt-auto">
                       <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Music</label>
                       <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/40 shadow-inner">
@@ -258,7 +211,6 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </section>
 
-              {/* RIGHT: Notifications (Purple/Pink Panel) */}
               <section className="bg-[#A774F5] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#6D3EAB] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 

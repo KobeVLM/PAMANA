@@ -1,15 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAudio } from '@/contexts/AudioContext'
 import { cn } from '@/lib/utils'
 import { StoryModal } from '@/components/StoryModal'
 import {
-<<<<<<< Updated upstream
-  Map,
-  Trophy,
-  Users,
-=======
->>>>>>> Stashed changes
   BarChart2,
   LogOut,
   X,
@@ -20,54 +15,27 @@ interface NavItem {
   label: string
   to: string
   icon: React.ReactNode
-  roles: ('LEARNER' | 'PARENT' | 'TEACHER')[]
+  roles: ('LEARNER' | 'PARENT')[]
 }
 
 const NAV_ITEMS: NavItem[] = [
   {
     label: 'Home',
-<<<<<<< Updated upstream
-    to: '/home',  // ✅ CHANGED from '/' to '/home'
-    icon: <Map className="w-5 h-5" />,
-=======
     to: '/home',
     icon: <img src="/images/iHome.png" alt="Home" className="w-32 h-32 object-contain drop-shadow-md" />,
->>>>>>> Stashed changes
     roles: ['LEARNER'],
-  },
-  {
-    label: 'Klase Mode',
-    to: '/klase',
-    icon: <Users className="w-5 h-5" />,
-    roles: ['TEACHER'],
-  },
-  {
-    label: 'Leaderboard',
-    to: '/leaderboard',
-    icon: <Trophy className="w-5 h-5" />,
-    roles: ['LEARNER', 'TEACHER'],
   },
   {
     label: 'Dashboard',
     to: '/dashboard',
-<<<<<<< Updated upstream
-    icon: <BarChart2 className="w-5 h-5" />,
-    roles: ['PARENT', 'TEACHER'],
-=======
     icon: <BarChart2 className="w-32 h-32 text-white drop-shadow-md" strokeWidth={2.5} />,
     roles: ['PARENT'],
->>>>>>> Stashed changes
   },
   {
     label: 'Settings',
     to: '/settings',
-<<<<<<< Updated upstream
-    icon: <Settings className="w-5 h-5" />,
-    roles: ['LEARNER', 'PARENT', 'TEACHER'],
-=======
     icon: <img src="/images/iSettings.png" alt="Settings" className="w-32 h-32 object-contain drop-shadow-md" />,
     roles: ['LEARNER', 'PARENT'],
->>>>>>> Stashed changes
   },
 ]
 
@@ -77,10 +45,10 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { user, logout } = useAuth()
+  const { stopAudio } = useAudio()
   const navigate = useNavigate()
   const location = useLocation()
   
-  // Fixed state to match the new toggle button
   const [isSidebarHidden, setIsSidebarHidden] = useState(false)
 
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
@@ -106,6 +74,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   }, [])
 
   const handleLogout = () => {
+    stopAudio()
     logout()
     navigate('/login')
   }
@@ -116,13 +85,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     (item) => user && item.roles.includes(user.role)
   )
 
-<<<<<<< Updated upstream
-  const roleLabel = user?.role === 'LEARNER'
-    ? 'Mag-aaral'
-    : user?.role === 'PARENT'
-    ? 'Magulang'
-    : 'Guro'
-=======
   const avatarSrc = character === 'Lalaki' 
     ? '/images/M_User.png' 
     : '/images/F_User.png'
@@ -146,7 +108,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       <span className="text-[#2b5c3b]">{user?.name?.charAt(0).toUpperCase() || <User className="w-10 h-10" />}</span>
     )
   }
->>>>>>> Stashed changes
 
   return (
     <div className="h-screen w-full overflow-hidden bg-[#f4f9f0] flex font-sans select-none">
@@ -220,7 +181,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                 {renderAvatar()}
               </div>
               
-              {/* REVERTED TO ORIGINAL GREEN/WHITE THEME */}
+              {/* Original Green/White Name Tag */}
               <div className="mt-[-20px] bg-[#f4f9f0] px-8 py-2 rounded-full border-4 border-[#a4cba9] shadow-md z-20">
                 <p className="text-[#2b5c3b] font-black text-xl truncate max-w-[160px]">
                   {user?.name || 'Mag-aaral'}
@@ -240,6 +201,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             >
               <span className="pointer-events-none absolute top-1.5 left-4 w-10 h-3 rounded-[100%] bg-white/50 -rotate-12 blur-[1.5px]" />
               <LogOut className="w-8 h-8 stroke-[3] text-white drop-shadow-[0_3px_0_#a33a00]" />
+              
               <span 
                 className="text-3xl font-black tracking-wide"
                 style={{
@@ -256,7 +218,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         </aside>
       )}
 
-      {/* DESKTOP TOGGLE BUTTON (Gem Button) */}
+      {/* DESKTOP TOGGLE BUTTON (Gem) */}
       {!isModulePage && (
         <button
           onClick={() => setIsSidebarHidden(!isSidebarHidden)}
@@ -284,7 +246,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         {!isModulePage && (
           <header className="lg:hidden sticky top-0 z-20 h-20 bg-gradient-to-b from-[#2d5e3e] to-[#4b8a5c] border-b-4 border-[#33664a] flex items-center px-4 justify-between shadow-md">
             
-            {/* MOBILE TOGGLE BUTTON */}
             <button
               onClick={() => setIsSidebarHidden(false)}
               className="relative flex items-center justify-center w-12 h-12 rounded-[1rem] bg-gradient-to-b from-[#55cfff] to-[#1f9ee6] border-b-[4px] border-[#0d6cb5] shadow-[0_3px_0_#074e83] active:border-b-0 active:translate-y-1 active:shadow-none transition-all"
@@ -320,7 +281,6 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         </main>
       </div>
 
-      {/* MOBILE CLOSE BUTTON */}
       {!isSidebarHidden && (
         <button
           onClick={() => setIsSidebarHidden(true)}
