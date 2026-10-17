@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
+<<<<<<< Updated upstream
 import { Settings, User, Bell, Paintbrush, Check, Music } from 'lucide-react'
+=======
+import { Settings, User, Bell, Paintbrush, Check, Music, Copy, Star } from 'lucide-react'
+>>>>>>> Stashed changes
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
@@ -12,7 +16,6 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
     if (savedChar === 'Lalaki' || savedChar === 'Babae') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCharacter(savedChar as 'Lalaki' | 'Babae')
     }
 
@@ -35,21 +38,27 @@ export const SettingsPage: React.FC = () => {
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
+  // Custom chunky header text style
+  const headerStyle = "text-4xl md:text-6xl font-black text-[#FFC107] tracking-wider uppercase [-webkit-text-stroke:2px_#5D4037] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#5D4037] flex items-center gap-4";
+
   return (
     <AppShell>
-      <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 p-6 md:p-10">
-        <div className="max-w-6xl mx-auto">
+      {/* Background: Soft sky blue to grass green gradient */}
+      <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] p-4 md:p-8 pb-20">
+        <div className="max-w-5xl mx-auto relative z-10 pt-4">
+          
           {/* SETTINGS Header */}
-          <div className="mb-10">
-            <h1 className="text-5xl md:text-6xl font-bold text-white font-heading tracking-tight flex items-center gap-3">
-              <Settings className="w-8 h-8 text-pamana-green" />
+          <div className="mb-10 flex flex-col items-center justify-center text-center">
+            <h1 className={headerStyle}>
+              <Settings className="w-12 h-12 md:w-16 md:h-16 text-white drop-shadow-[0_4px_0_#5D4037]" strokeWidth={3} />
               SETTINGS
             </h1>
-            <p className="text-green-200 mt-2">
-              Manage your account and other aspects of the app here.
+            <p className="text-[#2b5c3b] font-bold text-lg md:text-xl mt-2 bg-white/60 px-6 py-1 rounded-full border-2 border-white shadow-sm">
+              Manage your account and customize your game!
             </p>
           </div>
 
+<<<<<<< Updated upstream
           {/* Profile Section (Full Width) */}
           <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-pamana-green/30 hover:bg-white/10 transition-all duration-300 mb-8">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
@@ -89,76 +98,187 @@ export const SettingsPage: React.FC = () => {
                 </h2>
 
                 <div className="space-y-4 max-w-sm">
+=======
+          <div className="space-y-8">
+            
+            {/* --- PROFILE SECTION (Wood/Green Panel) --- */}
+            <section className="bg-[#8dc26f] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#5b8f40] relative overflow-hidden">
+              {/* Glossy top highlight */}
+              <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
+              
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#2b5c3b] flex items-center gap-3">
+                    <User className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    YOUR PROFILE
+                  </h2>
+                  <div className="hidden sm:block">
+                    <Star className="w-8 h-8 text-yellow-300 fill-yellow-300 drop-shadow-md" />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+>>>>>>> Stashed changes
                   <div className="space-y-2">
-                    <label className="text-sm text-green-300 font-medium">Choose your character</label>
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <button
-                        onClick={() => handleCharacterChange('Lalaki')}
-                        className={cn(
-                          "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300",
-                          character === 'Lalaki'
-                            ? "border-pamana-green bg-pamana-green/20 text-white"
-                            : "border-white/10 bg-white/5 text-green-200 hover:bg-white/10 hover:border-white/30"
-                        )}
-                      >
-                        Male {character === 'Lalaki' && <Check className="w-4 h-4 text-pamana-green" />}
-                      </button>
-                      <button
-                        onClick={() => handleCharacterChange('Babae')}
-                        className={cn(
-                          "flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 transition-all duration-300",
-                          character === 'Babae'
-                            ? "border-pamana-green bg-pamana-green/20 text-white"
-                            : "border-white/10 bg-white/5 text-green-200 hover:bg-white/10 hover:border-white/30"
-                        )}
-                      >
-                        Female {character === 'Babae' && <Check className="w-4 h-4 text-pamana-green" />}
-                      </button>
+                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Name</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-black text-lg shadow-inner">
+                      {user?.name || 'Loading...'}
                     </div>
                   </div>
-
-                  <div className="space-y-2 pt-4 border-t border-white/10">
-                    <label className="text-sm text-green-300 font-medium">Music</label>
-                    <div className="flex items-center justify-between p-4 rounded-xl border-2 border-white/10 bg-white/5">
-                      <div className="flex items-center gap-3 text-green-200">
-                        <Music className="w-5 h-5 text-pamana-green" />
-                        <span className="font-medium">Background Music</span>
-                      </div>
-                      <button
-                        onClick={toggleMusic}
-                        className={cn(
-                          "w-12 h-6 rounded-full transition-colors relative",
-                          musicEnabled ? "bg-pamana-green/80" : "bg-white/20"
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            "w-4 h-4 rounded-full bg-white absolute top-1 transition-transform",
-                            musicEnabled ? "translate-x-7" : "translate-x-1"
-                          )}
-                        />
-                      </button>
+                  <div className="space-y-2">
+                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Email</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-bold text-lg shadow-inner truncate">
+                      {user?.email || 'Loading...'}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Role</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-black text-lg capitalize shadow-inner">
+                      {user?.role?.toLowerCase() || 'Loading...'}
                     </div>
                   </div>
                 </div>
 
-                <p className="text-green-200/50 text-sm mt-6 italic">
-                  Other settings for audio and visuals are coming soon.
-                </p>
-              </section>
-            </div>
+                {/* Student Code Box */}
+                {user?.role === 'LEARNER' && (
+                  <div className="p-5 md:p-6 rounded-[1.5rem] bg-[#FFF8E1] border-[5px] border-[#FFC107] flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_6px_0_#D4A017]">
+                    <div className="w-full">
+                      <div className="text-sm text-[#8B5A2B] font-black uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <Star className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" /> 
+                        Student Code (ID para sa Magulang)
+                      </div>
+                      <div className="font-mono text-sm md:text-base text-[#5D4037] bg-white px-4 py-3 rounded-xl border-2 border-[#FFC107] select-all inline-block break-all font-black shadow-sm w-full">
+                        {user?.id}
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={handleCopyCode}
+                      className={cn(
+                        "px-6 py-3 rounded-2xl font-black text-xl flex items-center justify-center gap-2 transition-all w-full md:w-auto shrink-0 border-4",
+                        copiedCode 
+                          ? "bg-[#4CAF50] text-white border-white shadow-[0_6px_0_#2E7D32]" 
+                          : "bg-gradient-to-b from-[#FFB74D] to-[#FF9800] text-white border-white shadow-[0_6px_0_#E65100] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none"
+                      )}
+                    >
+                      {copiedCode ? (
+                        <>
+                          <Check className="w-6 h-6 stroke-[4]" />
+                          <span>Kopyado!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-6 h-6 stroke-[3]" />
+                          <span>Kopyahin</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
 
-            {/* RIGHT: Notifications (2 columns) */}
-            <div className="md:col-span-2">
-              <section className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-pamana-green/30 hover:bg-white/10 transition-all duration-300 h-full">
-                <h2 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
-                  <Bell className="w-5 h-5 text-pamana-green" />
-                  Notifications
-                </h2>
-                <p className="text-green-200 text-sm">
-                  Notification settings (to be added).
-                </p>
+            {/* --- 2-COLUMN GRID: PREFERENCES & NOTIFICATIONS --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* LEFT: Preferences (Blue Panel) */}
+              <section className="bg-[#5BC0EB] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2A8EAB] relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
+                
+                <div className="relative z-10 flex-1 flex flex-col">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#1a5c73] flex items-center gap-3 mb-8">
+                    <Paintbrush className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    PREFERENCES
+                  </h2>
+
+                  <div className="space-y-8 flex-1">
+                    {/* Character Selection */}
+                    <div className="space-y-3">
+                      <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Choose your character</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => handleCharacterChange('Lalaki')}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
+                            character === 'Lalaki'
+                              ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
+                              : "bg-white/40 border-white/50 text-[#0b3b4d] shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:bg-white/60 active:translate-y-1 active:shadow-none"
+                          )}
+                        >
+                          <span className="text-4xl mb-1">👦</span>
+                          Male 
+                          {character === 'Lalaki' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
+                        </button>
+                        <button
+                          onClick={() => handleCharacterChange('Babae')}
+                          className={cn(
+                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
+                            character === 'Babae'
+                              ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
+                              : "bg-white/40 border-white/50 text-[#0b3b4d] shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:bg-white/60 active:translate-y-1 active:shadow-none"
+                          )}
+                        >
+                          <span className="text-4xl mb-1">👧</span>
+                          Female 
+                          {character === 'Babae' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Music Toggle */}
+                    <div className="space-y-3 pt-6 border-t-4 border-white/30 mt-auto">
+                      <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Music</label>
+                      <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/40 shadow-inner">
+                        <div className="flex items-center gap-3 text-[#0b3b4d]">
+                          <div className="bg-white/50 p-2 rounded-xl">
+                            <Music className="w-6 h-6 text-[#2A8EAB]" strokeWidth={3} />
+                          </div>
+                          <span className="font-black text-lg">Background Music</span>
+                        </div>
+                        <button
+                          onClick={toggleMusic}
+                          className={cn(
+                            "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",
+                            musicEnabled ? "bg-[#4CAF50]" : "bg-gray-400"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-8 h-8 rounded-full bg-white absolute top-0.5 transition-transform duration-300 shadow-md flex items-center justify-center",
+                              musicEnabled ? "translate-x-10" : "translate-x-0.5"
+                            )}
+                          >
+                            {musicEnabled && <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </section>
+
+              {/* RIGHT: Notifications (Purple/Pink Panel) */}
+              <section className="bg-[#A774F5] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#6D3EAB] relative overflow-hidden flex flex-col">
+                <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col h-full">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#422174] flex items-center gap-3 mb-8">
+                    <Bell className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    ALERTS
+                  </h2>
+                  
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white/20 rounded-[1.5rem] border-4 border-dashed border-white/50">
+                    <div className="bg-white/40 p-4 rounded-full mb-4">
+                      <Bell className="w-12 h-12 text-white drop-shadow-md" strokeWidth={2.5} />
+                    </div>
+                    <p className="text-white font-black text-lg drop-shadow-[0_2px_0_#422174]">
+                      Notification settings will be added in a future update!
+                    </p>
+                  </div>
+                </div>
+              </section>
+
             </div>
           </div>
         </div>
