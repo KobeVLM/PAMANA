@@ -47,11 +47,11 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a1f14] via-[#0d2b1e] to-[#0a2418] flex items-center justify-center p-4 relative">
       {/* Back Button */}
       <Link 
         to="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
+        className="absolute top-6 left-6 flex items-center gap-2 text-[#B8E8C8]/70 hover:text-[#FEFCF3] transition-colors p-2 rounded-full hover:bg-[#50C878]/10"
         aria-label="Back to Landing Page"
       >
         <ArrowLeft className="w-6 h-6" />
@@ -60,26 +60,26 @@ export const LoginPage: React.FC = () => {
 
       {/* Decorative background circles */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-pamana-gold/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pamana-green/20 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#50C878]/15 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#B8E8C8]/10 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-md">
         {/* Card */}
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
+        <div className="bg-[#FEFCF3]/5 backdrop-blur-2xl border border-[#B8E8C8]/20 rounded-3xl p-8 shadow-2xl">
           {/* Logo */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float overflow-hidden rounded-full p-2 bg-green-500/10 backdrop-blur-sm border border-white/20">
+            <div className="w-24 h-24 flex items-center justify-center mb-2 animate-float overflow-hidden rounded-full p-2 bg-[#50C878]/15 backdrop-blur-sm border border-[#50C878]/30">
               <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
             </div>
-            <h1 className="text-3xl font-heading font-bold text-white">PAMANA</h1>
-            <p className="text-green-300 text-sm mt-1">Login to your account</p>
+            <h1 className="text-3xl font-heading font-bold text-[#FEFCF3]">PAMANA</h1>
+            <p className="text-[#B8E8C8] text-sm mt-1">Login to your account</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-green-200 font-medium">
+              <Label htmlFor="email" className="text-[#B8E8C8] font-medium">
                 Email
               </Label>
               <Input
@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
                 placeholder="example@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
+                className="h-12 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                 autoComplete="email"
                 disabled={isLoading}
               />
@@ -96,7 +96,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Password */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-green-200 font-medium">
+              <Label htmlFor="password" className="text-[#B8E8C8] font-medium">
                 Password
               </Label>
               <div className="relative">
@@ -106,14 +106,14 @@ export const LoginPage: React.FC = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
+                  className="h-12 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
                   autoComplete="current-password"
                   disabled={isLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B8E8C8]/50 hover:text-[#FEFCF3]/80 transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -123,7 +123,7 @@ export const LoginPage: React.FC = () => {
 
             {/* Error Message */}
             {error && (
-              <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl">
+              <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl">
                 <p className="text-red-300 text-sm text-center">{error}</p>
               </div>
             )}
@@ -132,7 +132,7 @@ export const LoginPage: React.FC = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-pamana-green to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-base rounded-xl shadow-lg shadow-green-900/50 transition-all duration-200 active:scale-95"
+              className="w-full h-12 bg-gradient-to-r from-[#50C878] to-[#3da860] hover:from-[#6ddb92] hover:to-[#50C878] text-[#0a1f14] font-bold text-base rounded-xl shadow-lg shadow-[#50C878]/30 transition-all duration-200 active:scale-95"
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -146,9 +146,9 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Register link */}
-          <p className="text-center text-green-300 text-sm mt-6">
+          <p className="text-center text-[#B8E8C8] text-sm mt-6">
             Don't have an account?{' '}
-            <Link to="/register" className="text-pamana-gold font-semibold hover:underline">
+            <Link to="/register" className="text-[#50C878] font-semibold hover:text-[#6ddb92] hover:underline transition-colors">
               Register here
             </Link>
           </p>
