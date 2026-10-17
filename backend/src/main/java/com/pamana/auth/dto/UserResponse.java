@@ -12,18 +12,16 @@ public class UserResponse {
     private String name;
     private String email;
     private Role role;
-    private UUID klaseId;
     private LocalDateTime createdAt;
 
     public UserResponse() {
     }
 
-    public UserResponse(UUID id, String name, String email, Role role, UUID klaseId, LocalDateTime createdAt) {
+    public UserResponse(UUID id, String name, String email, Role role, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.role = role;
-        this.klaseId = klaseId;
         this.createdAt = createdAt;
     }
 
@@ -58,14 +56,6 @@ public class UserResponse {
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public UUID getKlaseId() {
-        return klaseId;
-    }
-
-    public void setKlaseId(UUID klaseId) {
-        this.klaseId = klaseId;
     }
 
     public LocalDateTime getCreatedAt() {

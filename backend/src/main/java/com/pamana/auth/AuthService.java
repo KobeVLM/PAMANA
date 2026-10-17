@@ -7,8 +7,6 @@ import com.pamana.auth.dto.AuthResponse;
 import com.pamana.auth.dto.LoginRequest;
 import com.pamana.auth.dto.RegisterRequest;
 import com.pamana.auth.dto.UserResponse;
-import com.pamana.klase.KlaseRepository;
-import com.pamana.klase.Klase;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.security.JwtTokenProvider;
@@ -19,10 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -31,19 +27,16 @@ public class AuthService {
     private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
-    private final KlaseRepository klaseRepository;
     private final ModuleProgressRepository moduleProgressRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(
             UserRepository userRepository,
-            KlaseRepository klaseRepository,
             ModuleProgressRepository moduleProgressRepository,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider jwtTokenProvider) {
         this.userRepository = userRepository;
-        this.klaseRepository = klaseRepository;
         this.moduleProgressRepository = moduleProgressRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
@@ -69,21 +62,11 @@ public class AuthService {
                 request.getRole()
         );
 
-        // 3. Process optional classroom join code (if user is a LEARNER)
-        if (StringUtils.hasText(request.getJoinCode())) {
-            Optional<Klase> klaseOpt = klaseRepository.findByJoinCode(request.getJoinCode());
-            if (klaseOpt.isEmpty()) {
-                log.warn("Account registration failed - invalid join code: {}", request.getJoinCode());
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Hindi wasto ang classroom join code.");
-            }
-            user.setKlaseId(klaseOpt.get().getId());
-        }
-
-        // 4. Save User to DB
+        // 3. Save User to DB
         User savedUser = userRepository.save(user);
         log.info("Successfully created user account with ID: {}", savedUser.getId());
 
-        // 5. Initialize progress tracks for all 4 educational modules
+        // 4. Initialize progress tracks for all 4 educational modules
         initializeModuleProgress(savedUser.getId());
 
         return mapToUserResponse(savedUser);
@@ -136,7 +119,6 @@ public class AuthService {
                 user.getName(),
                 user.getEmail(),
                 user.getRole(),
-                user.getKlaseId(),
                 user.getCreatedAt()
         );
     }

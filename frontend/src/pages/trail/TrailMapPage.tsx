@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { Progress } from '@/components/ui/progress'
+import {
+  Modal,
+  ModalContent,
+  ModalTitle,
+  ModalDescription,
+} from '@/components/ui/modal'
+import { useCelebration } from '@/components/feedback/Celebration'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
 import { Lock, Star, MapPin } from 'lucide-react'
@@ -45,6 +52,9 @@ export const TrailMapPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, node: TrailNode | null }>({ isOpen: false, node: null })
+  const [displayPercent, setDisplayPercent] = useState(0)
+  const celebrate = useCelebration()
+  const hasCelebratedRef = useRef(false)
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -72,6 +82,22 @@ export const TrailMapPage: React.FC = () => {
   const totalModules = 4
   const overallPercent = Math.round((completedCount / totalModules) * 100)
 
+  // Grow the bar from 0 to the saved progress once the data is in.
+  useEffect(() => {
+    if (isLoading) return
+    const id = window.setTimeout(() => setDisplayPercent(overallPercent), 120)
+    return () => window.clearTimeout(id)
+  }, [isLoading, overallPercent])
+
+  // Confetti once when the learner first lands on a fully completed trail.
+  useEffect(() => {
+    if (isLoading || hasCelebratedRef.current) return
+    if (completedCount === totalModules) {
+      hasCelebratedRef.current = true
+      void celebrate('large')
+    }
+  }, [isLoading, completedCount, totalModules, celebrate])
+
   const sortedProgress = [...moduleProgress].sort((a, b) => a.moduleNumber - b.moduleNumber)
 
   const activeModule = sortedProgress.filter(p => p.isUnlocked && !p.isComplete).pop()?.moduleNumber 
@@ -79,6 +105,17 @@ export const TrailMapPage: React.FC = () => {
     || 1
 
   const character = localStorage.getItem('pamana_character') || 'Lalaki'
+
+  const isBoy = character === 'Lalaki'
+  const markerComplete = displayPercent >= 100
+  const markerSrc = markerComplete
+    ? isBoy
+      ? '/images/boy_complete.png'
+      : '/images/girl_complete.png'
+    : isBoy
+      ? '/images/boy_walking-transparent.png'
+      : '/images/girl_walking-transparent.png'
+  const markerPercent = Math.min(97, Math.max(3, displayPercent))
 
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
@@ -99,7 +136,7 @@ export const TrailMapPage: React.FC = () => {
       navigate(`/modules/${confirmModal.node.moduleNumber}`)
     } catch (e) {
       console.error("Failed to reset module", e)
-      setToastMessage("Nagkaroon ng error sa pag-reset ng module. Subukan muli.")
+      setToastMessage("Nagkaroon ng error sa pag-reset ng module. Subukan muli. (An error occurred while resetting the module. Please try again.)")
       setTimeout(() => setToastMessage(null), 4000)
     } finally {
       setConfirmModal({ isOpen: false, node: null })
@@ -128,6 +165,9 @@ export const TrailMapPage: React.FC = () => {
         <img 
           src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} 
           alt="Character Avatar" 
+          width={56}
+          height={56}
+          decoding="async"
           className="w-14 h-14 object-cover object-top rounded-full scale-110 border-2 border-orange-200/50 shadow-sm" 
         />
       )
@@ -193,6 +233,10 @@ export const TrailMapPage: React.FC = () => {
               <img 
                 src="/images/TrailMap.png" 
                 alt="Trail Map"
+                width={1408}
+                height={768}
+                decoding="async"
+                fetchPriority="high"
                 className="w-full h-full object-cover object-center"
               />
               
@@ -209,13 +253,35 @@ export const TrailMapPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <MapPin className="w-6 h-6 text-pamana-green flex-shrink-0" />
             <div className="flex-1">
-              <Progress 
-                value={overallPercent} 
-                className="h-4 bg-green-900/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-green-300 [&>div]:to-green-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
-              />
+              <div className="relative">
+                <Progress
+                  value={displayPercent}
+                  className="h-4 bg-green-900/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-green-300 [&>div]:to-green-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-1000 [&>div]:ease-out"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-[85%] transition-[left] duration-1000 ease-out"
+                  style={{ left: `${markerPercent}%` }}
+                >
+                  <img
+                    src={markerSrc}
+                    alt=""
+                    draggable={false}
+                    className={cn(
+                      'object-contain drop-shadow-lg',
+                      markerComplete
+                        ? 'h-16 w-16 animate-bounce-in sm:h-20 sm:w-20'
+                        : 'h-12 w-12 animate-float sm:h-14 sm:w-14'
+                    )}
+                  />
+                </div>
+              </div>
             </div>
             <div className="font-bold text-white text-lg w-16 text-right">{overallPercent}%</div>
           </div>
+          <p className="sr-only">
+            {completedCount} ng {totalModules} na module ang natapos
+          </p>
         </div>
       </div>
 
@@ -229,37 +295,45 @@ export const TrailMapPage: React.FC = () => {
         </div>
       )}
 
-      {/* Custom Confirmation Modal */}
-      {confirmModal.isOpen && confirmModal.node && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="w-8 h-8 fill-current" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Ulitin ang Module</h2>
-              <p className="text-gray-600">
-                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ma-re-reset ang iyong progress at maaari mong pagbutihin ang iyong score.
-              </p>
-            </div>
-            
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setConfirmModal({ isOpen: false, node: null })}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                Kanselahin
-              </button>
-              <button 
-                onClick={handleConfirmRetake}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all active:scale-95"
-              >
-                Oo, Ulitin
-              </button>
-            </div>
+      {/* Retake confirmation dialog */}
+      <Modal
+        open={confirmModal.isOpen && Boolean(confirmModal.node)}
+        onOpenChange={(open) => {
+          if (!open) setConfirmModal({ isOpen: false, node: null })
+        }}
+      >
+        <ModalContent className="max-w-md text-center">
+          <div className="w-16 h-16 bg-pamana-gold/20 text-pamana-gold rounded-full flex items-center justify-center mx-auto mb-4">
+            <Star className="w-8 h-8 fill-current" aria-hidden="true" />
           </div>
-        </div>
-      )}
+          <ModalTitle className="text-2xl mb-2">Ulitin ang Module</ModalTitle>
+          <ModalDescription>
+            Gusto mo bang ulitin ang{' '}
+            <strong className="text-white">
+              Module {confirmModal.node?.moduleNumber}
+            </strong>
+            ? Ma-re-reset ang iyong progress at maaari mong pagbutihin ang
+            iyong score.
+          </ModalDescription>
+
+          <div className="flex gap-3 mt-6">
+            <button
+              type="button"
+              onClick={() => setConfirmModal({ isOpen: false, node: null })}
+              className="flex-1 py-3 px-4 rounded-xl font-bold text-green-100 bg-white/10 hover:bg-white/20 border border-white/15 transition-colors"
+            >
+              Kanselahin
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmRetake}
+              className="flex-1 py-3 px-4 rounded-xl font-bold text-green-950 bg-pamana-gold hover:bg-pamana-gold/90 shadow-md shadow-pamana-gold/20 transition-all active:scale-95"
+            >
+              Oo, Ulitin
+            </button>
+          </div>
+        </ModalContent>
+      </Modal>
     </AppShell>
   )
 }

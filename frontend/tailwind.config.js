@@ -46,6 +46,14 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -63,7 +71,19 @@ export default {
           cream: "#FFFBEB",
           gold: "#F59E0B",
           terracotta: "#C2410C",
+          bark: "#3B2A1A",
+          wood: "#4A3728",
+          parchment: "#FAF3E0",
+          moss: "#4D7C0F",
         },
+      },
+      boxShadow: {
+        story:
+          "0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 12px -4px rgba(0, 0, 0, 0.4)",
+        tile: "0 5px 0 0 rgba(0, 0, 0, 0.35), 0 12px 20px -10px rgba(0, 0, 0, 0.5)",
+        "glow-gold":
+          "0 0 0 3px rgba(245, 158, 11, 0.35), 0 0 24px rgba(245, 158, 11, 0.25)",
+        "inner-soft": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
       },
       keyframes: {
         "accordion-down": {
@@ -92,10 +112,31 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
         },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0) rotate(-1deg)" },
+          "50%": { transform: "translateY(-12px) rotate(1deg)" },
+        },
         "star-pop": {
           "0%": { transform: "scale(0) rotate(-30deg)", opacity: "0" },
           "70%": { transform: "scale(1.3) rotate(5deg)", opacity: "1" },
           "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
+        "pop-in": {
+          "0%": { transform: "scale(0.9)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "slide-up": {
+          "0%": { transform: "translateY(16px)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        wiggle: {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-4deg)" },
+          "75%": { transform: "rotate(4deg)" },
+        },
+        sheen: {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(220%)" },
         },
       },
       animation: {
@@ -105,7 +146,12 @@ export default {
         shake: "shake 0.4s ease-in-out",
         "pulse-glow": "pulse-glow 2s infinite",
         float: "float 3s ease-in-out infinite",
+        "float-slow": "float-slow 6s ease-in-out infinite",
         "star-pop": "star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
+        "pop-in": "pop-in 0.25s ease-out",
+        "slide-up": "slide-up 0.35s ease-out",
+        wiggle: "wiggle 0.5s ease-in-out",
+        sheen: "sheen 2.5s ease-in-out infinite",
       },
       fontFamily: {
         sans: ["Nunito", "system-ui", "sans-serif"],

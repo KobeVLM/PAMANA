@@ -7,8 +7,6 @@ import com.pamana.vocabulary.WordMasteryRepository;
 import com.pamana.vocabulary.VocabularyItem;
 import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.dto.WordMasteryStatus;
-import com.pamana.hamon.HamonSessionRepository;
-import com.pamana.hamon.HamonSession;
 import com.pamana.sentence.SentenceProgressRepository;
 import com.pamana.sentence.SentenceProgress;
 import com.pamana.progress.ProgressService;
@@ -40,7 +38,6 @@ public class ProgressService {
     private final WordMasteryRepository wordMasteryRepository;
     private final VocabularyItemRepository vocabularyItemRepository;
     private final SentenceProgressRepository sentenceProgressRepository;
-    private final HamonSessionRepository hamonSessionRepository;
     private final SessionLogRepository sessionLogRepository;
     private final ModuleProgressRepository moduleProgressRepository;
 
@@ -48,14 +45,12 @@ public class ProgressService {
                            WordMasteryRepository wordMasteryRepository,
                            VocabularyItemRepository vocabularyItemRepository,
                            SentenceProgressRepository sentenceProgressRepository,
-                           HamonSessionRepository hamonSessionRepository,
                            SessionLogRepository sessionLogRepository,
                            ModuleProgressRepository moduleProgressRepository) {
         this.syllableProgressRepository = syllableProgressRepository;
         this.wordMasteryRepository = wordMasteryRepository;
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.sentenceProgressRepository = sentenceProgressRepository;
-        this.hamonSessionRepository = hamonSessionRepository;
         this.sessionLogRepository = sessionLogRepository;
         this.moduleProgressRepository = moduleProgressRepository;
     }
@@ -71,30 +66,22 @@ public class ProgressService {
         int masteredCount = (int) wordMasteryRepository.countByUserIdAndStatus(userId, "green");
         int needsReviewCount = (int) wordMasteryRepository.countByUserIdAndStatus(userId, "red");
 
-        // 3. Hamon pass rate
-        List<HamonSession> hamonSessions = hamonSessionRepository.findByUserId(userId);
-        double hamonPassRate = hamonSessions.stream()
-                .filter(s -> s.getIsComplete() && s.getPassRate() != null)
-                .mapToDouble(s -> s.getPassRate().doubleValue())
-                .average()
-                .orElse(0.0);
-
-        // 4. Average session duration
+        // 3. Average session duration
         List<SessionLog> sessionLogs = sessionLogRepository.findByUserId(userId);
         double avgDuration = sessionLogs.stream()
                 .mapToDouble(SessionLog::getDurationMinutes)
                 .average()
                 .orElse(0.0);
 
-        // 5. Overall Pamana Trail Completion
+        // 4. Overall Pamana Trail Completion
         List<ModuleProgress> modProgress = moduleProgressRepository.findByUserId(userId);
         long completedModules = modProgress.stream().filter(ModuleProgress::getIsComplete).count();
         double trailCompletion = (completedModules / 4.0) * 100.0;
 
-        // 6. Word Mastery list sorted alphabetically
+        // 5. Word Mastery list sorted alphabetically
         List<WordMasteryStatus> wordMasteryList = getWordMasteryList(userId);
 
-        // 7. Recent Session History (sorted by startedAt descending, up to 5 entries)
+        // 6. Recent Session History (sorted by startedAt descending, up to 5 entries)
         List<SessionLog> sessionHistory = sessionLogs.stream()
                 .sorted(Comparator.comparing(SessionLog::getStartedAt).reversed())
                 .limit(5)
@@ -104,7 +91,6 @@ public class ProgressService {
                 accuracyTrend,
                 masteredCount,
                 needsReviewCount,
-                BigDecimal.valueOf(hamonPassRate).setScale(2, RoundingMode.HALF_UP).doubleValue(),
                 BigDecimal.valueOf(avgDuration).setScale(2, RoundingMode.HALF_UP).doubleValue(),
                 BigDecimal.valueOf(trailCompletion).setScale(2, RoundingMode.HALF_UP).doubleValue(),
                 wordMasteryList,
@@ -173,7 +159,6 @@ public class ProgressService {
                         item.getWord(),
                         item.getDomain(),
                         m.getOverallAccuracy().doubleValue(),
-                        m.getHamonFailCount(),
                         m.getStatus()
                 ));
             } else {
@@ -183,7 +168,6 @@ public class ProgressService {
                         item.getWord(),
                         item.getDomain(),
                         0.0,
-                        0,
                         "grey"
                 ));
             }

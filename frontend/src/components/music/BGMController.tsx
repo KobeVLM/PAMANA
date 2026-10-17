@@ -28,9 +28,9 @@ export const BGMController: React.FC = () => {
 
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false' // default true
       
-      // Play music on trail, klase, leaderboard, settings, and dashboards
+      // Play music on trail, settings, and dashboards
       // BUT specifically stop it inside modules (the actual game levels)
-      const playPaths = ['/trail', '/klase', '/leaderboard', '/settings', '/dashboard']
+      const playPaths = ['/trail', '/settings', '/dashboard']
       const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
 
       if (isMusicEnabled && shouldPlay) {
@@ -56,7 +56,7 @@ export const BGMController: React.FC = () => {
     const handleInteraction = () => {
       if (!user) return
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false'
-      const playPaths = ['/trail', '/klase', '/leaderboard', '/settings', '/dashboard']
+      const playPaths = ['/trail', '/settings', '/dashboard']
       const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
       
       if (isMusicEnabled && shouldPlay && audioRef.current?.paused) {
