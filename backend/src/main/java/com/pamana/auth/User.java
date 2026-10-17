@@ -40,9 +40,6 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "klase_id")
-    private UUID klaseId;
-
     @Column(name = "parent_id")
     private UUID parentId;
 
@@ -103,14 +100,6 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public UUID getKlaseId() {
-        return klaseId;
-    }
-
-    public void setKlaseId(UUID klaseId) {
-        this.klaseId = klaseId;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -3,15 +3,10 @@ package com.pamana.vocabulary;
 import com.pamana.vocabulary.VocabularyController;
 import com.pamana.vocabulary.VocabularyService;
 import com.pamana.vocabulary.VocabularyItemRepository;
-import com.pamana.vocabulary.VocabularyItem;
 import com.pamana.vocabulary.dto.VocabularyProgressRequest;
 import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
-import com.pamana.hamon.HamonService;
-import com.pamana.hamon.HamonSession;
-import com.pamana.hamon.dto.HamonResultResponse;
-import com.pamana.hamon.dto.HamonSessionResponse;
 import com.pamana.common.dto.DialogueResponse;
 
 
@@ -24,9 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -36,14 +29,11 @@ public class VocabularyController {
     private static final Logger log = LoggerFactory.getLogger(VocabularyController.class);
 
     private final VocabularyService vocabularyService;
-    private final HamonService hamonService;
     private final VocabularyItemRepository vocabularyItemRepository;
 
     public VocabularyController(VocabularyService vocabularyService,
-                                HamonService hamonService,
                                 VocabularyItemRepository vocabularyItemRepository) {
         this.vocabularyService = vocabularyService;
-        this.hamonService = hamonService;
         this.vocabularyItemRepository = vocabularyItemRepository;
     }
 
@@ -113,57 +103,5 @@ public class VocabularyController {
                 request.isCorrect()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/hamon/session/active")
-    @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<HamonSessionResponse> getActiveHamonSession(Principal principal) {
-        UUID userId = UUID.fromString(principal.getName());
-        log.info("REST API: Fetch active Hamon challenge session for user: {}", userId);
-
-        HamonSession session = hamonService.generateHamonSession(userId);
-
-        List<VocabularyWordResponse> words = new ArrayList<>();
-        for (UUID wordId : session.getWordIds()) {
-            VocabularyItem item = vocabularyItemRepository.findById(wordId)
-                    .orElseThrow(() -> new IllegalArgumentException("Vocabulary item not found with ID: " + wordId));
-            words.add(new VocabularyWordResponse(
-                    item.getId(),
-                    item.getWord(),
-                    item.getDomain(),
-                    item.getAudioUrl(),
-                    item.getImageUrl(),
-                    item.getOrdinal()
-            ));
-        }
-
-        HamonSessionResponse response = new HamonSessionResponse(
-                session.getId(),
-                session.getUserId(),
-                words
-        );
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/hamon/results/{sessionId}")
-    @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<HamonResultResponse> submitHamonResults(
-            @PathVariable UUID sessionId,
-            @RequestBody Map<UUID, Double> results) {
-        log.info("REST API: Submit batch results for Hamon session: {}", sessionId);
-
-        HamonResultResponse response = hamonService.recordHamonResult(sessionId, results);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/hamon/skip")
-    @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<Void> skipHamonSession(Principal principal) {
-        UUID userId = UUID.fromString(principal.getName());
-        log.info("REST API: Skip active Hamon challenge session for user: {}", userId);
-
-        hamonService.skipHamonSession(userId);
-        return ResponseEntity.ok().build();
     }
 }

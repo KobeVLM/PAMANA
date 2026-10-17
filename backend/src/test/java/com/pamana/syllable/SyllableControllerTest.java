@@ -96,8 +96,7 @@ public class SyllableControllerTest {
 
                 // 2. Fetch the overall status
                 mockMvc.perform(get("/api/syllables/status")
-                                .header("Authorization", "Bearer " + token)
-                                .param("userId", userId.toString()))
+                                .header("Authorization", "Bearer " + token))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.pagsamaAccuracy", is(100.0)))
                                 .andExpect(jsonPath("$.pakingganAccuracy", is(0.0)))
@@ -124,8 +123,7 @@ public class SyllableControllerTest {
 
                 // Fetch status - should show complete and Module 2 unlocked!
                 mockMvc.perform(get("/api/syllables/status")
-                                .header("Authorization", "Bearer " + token)
-                                .param("userId", userId.toString()))
+                                .header("Authorization", "Bearer " + token))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.module1Accuracy", is(100.0)))
                                 .andExpect(jsonPath("$.complete", is(true)))

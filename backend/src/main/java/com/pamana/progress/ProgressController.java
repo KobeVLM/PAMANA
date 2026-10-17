@@ -3,11 +3,13 @@ package com.pamana.progress;
 import com.pamana.progress.ProgressController;
 import com.pamana.progress.ProgressService;
 import com.pamana.parent.dto.DashboardResponse;
+import com.pamana.security.LearnerAccessService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,14 +24,17 @@ public class ProgressController {
     private static final Logger log = LoggerFactory.getLogger(ProgressController.class);
 
     private final ProgressService progressService;
+    private final LearnerAccessService learnerAccessService;
 
-    public ProgressController(ProgressService progressService) {
+    public ProgressController(ProgressService progressService, LearnerAccessService learnerAccessService) {
         this.progressService = progressService;
+        this.learnerAccessService = learnerAccessService;
     }
 
     @GetMapping("/{userId}/dashboard")
     @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
-    public ResponseEntity<DashboardResponse> getDashboard(@PathVariable UUID userId) {
+    public ResponseEntity<DashboardResponse> getDashboard(@PathVariable UUID userId, Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Fetch progress dashboard metrics for student ID: {}", userId);
 
         DashboardResponse response = progressService.getDashboardMetrics(userId);

@@ -26,8 +26,6 @@ public class RegisterRequest {
     @NotNull(message = "Role is required")
     private Role role;
 
-    private String joinCode; // Optional: used for learners joining a class at registration
-
     public RegisterRequest() {
     }
 
@@ -69,13 +67,5 @@ public class RegisterRequest {
 
     public void setRole(Role role) {
         this.role = role;
-    }
-
-    public String getJoinCode() {
-        return joinCode;
-    }
-
-    public void setJoinCode(String joinCode) {
-        this.joinCode = joinCode;
     }
 }

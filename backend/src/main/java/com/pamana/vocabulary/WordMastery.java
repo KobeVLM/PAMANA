@@ -39,9 +39,6 @@ public class WordMastery {
     @Column(name = "gamitin_accuracy", precision = 5, scale = 2)
     private BigDecimal gamitinAccuracy = BigDecimal.ZERO;
 
-    @Column(name = "hamon_fail_count", nullable = false)
-    private Integer hamonFailCount = 0;
-
     @Column(nullable = false, length = 10)
     private String status = "grey"; // green / yellow / red / grey
 
@@ -125,14 +122,6 @@ public class WordMastery {
 
     public void setGamitinAccuracy(BigDecimal gamitinAccuracy) {
         this.gamitinAccuracy = gamitinAccuracy;
-    }
-
-    public Integer getHamonFailCount() {
-        return hamonFailCount;
-    }
-
-    public void setHamonFailCount(Integer hamonFailCount) {
-        this.hamonFailCount = hamonFailCount;
     }
 
     public String getStatus() {

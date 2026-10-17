@@ -8,7 +8,6 @@ import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
-import com.pamana.hamon.HamonService;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.common.BaseGameService;
 import com.pamana.common.dto.DialogueResponse;
@@ -30,7 +29,6 @@ public class VocabularyService extends BaseGameService {
 
     private final VocabularyItemRepository vocabularyItemRepository;
     private final WordMasteryRepository wordMasteryRepository;
-    private final HamonService hamonService;
 
     // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG
     // competencies
@@ -67,11 +65,9 @@ public class VocabularyService extends BaseGameService {
     }
 
     public VocabularyService(VocabularyItemRepository vocabularyItemRepository,
-            WordMasteryRepository wordMasteryRepository,
-            HamonService hamonService) {
+            WordMasteryRepository wordMasteryRepository) {
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.wordMasteryRepository = wordMasteryRepository;
-        this.hamonService = hamonService;
     }
 
     @Transactional(readOnly = true)
@@ -208,9 +204,8 @@ public class VocabularyService extends BaseGameService {
         mastery.setOverallAccuracy(BigDecimal.valueOf(overall).setScale(2, RoundingMode.HALF_UP));
 
         // Evaluate Status
-        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50% OR hamon_fail_count
-        // >= 3
-        if (mastery.getHamonFailCount() >= 3 || overall < 50.0) {
+        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50%
+        if (overall < 50.0) {
             mastery.setStatus("red");
         } else if (overall >= 75.0) {
             mastery.setStatus("green");
@@ -224,15 +219,11 @@ public class VocabularyService extends BaseGameService {
         // are green)
         evaluateDomainCompletion(userId);
 
-        // Hamon ng Pamana is disabled in favor of Mastery Practice
-        boolean hamonTriggered = false;
-
         return new WordMasteryResponse(
                 wordId,
                 mastery.getOverallAccuracy().doubleValue(),
                 mastery.getStatus(),
-                "green".equalsIgnoreCase(mastery.getStatus()),
-                hamonTriggered);
+                "green".equalsIgnoreCase(mastery.getStatus()));
     }
 
     private void evaluateDomainCompletion(UUID userId) {
