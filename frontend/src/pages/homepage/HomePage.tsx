@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BookOpen, Lock, Play, Star } from 'lucide-react'
+import { Lock, Play, Star } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
@@ -36,7 +36,7 @@ const HomePage = () => {
       moduleNum: 1, 
       route: '/mastery/1', 
       icon: '🐃', 
-      bg: 'bg-gradient-to-b from-[#00d2ff] to-[#0096c7]', 
+      bgImage: '/images/m-Farm.jpg', 
       shadow: 'shadow-[0_8px_0_#0077b6]' 
     },
     { 
@@ -45,7 +45,7 @@ const HomePage = () => {
       moduleNum: 2, 
       route: '/mastery/2', 
       icon: '🍪', 
-      bg: 'bg-gradient-to-b from-[#f5b041] to-[#d68910]', 
+      bgImage: '/images/m-Garden.jpg', 
       shadow: 'shadow-[0_8px_0_#a66310]' 
     },
     { 
@@ -54,7 +54,7 @@ const HomePage = () => {
       moduleNum: 3, 
       route: '/mastery/3', 
       icon: '🖼️', 
-      bg: 'bg-gradient-to-b from-[#af7ac5] to-[#8e44ad]', 
+      bgImage: '/images/m-Kitchen.jpg', 
       shadow: 'shadow-[0_8px_0_#6c3483]' 
     },
     { 
@@ -63,7 +63,7 @@ const HomePage = () => {
       moduleNum: 4, 
       route: '/mastery/4', 
       icon: '💬', 
-      bg: 'bg-gradient-to-b from-[#f1948a] to-[#e74c3c]', 
+      bgImage: '/images/m-House.jpg', 
       shadow: 'shadow-[0_8px_0_#b03a2e]' 
     },
   ]
@@ -106,9 +106,10 @@ const HomePage = () => {
               Beginner
             </h2>
             
-            <div className="relative w-full h-[310px] md:h-[330px] rounded-[2rem] border-[6px] border-white shadow-[0_8px_0_rgba(0,0,0,0.15)] overflow-hidden group transition-all duration-200 hover:-translate-y-1 hover:brightness-105 hover:shadow-[0_12px_0_rgba(0,0,0,0.15)] active:translate-y-1 active:shadow-none cursor-pointer">
+            {/* Changed to flex-1 and min-h to stretch and match the Mastery height */}
+            <div className="relative w-full flex-1 min-h-[310px] md:min-h-[330px] rounded-[2rem] border-[6px] border-white shadow-[0_8px_0_rgba(0,0,0,0.15)] overflow-hidden group transition-all duration-200 hover:-translate-y-1 hover:brightness-105 hover:shadow-[0_12px_0_rgba(0,0,0,0.15)] active:translate-y-1 active:shadow-none cursor-pointer">
               
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/TrailMap1.png')" }} />
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/TrailMap1.jpg')" }} />
               
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
@@ -138,7 +139,7 @@ const HomePage = () => {
               Mastery
             </h2>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 h-full">
               {masteryItems.map((item) => {
                 const unlocked = isUnlocked(item.moduleNum)
                 return (
@@ -147,13 +148,23 @@ const HomePage = () => {
                     onClick={() => handleMasteryClick(item)}
                     className={cn(
                       "relative h-[165px] md:h-[175px] rounded-[1.5rem] border-[5px] border-white flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 group",
-                      item.bg,
+                      item.shadow,
                       unlocked 
-                        ? cn(item.shadow, "hover:-translate-y-1 hover:brightness-105 active:translate-y-1 active:shadow-none") 
-                        : "shadow-[0_6px_0_rgba(0,0,0,0.3)] brightness-[0.6] grayscale-[0.2] active:translate-y-1"
+                        ? "hover:-translate-y-1 hover:brightness-105 active:translate-y-1 active:shadow-none" 
+                        : "brightness-[0.6] grayscale-[0.2] active:translate-y-1"
                     )}
                   >
-                    <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[1.2rem] pointer-events-none" />
+                    {/* Background Image */}
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${item.bgImage}')` }} />
+
+                    {/* Dark Overlay so text is readable */}
+                    <div className={cn(
+                      "absolute inset-0 transition-colors duration-300",
+                      unlocked ? "bg-black/20" : "bg-black/50"
+                    )} />
+
+                    {/* Smooth Glossy Shine */}
+                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
 
                     <div className="absolute top-2 right-2 z-20">
                       {unlocked ? (
@@ -170,8 +181,8 @@ const HomePage = () => {
                     <div className="relative z-10 flex items-center justify-center w-full px-4 gap-2 mt-2">
                       
                       <div className={cn(
-                        "text-5xl md:text-6xl drop-shadow-lg transition-all",
-                        !unlocked && "opacity-30 grayscale"
+                        "text-5xl md:text-6xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] transition-all",
+                        !unlocked && "opacity-40 grayscale"
                       )}>
                         {item.icon}
                       </div>
@@ -185,13 +196,13 @@ const HomePage = () => {
                         </div>
                       )}
 
-                      {/* GLOWING AND LIGHTENED LOCK */}
+                      {/* GLOWING REMOVED, JUST SCALES UP */}
                       {!unlocked && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <img 
                             src="/images/Lock.png" 
                             alt="Locked" 
-                            className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)] transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.9)] brightness-150 contrast-125" 
+                            className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:scale-110 brightness-150 contrast-125" 
                           />
                         </div>
                       )}
@@ -221,22 +232,49 @@ const HomePage = () => {
           
           <button 
             onClick={() => console.log('Open Story')}
-            className="w-full bg-gradient-to-b from-[#5BC0EB] to-[#4CA8D6] hover:brightness-110 border-[5px] border-white rounded-[1.5rem] p-2 md:p-3 flex items-center shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all active:translate-y-1 active:shadow-none group relative overflow-hidden"
+            className="relative w-full bg-gradient-to-b from-[#00D2FF] via-[#00A8E8] to-[#0080C0] hover:brightness-110 border-[5px] border-white rounded-[2rem] p-2 md:p-3 flex items-center justify-between shadow-[0_10px_0_#005A9C] hover:-translate-y-1 hover:shadow-[0_12px_0_#005A9C] active:translate-y-1 active:shadow-[0_4px_0_#005A9C] transition-all duration-200 ease-out group overflow-hidden"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-50 pointer-events-none" />
+            {/* Background Decorations */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
+              <Star className="absolute top-2 left-[35%] w-5 h-5 md:w-6 md:h-6 text-yellow-400 fill-yellow-400 -rotate-12 opacity-80" />
+              <Star className="absolute bottom-2 left-[45%] w-4 h-4 text-pink-400 fill-pink-400 rotate-45 opacity-80" />
+              <Star className="absolute top-4 right-[35%] w-6 h-6 md:w-8 md:h-8 text-yellow-300 fill-yellow-300 rotate-12 opacity-90" />
+              <Star className="absolute bottom-3 right-[25%] w-4 h-4 text-green-400 fill-green-400 -rotate-12 opacity-80" />
+            </div>
             
-            <div className="flex items-center gap-3 z-10 px-2 md:px-4">
-              <div className="bg-white/30 p-2 rounded-xl backdrop-blur-sm shadow-inner">
-                <BookOpen className="w-8 h-8 text-white" />
-              </div>
-              <span className="text-xl md:text-3xl font-black text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.4)] tracking-wide">
+            <div className="flex items-center gap-3 z-10 pl-1 md:pl-2">
+              {/* Rotated Book Icon */}
+              <img 
+                src="/images/BK.png" 
+                alt="Book Icon" 
+                className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] -rotate-6 group-hover:scale-105 transition-transform" 
+              />
+              <span 
+                className="text-2xl md:text-4xl font-black tracking-wide mt-1"
+                style={{
+                  color: '#ffffff',
+                  WebkitTextStroke: '2px #005A9C',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 4px 0 #005A9C'
+                }}
+              >
                 Pamana Story
               </span>
             </div>
 
-            <div className="ml-auto z-10 flex items-center gap-1 bg-white/20 hover:bg-white/30 border-2 border-white/50 px-4 py-1.5 rounded-full backdrop-blur-sm transition-colors shadow-sm">
-              <span className="text-white font-black text-xl drop-shadow-md">GO</span>
-              <Play className="w-6 h-6 text-white fill-white drop-shadow-md" />
+            <div className="ml-auto z-10 flex items-center gap-1 md:gap-2 pr-2 md:pr-4">
+              <span 
+                className="text-2xl md:text-4xl font-black mt-1"
+                style={{
+                  color: '#ffffff',
+                  WebkitTextStroke: '2px #005A9C',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 4px 0 #005A9C'
+                }}
+              >
+                GO
+              </span>
+              <Play className="w-8 h-8 md:w-10 md:h-10 text-white fill-white drop-shadow-[0_3px_0_#005A9C]" />
             </div>
           </button>
         </div>

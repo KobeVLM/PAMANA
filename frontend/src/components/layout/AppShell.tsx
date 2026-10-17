@@ -15,7 +15,7 @@ interface NavItem {
   label: string
   to: string
   icon: React.ReactNode
-  roles: ('LEARNER' | 'PARENT')[]
+  roles: ('LEARNER' | 'PARENT' | 'TEACHER')[]
 }
 
 const NAV_ITEMS: NavItem[] = [

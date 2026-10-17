@@ -1,9 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Loader2, Info, ArrowLeft } from 'lucide-react'
 
 export const RegisterPage: React.FC = () => {
@@ -61,176 +58,189 @@ export const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a1f14] via-[#0d2b1e] to-[#0a2418] flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] flex items-center justify-center p-3 md:p-4 relative overflow-hidden">
+      
       {/* Back Button */}
-      <Link 
-        to="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-[#B8E8C8]/70 hover:text-[#FEFCF3] transition-colors p-2 rounded-full hover:bg-[#50C878]/10"
-        aria-label="Back to Landing Page"
+      <button 
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-2 text-white font-black text-base md:text-lg bg-black/20 hover:bg-black/30 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl backdrop-blur-sm transition-all"
       >
-        <ArrowLeft className="w-6 h-6" />
-        <span className="font-medium hidden sm:inline">Back</span>
-      </Link>
+        <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 stroke-[3]" /> Back
+      </button>
 
+      {/* Decorative background clouds/effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-[#50C878]/15 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-[#B8E8C8]/10 rounded-full blur-3xl" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/30 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <div className="bg-[#FEFCF3]/5 backdrop-blur-2xl border border-[#B8E8C8]/20 rounded-3xl p-8 shadow-2xl">
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 flex items-center justify-center mb-1 animate-float overflow-hidden rounded-full p-2 bg-[#50C878]/15 backdrop-blur-sm border border-[#50C878]/30">
-              <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
-            </div>
-            <h1 className="text-2xl font-heading font-bold text-[#FEFCF3]">PAMANA</h1>
-            <p className="text-[#B8E8C8] text-sm mt-1">Start your journey</p>
-          </div>
+      <div className="relative w-full max-w-sm md:max-w-md">
+        {/* Card */}
+        <div className="bg-white/95 backdrop-blur-md border-4 border-white rounded-[2rem] p-5 md:p-6 shadow-[0_8px_0_rgba(0,0,0,0.1)] relative overflow-hidden">
+          
+          {/* Glossy Top Effect */}
+          <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/60 to-transparent pointer-events-none rounded-t-[2rem]" />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-[#B8E8C8] font-medium text-sm">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Juan dela Cruz"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-11 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.name && <p className="text-red-300 text-xs">{errors.name}</p>}
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-4">
+              <img src="/images/S-Logo.png" alt="PAMANA Logo" className="h-12 md:h-14 object-contain drop-shadow-md mb-2" />
+              <h1 className="text-2xl md:text-3xl font-black text-slate-800">Join the Quest!</h1>
+              <p className="text-slate-500 font-bold text-sm mt-0.5">Create your account to begin.</p>
             </div>
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <Label htmlFor="reg-email" className="text-[#B8E8C8] font-medium text-sm">Email</Label>
-              <Input
-                id="reg-email"
-                type="email"
-                placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.email && <p className="text-red-300 text-xs">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="reg-password" className="text-[#B8E8C8] font-medium text-sm">Password</Label>
-              <div className="relative">
-                <Input
-                  id="reg-password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B8E8C8]/50 hover:text-[#FEFCF3]/80 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && <p className="text-red-300 text-xs">{errors.password}</p>}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-[#B8E8C8] font-medium text-sm">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Repeat your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-11 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.confirmPassword && <p className="text-red-300 text-xs">{errors.confirmPassword}</p>}
-            </div>
-
-            {/* Role Selection */}
-            <div className="space-y-1.5">
-              <Label className="text-[#B8E8C8] font-medium text-sm">Role</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {(['LEARNER', 'PARENT', 'TEACHER'] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setRole(r)}
-                    className={`h-10 text-xs font-bold rounded-xl transition-all ${
-                      role === r
-                        ? 'bg-[#50C878] text-[#0a1f14] shadow-md shadow-[#50C878]/30 scale-105'
-                        : 'bg-[#FEFCF3]/10 text-[#FEFCF3] hover:bg-[#FEFCF3]/20 border border-[#B8E8C8]/20'
-                    }`}
-                  >
-                    {r === 'LEARNER' ? 'Learner' : r === 'PARENT' ? 'Parent' : 'Teacher'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Join Code (optional) */}
-            {role === 'LEARNER' && (
-              <div className="space-y-1.5">
-                <Label htmlFor="join-code" className="text-[#B8E8C8] font-medium text-sm flex items-center gap-1.5">
-                  Class Code
-                  <span className="text-[#B8E8C8]/70 text-xs font-normal">(optional)</span>
-                  <Info className="w-3.5 h-3.5 text-[#B8E8C8]/70" />
-                </Label>
-
-                <Input
-                  id="join-code"
+            <form onSubmit={handleSubmit} className="space-y-3">
+              
+              {/* Name */}
+              <div className="space-y-1">
+                <label htmlFor="name" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Name
+                </label>
+                <input
+                  id="name"
                   type="text"
-                  placeholder="6-digit code from your teacher"
-                  value={joinCode}
-                  onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
-                  className="h-11 bg-[#FEFCF3]/10 border-[#B8E8C8]/20 text-[#FEFCF3] placeholder:text-[#B8E8C8]/40 focus:border-[#50C878] focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl font-mono tracking-widest"
-                  maxLength={6}
+                  placeholder="Juan dela Cruz"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
                   disabled={isLoading}
                 />
+                {errors.name && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.name}</p>}
               </div>
-            )}
 
-            {/* General error */}
-            {errors.general && (
-              <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl">
-                <p className="text-red-300 text-sm text-center">{errors.general}</p>
+              {/* Email */}
+              <div className="space-y-1">
+                <label htmlFor="reg-email" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Email
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                />
+                {errors.email && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.email}</p>}
               </div>
-            )}
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-[#50C878] to-[#3da860] hover:from-[#6ddb92] hover:to-[#50C878] text-[#0a1f14] font-bold text-base rounded-xl shadow-lg shadow-[#50C878]/30 transition-all duration-200 active:scale-95 mt-2"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Registering...
-                </span>
-              ) : (
-                'Register'
+              {/* Password */}
+              <div className="space-y-1">
+                <label htmlFor="reg-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="At least 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] pr-10"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.password}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label htmlFor="confirm-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Repeat your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                />
+                {errors.confirmPassword && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.confirmPassword}</p>}
+              </div>
+
+              {/* Role Selection */}
+              <div className="space-y-1 pt-1">
+                <label className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">Role</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(['LEARNER', 'PARENT', 'TEACHER'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`py-2 rounded-xl font-black text-xs transition-all border-2 ${
+                        role === r
+                          ? "bg-[#FFC107] border-[#FFC107] text-amber-950 shadow-[0_3px_0_#D4A017] scale-[1.02]"
+                          : "bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      {r === 'LEARNER' ? 'Learner' : r === 'PARENT' ? 'Parent' : 'Teacher'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Join Code (optional) */}
+              {role === 'LEARNER' && (
+                <div className="space-y-1 pt-1">
+                  <label htmlFor="join-code" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1 flex items-center gap-1">
+                    Class Code <span className="text-slate-400 text-[10px]">(optional)</span>
+                    <Info className="w-3 h-3 text-slate-400" />
+                  </label>
+                  <input
+                    id="join-code"
+                    type="text"
+                    placeholder="6-digit code"
+                    value={joinCode}
+                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
+                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] font-mono tracking-widest uppercase"
+                    maxLength={6}
+                    disabled={isLoading}
+                  />
+                </div>
               )}
-            </Button>
-          </form>
 
-          <p className="text-center text-[#B8E8C8] text-sm mt-5">
-            Already have an account?{' '}
-            <Link to="/login" className="text-[#50C878] font-semibold hover:text-[#6ddb92] hover:underline transition-colors">
-              Login here
-            </Link>
-          </p>
+              {/* General error */}
+              {errors.general && (
+                <div className="p-2 bg-red-100 border-2 border-red-300 rounded-xl">
+                  <p className="text-red-600 font-bold text-xs text-center">{errors.general}</p>
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white py-3 rounded-xl border-4 border-white shadow-[0_5px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none transition-all font-black text-lg tracking-wider disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    REGISTERING...
+                  </span>
+                ) : (
+                  'REGISTER'
+                )}
+              </button>
+            </form>
+
+            {/* Login link */}
+            <p className="text-center text-slate-500 font-bold text-sm mt-4">
+              Already have an account?{' '}
+              <Link to="/login" className="text-[#4CAF50] font-black hover:text-[#388E3C] hover:underline transition-colors">
+                Login here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { Settings, User, Bell, Paintbrush, Check, Music, Copy, Star } from 'lucide-react'
+import { User, Bell, Paintbrush, Check, Music, Copy, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
@@ -21,6 +21,7 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
     if (savedChar === 'Lalaki' || savedChar === 'Babae') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCharacter(savedChar as 'Lalaki' | 'Babae')
     }
 
@@ -43,31 +44,32 @@ export const SettingsPage: React.FC = () => {
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
-  const headerStyle = "text-4xl md:text-6xl font-black text-[#FFC107] tracking-wider uppercase [-webkit-text-stroke:2px_#5D4037] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#5D4037] flex items-center gap-4";
-
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] p-4 md:p-8 pb-20">
         <div className="max-w-5xl mx-auto relative z-10 pt-4">
           
+          {/* Header Section */}
           <div className="mb-10 flex flex-col items-center justify-center text-center">
-            <h1 className={headerStyle}>
-              <Settings className="w-12 h-12 md:w-16 md:h-16 text-white drop-shadow-[0_4px_0_#5D4037]" strokeWidth={3} />
-              SETTINGS
-            </h1>
-            <p className="text-[#2b5c3b] font-bold text-lg md:text-xl mt-2 bg-white/60 px-6 py-1 rounded-full border-2 border-white shadow-sm">
+            <img
+              src="/images/ST.png"
+              alt="Settings"
+              className="h-20 md:h-28 object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.3)] mb-2"
+            />
+            <p className="text-[#2b5c3b] font-bold text-lg md:text-xl mt-2 bg-white/70 px-6 py-1 rounded-full border-2 border-white shadow-sm">
               Manage your account and customize your game!
             </p>
           </div>
 
           <div className="space-y-8">
             
-            <section className="bg-[#8dc26f] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#5b8f40] relative overflow-hidden">
+            {/* PROFILE SECTION - Deeper Green for better contrast */}
+            <section className="bg-[#4CAF50] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2E7D32] relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
               
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#2b5c3b] flex items-center gap-3">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#1B5E20] flex items-center gap-3">
                     <User className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
                     YOUR PROFILE
                   </h2>
@@ -78,20 +80,21 @@ export const SettingsPage: React.FC = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                   <div className="space-y-2">
-                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Name</label>
-                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-black text-lg shadow-inner">
+                    {/* Changed label text to white/light for contrast */}
+                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg shadow-inner">
                       {user?.name || 'Loading...'}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Email</label>
-                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-bold text-lg shadow-inner truncate">
+                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Email</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-bold text-lg shadow-inner truncate">
                       {user?.email || 'Loading...'}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-[#1a2e05] font-black uppercase tracking-wider ml-2">Role</label>
-                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#5b8f40] text-[#2b5c3b] font-black text-lg capitalize shadow-inner">
+                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Role</label>
+                    <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg capitalize shadow-inner">
                       {user?.role?.toLowerCase() || 'Loading...'}
                     </div>
                   </div>
@@ -138,18 +141,19 @@ export const SettingsPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
-              <section className="bg-[#5BC0EB] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2A8EAB] relative overflow-hidden flex flex-col">
+              {/* PREFERENCES - Deeper Blue */}
+              <section className="bg-[#00B0FF] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#0083B0] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 
                 <div className="relative z-10 flex-1 flex flex-col">
-                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#1a5c73] flex items-center gap-3 mb-8">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#005A7A] flex items-center gap-3 mb-8">
                     <Paintbrush className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
                     PREFERENCES
                   </h2>
 
                   <div className="space-y-8 flex-1">
                     <div className="space-y-3">
-                      <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Choose your character</label>
+                      <label className="text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Choose your character</label>
                       <div className="grid grid-cols-2 gap-4">
                         <button
                           onClick={() => handleCharacterChange('Lalaki')}
@@ -157,7 +161,7 @@ export const SettingsPage: React.FC = () => {
                             "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
                             character === 'Lalaki'
                               ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
-                              : "bg-white/40 border-white/50 text-[#0b3b4d] shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:bg-white/60 active:translate-y-1 active:shadow-none"
+                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none"
                           )}
                         >
                           <span className="text-4xl mb-1">👦</span>
@@ -170,7 +174,7 @@ export const SettingsPage: React.FC = () => {
                             "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
                             character === 'Babae'
                               ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
-                              : "bg-white/40 border-white/50 text-[#0b3b4d] shadow-[0_6px_0_rgba(0,0,0,0.1)] hover:bg-white/60 active:translate-y-1 active:shadow-none"
+                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none"
                           )}
                         >
                           <span className="text-4xl mb-1">👧</span>
@@ -181,13 +185,13 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-3 pt-6 border-t-4 border-white/30 mt-auto">
-                      <label className="text-sm text-[#0b3b4d] font-black uppercase tracking-wider ml-2">Music</label>
-                      <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/40 shadow-inner">
-                        <div className="flex items-center gap-3 text-[#0b3b4d]">
-                          <div className="bg-white/50 p-2 rounded-xl">
-                            <Music className="w-6 h-6 text-[#2A8EAB]" strokeWidth={3} />
+                      <label className="text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Music</label>
+                      <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="bg-white/20 p-2 rounded-xl">
+                            <Music className="w-6 h-6 text-white" strokeWidth={3} />
                           </div>
-                          <span className="font-black text-lg">Background Music</span>
+                          <span className="font-black text-lg drop-shadow-sm">Background Music</span>
                         </div>
                         <button
                           onClick={toggleMusic}
@@ -211,20 +215,21 @@ export const SettingsPage: React.FC = () => {
                 </div>
               </section>
 
-              <section className="bg-[#A774F5] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#6D3EAB] relative overflow-hidden flex flex-col">
+              {/* ALERTS - Deeper Purple */}
+              <section className="bg-[#AB47BC] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#7B1FA2] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 
                 <div className="relative z-10 flex flex-col h-full">
-                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#422174] flex items-center gap-3 mb-8">
+                  <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#4A148C] flex items-center gap-3 mb-8">
                     <Bell className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
                     ALERTS
                   </h2>
                   
-                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white/20 rounded-[1.5rem] border-4 border-dashed border-white/50">
-                    <div className="bg-white/40 p-4 rounded-full mb-4">
+                  <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white/10 rounded-[1.5rem] border-4 border-dashed border-white/40">
+                    <div className="bg-white/20 p-4 rounded-full mb-4">
                       <Bell className="w-12 h-12 text-white drop-shadow-md" strokeWidth={2.5} />
                     </div>
-                    <p className="text-white font-black text-lg drop-shadow-[0_2px_0_#422174]">
+                    <p className="text-white font-black text-lg drop-shadow-[0_2px_0_#4A148C]">
                       Notification settings will be added in a future update!
                     </p>
                   </div>

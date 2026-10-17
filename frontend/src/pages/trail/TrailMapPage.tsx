@@ -170,7 +170,7 @@ export const TrailMapPage: React.FC = () => {
           ) : (
             <div className="relative w-full h-full">
               <img 
-                src="/images/TrailMap.png" 
+                src="/images/Hd-TrailMap.png" 
                 alt="Trail Map"
                 className="w-full h-full object-cover object-center"
               />
