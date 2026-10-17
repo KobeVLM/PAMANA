@@ -46,6 +46,7 @@ const DEAD_ZONE = 70
 const PAYOFFS: Reaction[] = ['heart', 'sparkle', 'delighted']
 const BOOP_PAYOFF = 120
 const BOOP_END = 560
+const CELEBRATE_MS = 1400
 const SQUASH_MS = 420
 const DIZZY_AFTER = 4
 const DIZZY_WINDOW = 1600
@@ -84,6 +85,16 @@ export type MascotProps = {
   className?: string
   /** What a screen reader calls it. */
   label?: string
+  /**
+   * Increment to make the mascot cheer: cycles heart -> sparkle -> delighted
+   * for about a second and a half. `0` (the default) does nothing.
+   */
+  celebrate?: number
+  /**
+   * The current question's identity. Changing it clears an in-flight cheer, so
+   * the happy face never bleeds into the next question.
+   */
+  resetKey?: unknown
 }
 
 /**
@@ -93,12 +104,15 @@ export type MascotProps = {
  * laptops and some hybrid devices; here touch pointers are ignored instead.
  */
 export function Mascot(props: MascotProps) {
-  const { directions, reactions, size = 140, className, label = 'mascot' } = props
+  const { directions, reactions, size = 140, className, label = 'mascot', celebrate = 0, resetKey } = props
 
   const buttonRef = useRef<HTMLButtonElement>(null)
   const squashRef = useRef<HTMLSpanElement>(null)
   const timersRef = useRef<number[]>([])
   const boopsRef = useRef({ count: 0, at: 0 })
+  // Baseline at the current value: remounting mid-question (after a completion
+  // screen) must not replay a cheer the player already earned.
+  const celebrateRef = useRef(celebrate)
   const [direction, setDirection] = useState<Direction>('center')
   const [reaction, setReaction] = useState<Reaction | null>(null)
 
@@ -154,6 +168,31 @@ export function Mascot(props: MascotProps) {
       timersRef.current.forEach(window.clearTimeout)
     }
   }, [])
+
+  // The question changed: drop any cheer still playing. Declared before the
+  // cheer effect so a reward landing in the same commit still wins.
+  useEffect(() => {
+    timersRef.current.forEach(window.clearTimeout)
+    timersRef.current = []
+    setReaction(null)
+  }, [resetKey])
+
+  // External cheer: a correct answer bumps `celebrate`, which plays the next
+  // happy expression in the payoff cycle.
+  useEffect(() => {
+    if (!celebrate || celebrate === celebrateRef.current) {
+      return
+    }
+    celebrateRef.current = celebrate
+
+    timersRef.current.forEach(window.clearTimeout)
+    timersRef.current = []
+
+    setReaction(PAYOFFS[(celebrate - 1) % PAYOFFS.length])
+    timersRef.current.push(
+      window.setTimeout(() => setReaction(null), CELEBRATE_MS)
+    )
+  }, [celebrate])
 
   const boop = () => {
     timersRef.current.forEach(window.clearTimeout)

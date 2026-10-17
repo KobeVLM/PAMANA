@@ -79,7 +79,7 @@ function SortableTile({
         isDragging && "z-10 scale-105 border-pamana-gold opacity-80",
         isSelected
           ? "animate-pulse border-pamana-gold bg-pamana-gold/30 text-amber-200 shadow-lg shadow-amber-500/20 ring-2 ring-pamana-gold"
-          : "border-white/20 bg-white/10 text-white"
+          : ""
       )}
     >
       <GripVertical

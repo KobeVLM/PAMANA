@@ -8,6 +8,9 @@ import {
   PracticeHeader,
   type PracticeStep,
 } from '@/components/practice/PracticeHeader'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
@@ -19,6 +22,7 @@ import { ErrorState } from '@/components/common/ErrorState'
 import { Button } from '@/components/ui/button'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi, type Bi } from '@/lib/i18n'
 import api from '@/lib/api'
 
@@ -102,8 +106,11 @@ export const SyllableModulePage: React.FC = () => {
     setId: number
   } | null>(null)
   const [isResetting, setIsResetting] = useState(false)
+  const [celebrate, setCelebrate] = useState(0)
 
   const { replay: replayVoice } = useAudioElement(currentSet?.audioUrl ?? null)
+
+  useScrollToTop(`${currentSet?.subLevel ?? ''}-${currentSet?.setId ?? ''}`)
 
   useEffect(() => {
     return () => {
@@ -201,6 +208,7 @@ export const SyllableModulePage: React.FC = () => {
       setFeedback(isCorrect ? 'correct' : 'incorrect')
 
       if (isCorrect) {
+        setCelebrate((count) => count + 1)
         replayVoice()
       } else {
         playWrong()
@@ -371,14 +379,28 @@ export const SyllableModulePage: React.FC = () => {
       })
     : undefined
 
+  const lessonsLeft = status
+    ? SUB_LEVELS.filter((sl) => (status.subLevelAccuracies[sl] ?? 0) < 80).length
+    : null
+
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Module 1: Pakinggan at Kilalanin"
         subtitle="Pinto ng Probinsya · Pagsama ng mga Tunog"
         backLabel="Pamana Trail"
         onBack={() => navigate('/trail')}
+        sticky
         steps={steps}
+        accuracy={status ? Math.round(status.moduleAccuracy) : null}
+        itemsLeft={
+          lessonsLeft === null
+            ? undefined
+            : {
+                fil: `Natitira: ${lessonsLeft} aralin`,
+                en: `${lessonsLeft} ${lessonsLeft === 1 ? 'lesson' : 'lessons'} left`,
+              }
+        }
         progressLabel={
           status
             ? `Katumpakan ng Module · Kailangan: 80%`
@@ -400,158 +422,182 @@ export const SyllableModulePage: React.FC = () => {
           onRetry={() => void init()}
         />
       ) : currentSet ? (
-        <div className="space-y-6">
-          <NPCDialogue
-            npc="lolo"
-            line={NPC_LINES[currentSet.subLevel].fil}
-            lineEn={NPC_LINES[currentSet.subLevel].en}
-            audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
-          />
-
-          {advanceError && (
-            <FeedbackBanner variant="info" assertive>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <BilingualText
-                  as="p"
-                  fil="Hindi ma-load ang susunod na gawain."
-                  en="The next activity could not be loaded."
-                  filClassName="text-sm"
-                  enClassName="text-xs opacity-80"
-                />
-                <Button
-                  size="sm"
-                  variant="gold"
-                  className="text-stone-900 [&_svg]:text-stone-900"
-                  onClick={() =>
-                    void advance(advanceError.subLevel, advanceError.setId)
-                  }
-                >
-                  <BilingualText
-                    as="span"
-                    fil={STRINGS.retry.fil}
-                    en={STRINGS.retry.en}
-                    filClassName="text-sm font-semibold"
-                    enClassName="text-xs font-normal opacity-80"
-                  />
-                </Button>
-              </div>
-            </FeedbackBanner>
-          )}
-
-          {/* Pagsama: consonant + vowel audio pair */}
-          {currentSet.subLevel === 'pagsama' && (
-            <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-              <div className="flex flex-col items-center gap-2">
-                <AudioPlayer
-                  audioUrl={currentSet.consonantAudioUrl ?? ''}
-                  size="lg"
-                  label="Pakinggan ang katinig"
-                  labelEn="Listen to the consonant"
-                />
-                <span className="font-heading text-2xl font-bold text-white">
-                  {currentSet.consonant}
-                </span>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.consonant.fil}
-                  en={UI_TEXT.consonant.en}
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-              <span className="text-3xl text-white/40" aria-hidden="true">
-                +
-              </span>
-              <div className="flex flex-col items-center gap-2">
-                <AudioPlayer
-                  audioUrl={currentSet.vowelAudioUrl ?? ''}
-                  size="lg"
-                  label="Pakinggan ang patinig"
-                  labelEn="Listen to the vowel"
-                />
-                <span className="font-heading text-2xl font-bold text-white">
-                  {currentSet.vowel}
-                </span>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.vowel.fil}
-                  en={UI_TEXT.vowel.en}
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-              <span className="text-3xl text-white/40" aria-hidden="true">
-                =
-              </span>
-              <div className="flex flex-col items-center gap-2">
-                <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10">
-                  <span className="text-3xl font-bold text-white/30">?</span>
-                </div>
-                <BilingualText
-                  as="span"
-                  fil={UI_TEXT.result.fil}
-                  en={UI_TEXT.result.en}
-                  filClassName="text-xs text-green-300"
-                  enClassName="text-[10px] text-green-200/60"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Pakinggan / Kilalanin / Rhyming: single audio player */}
-          {currentSet.subLevel !== 'pagsama' && (
-            <div className="flex justify-center py-4">
-              <div className="flex flex-col items-center gap-3">
-                <AudioPlayer
-                  audioUrl={currentSet.audioUrl}
-                  size="lg"
-                  label="Pakinggan ang tunog"
-                  labelEn="Listen to the sound"
-                />
-                <BilingualText
-                  as="p"
-                  fil={UI_TEXT.listenAgain.fil}
-                  en={UI_TEXT.listenAgain.en}
-                  filClassName="text-sm text-green-300"
-                  enClassName="text-xs text-green-200/70"
-                />
-              </div>
-            </div>
-          )}
-
-          {feedback && (
-            <FeedbackBanner
-              variant={feedback}
-              assertive={feedback === 'incorrect'}
-            >
-              <BilingualText
-                fil={feedback === 'correct' ? STRINGS.correct.fil : 'Halos! Subukan ulit.'}
-                en={feedback === 'correct' ? STRINGS.correct.en : 'Almost! Try again.'}
+        <PracticeStage
+          split={currentSet.subLevel !== 'pagsama'}
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={NPC_LINES[currentSet.subLevel].fil}
+                lineEn={NPC_LINES[currentSet.subLevel].en}
+                audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
+                celebrate={celebrate}
+                resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
               />
-            </FeedbackBanner>
-          )}
 
-          <OptionGrid
-            options={currentSet.options}
-            selectedId={selectedId}
-            correctId={correctId}
-            onSelect={(id) => void handleSelect(id)}
-            type="text"
-            attempts={attempts}
-            disabled={isSubmitting}
-          />
+              {advanceError && (
+                <FeedbackBanner variant="info" assertive>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <BilingualText
+                      as="p"
+                      fil="Hindi ma-load ang susunod na gawain."
+                      en="The next activity could not be loaded."
+                      filClassName="text-sm"
+                      enClassName="text-xs opacity-80"
+                    />
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      className="text-stone-900 [&_svg]:text-stone-900"
+                      onClick={() =>
+                        void advance(advanceError.subLevel, advanceError.setId)
+                      }
+                    >
+                      <BilingualText
+                        as="span"
+                        fil={STRINGS.retry.fil}
+                        en={STRINGS.retry.en}
+                        filClassName="text-sm font-semibold"
+                        enClassName="text-xs font-normal opacity-80"
+                      />
+                    </Button>
+                  </div>
+                </FeedbackBanner>
+              )}
 
-          {attempts >= HINT_AFTER_ATTEMPTS && (
-            <BilingualText
-              as="p"
-              fil="💡 Ang gintong kahon ang tamang sagot!"
-              en="💡 The golden box is the correct answer!"
-              className="text-center"
-              filClassName="text-xs text-pamana-gold"
-              enClassName="text-[10px] text-pamana-gold/70"
-            />
-          )}
-        </div>
+              {currentSet.subLevel === 'pagsama' ? (
+                <PromptStage
+                  variant="equation"
+                  ariaLabel="Pagsamahin ang mga tunog (Blend the sounds)"
+                >
+                  <div className="flex flex-wrap flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.consonantAudioUrl ?? ''}
+                        size="md"
+                        label="Pakinggan ang katinig"
+                        labelEn="Listen to the consonant"
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.consonant}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.consonant.fil}
+                        en={UI_TEXT.consonant.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl text-white/40" aria-hidden="true">
+                      +
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.vowelAudioUrl ?? ''}
+                        size="md"
+                        label="Pakinggan ang patinig"
+                        labelEn="Listen to the vowel"
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.vowel}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.vowel.fil}
+                        en={UI_TEXT.vowel.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl text-white/40" aria-hidden="true">
+                      =
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
+                        <span className="text-3xl font-bold text-white/30">?</span>
+                      </div>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.result.fil}
+                        en={UI_TEXT.result.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                  </div>
+                </PromptStage>
+              ) : (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel="Pakinggan ang tunog (Listen to the sound)"
+                >
+                  <AudioPlayer
+                    audioUrl={currentSet.audioUrl}
+                    size="lg"
+                    label="Pakinggan ang tunog"
+                    labelEn="Listen to the sound"
+                  />
+                  <BilingualText
+                    as="p"
+                    fil={UI_TEXT.listenAgain.fil}
+                    en={UI_TEXT.listenAgain.en}
+                    className="text-center"
+                    filClassName="text-sm text-green-300"
+                    enClassName="text-xs text-green-200/70"
+                  />
+                </PromptStage>
+              )}
+
+              <FeedbackSlot>
+                {feedback && (
+                  <FeedbackBanner
+                    variant={feedback}
+                    assertive={feedback === 'incorrect'}
+                  >
+                    <BilingualText
+                      fil={
+                        feedback === 'correct'
+                          ? STRINGS.correct.fil
+                          : 'Halos! Subukan ulit.'
+                      }
+                      en={
+                        feedback === 'correct'
+                          ? STRINGS.correct.en
+                          : 'Almost! Try again.'
+                      }
+                    />
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={
+            <div className="space-y-4">
+              <OptionGrid
+                options={currentSet.options}
+                selectedId={selectedId}
+                correctId={correctId}
+                onSelect={(id) => void handleSelect(id)}
+                type="text"
+                attempts={attempts}
+                disabled={isSubmitting}
+              />
+
+              {attempts >= HINT_AFTER_ATTEMPTS && (
+                <FeedbackBanner variant="hint">
+                  <BilingualText
+                    as="p"
+                    fil="💡 Ang gintong kahon ang tamang sagot!"
+                    en="💡 The golden box is the correct answer!"
+                    filClassName="text-sm"
+                    enClassName="text-xs opacity-80"
+                  />
+                </FeedbackBanner>
+              )}
+            </div>
+          }
+        />
       ) : null}
     </PracticePageLayout>
   )

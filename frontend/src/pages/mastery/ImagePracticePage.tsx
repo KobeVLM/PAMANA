@@ -4,6 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
 import { PracticeHeader } from '@/components/practice/PracticeHeader'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
@@ -15,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useRoundFlow } from '@/hooks/useRoundFlow'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { BilingualText } from '@/components/common/BilingualText'
 import { STRINGS, bi } from '@/lib/i18n'
 import api from '@/lib/api'
@@ -65,6 +69,7 @@ export const ImagePracticePage: React.FC = () => {
 
   const [roundWords, setRoundWords] = useState<VocabWord[]>([])
   const [introDone, setIntroDone] = useState(false)
+  const [celebrate, setCelebrate] = useState(0)
   const hasPlayedIntroRef = React.useRef(false)
 
   const totalRounds = roundWords.length || ROUND_TOTAL
@@ -72,12 +77,16 @@ export const ImagePracticePage: React.FC = () => {
   const flow = useRoundFlow({
     totalRounds,
     onAnswer: (isCorrect) => {
-      if (isCorrect) playTarget()
-      else playWrong()
+      if (isCorrect) {
+        setCelebrate((count) => count + 1)
+        playTarget()
+      } else playWrong()
     },
   })
 
   const currentWord = roundWords[flow.roundIndex] ?? null
+
+  useScrollToTop(String(flow.roundIndex))
 
   // Route guard: Module 3 must be complete first.
   const checkPrerequisite = useCallback(async () => {
@@ -245,74 +254,87 @@ export const ImagePracticePage: React.FC = () => {
     if (optionsError || !roundData) return <ErrorState onRetry={retryOptions} />
 
     return (
-      <div className="space-y-6">
-        <NPCDialogue
-          npc="lolo"
-          line={NPC_LINE.fil}
-          lineEn={NPC_LINE.en}
-          audioUrl={NPC_AUDIO}
-          autoPlay={flow.roundIndex === 0 && !introDone}
-          onAudioEnd={handleNpcAudioEnd}
-        />
-
-        <div className="flex justify-center py-2">
-          <div className="flex flex-col items-center gap-2">
-            <AudioPlayer
-              key={currentWord.wordId}
-              audioUrl={currentWord.audioUrl}
-              autoPlay={false}
-              size="lg"
-              label={STRINGS.listenWord.fil}
-              labelEn={STRINGS.listenWord.en}
+      <PracticeStage
+        stage={
+          <>
+            <NPCDialogue
+              npc="lolo"
+              line={NPC_LINE.fil}
+              lineEn={NPC_LINE.en}
+              audioUrl={NPC_AUDIO}
+              autoPlay={flow.roundIndex === 0 && !introDone}
+              onAudioEnd={handleNpcAudioEnd}
+              celebrate={celebrate}
+              resetKey={flow.roundIndex}
             />
-            <BilingualText
-              as="p"
-              fil={STRINGS.listenAgain.fil}
-              en={STRINGS.listenAgain.en}
-              className="text-center"
-              filClassName="text-xs font-medium text-green-300/80"
-              enClassName="text-[10px] text-green-200/60"
-            />
-          </div>
-        </div>
 
-        {flow.feedback && (
-          <FeedbackBanner variant={flow.feedback} assertive={flow.feedback === 'incorrect'}>
-            {flow.feedback === 'correct' ? (
-              <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
-            ) : (
-              <BilingualText
-                fil="Halos! Narito ang tamang larawan."
-                en="Almost! Here is the correct picture."
+            <PromptStage
+              variant="audio"
+              ariaLabel="Pakinggan ang salita (Listen to the word)"
+            >
+              <AudioPlayer
+                key={currentWord.wordId}
+                audioUrl={currentWord.audioUrl}
+                autoPlay={false}
+                size="lg"
+                label={STRINGS.listenWord.fil}
+                labelEn={STRINGS.listenWord.en}
               />
-            )}
-          </FeedbackBanner>
-        )}
+              <BilingualText
+                as="p"
+                fil={STRINGS.listenAgain.fil}
+                en={STRINGS.listenAgain.en}
+                className="text-center"
+                filClassName="text-xs font-medium text-green-300/80"
+                enClassName="text-[10px] text-green-200/60"
+              />
+            </PromptStage>
 
-        <OptionGrid
-          options={roundData.options}
-          selectedId={flow.selectedId}
-          correctId={flow.correctId}
-          onSelect={handleSelect}
-          type="image"
-          size="lg"
-          showLabels
-          dimUnselected
-          disabled={flow.isProcessing}
-        />
-      </div>
+            <FeedbackSlot>
+              {flow.feedback && (
+                <FeedbackBanner
+                  variant={flow.feedback}
+                  assertive={flow.feedback === 'incorrect'}
+                >
+                  {flow.feedback === 'correct' ? (
+                    <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
+                  ) : (
+                    <BilingualText
+                      fil="Halos! Narito ang tamang larawan."
+                      en="Almost! Here is the correct picture."
+                    />
+                  )}
+                </FeedbackBanner>
+              )}
+            </FeedbackSlot>
+          </>
+        }
+        tray={
+          <OptionGrid
+            options={roundData.options}
+            selectedId={flow.selectedId}
+            correctId={flow.correctId}
+            onSelect={handleSelect}
+            type="image"
+            size="lg"
+            showLabels
+            dimUnselected
+            disabled={flow.isProcessing}
+          />
+        }
+      />
     )
   }
 
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Pagsasanay: Pagtutugma ng Larawan"
         subtitle="Sanayin ang iyong kakayahan sa pagkilala ng larawan batay sa salitang naririnig."
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        score={flow.score}
+        accuracy={(flow.score / totalRounds) * 100}
         progressLabel={`Tanong ${flow.roundIndex + 1} ng ${totalRounds}`}
         progressLabelEn={`Question ${flow.roundIndex + 1} of ${totalRounds}`}
         progressValue={((flow.roundIndex + 1) / totalRounds) * 100}

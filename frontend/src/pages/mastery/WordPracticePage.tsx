@@ -5,6 +5,9 @@ import { useAudio } from '@/contexts/AudioContext'
 import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
 import { PracticeHeader } from '@/components/practice/PracticeHeader'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
@@ -16,10 +19,10 @@ import { Button } from '@/components/ui/button'
 import { useAsyncData } from '@/hooks/useAsyncData'
 import { useRoundFlow } from '@/hooks/useRoundFlow'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { BilingualText } from '@/components/common/BilingualText'
 import { STRINGS, bi } from '@/lib/i18n'
 import api from '@/lib/api'
-import { cn } from '@/lib/utils'
 import type { ModuleProgress } from '@/types'
 
 interface VocabWord {
@@ -73,6 +76,7 @@ export const WordPracticePage: React.FC = () => {
   const [roundWords, setRoundWords] = useState<VocabWord[]>([])
   const [npcIntroDone, setNpcIntroDone] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
+  const [celebrate, setCelebrate] = useState(0)
   const hasPlayedNpcRef = React.useRef(false)
   const prevIsAudioPlayingRef = React.useRef(false)
 
@@ -81,12 +85,16 @@ export const WordPracticePage: React.FC = () => {
   const flow = useRoundFlow({
     totalRounds,
     onAnswer: (isCorrect) => {
-      if (isCorrect) playTarget()
-      else playWrong()
+      if (isCorrect) {
+        setCelebrate((count) => count + 1)
+        playTarget()
+      } else playWrong()
     },
   })
 
   const currentWord = roundWords[flow.roundIndex] ?? null
+
+  useScrollToTop(String(flow.roundIndex))
 
   // Route guard: Module 2 must be complete first.
   const checkPrerequisite = useCallback(async () => {
@@ -276,131 +284,133 @@ export const WordPracticePage: React.FC = () => {
     if (optionsError || !roundData) return <ErrorState onRetry={retryOptions} />
 
     return (
-      <div className="space-y-6">
-        <NPCDialogue
-          npc="lolo"
-          line={NPC_LINE.fil}
-          lineEn={NPC_LINE.en}
-          audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
-          autoPlay={flow.roundIndex === 0 && !npcIntroDone}
-        />
+      <PracticeStage
+        stage={
+          <>
+            <NPCDialogue
+              npc="lolo"
+              line={NPC_LINE.fil}
+              lineEn={NPC_LINE.en}
+              audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
+              autoPlay={flow.roundIndex === 0 && !npcIntroDone}
+              celebrate={celebrate}
+              resetKey={flow.roundIndex}
+            />
 
-        {flow.selectedId === null ? (
-          <div className="card-story flex min-h-[260px] animate-fade-in flex-col items-center justify-center space-y-4 p-6 text-center sm:min-h-[290px] sm:p-8">
-            {domainLabel && (
-              <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-center text-xs font-semibold text-green-300">
-                {domainLabel}
-              </span>
-            )}
-
-            <div className="space-y-1">
-              <h2 className="font-heading text-2xl font-bold text-white sm:text-3xl">
-                Pakinggan ang Salita
-              </h2>
-              <BilingualText
-                as="p"
-                fil="Makinig nang mabuti at piliin ang tamang salita sa ibaba."
-                en="Listen carefully and choose the correct word below."
-                className="max-w-sm"
-                filClassName="text-sm text-green-300"
-                enClassName="text-xs text-green-200/70"
-              />
-            </div>
-
-            <div className="flex flex-col items-center gap-2 py-2">
-              <AudioPlayer
-                key={`${currentWord.wordId}-${npcIntroDone}`}
-                audioUrl={currentWord.audioUrl}
-                autoPlay={npcIntroDone}
-                size="lg"
-                label={STRINGS.listenWord.fil}
-                labelEn={STRINGS.listenWord.en}
-              />
-              <BilingualText
-                as="p"
-                fil="Pindutin para pakinggan muli"
-                en="Press to hear it again"
-                className="text-center"
-                filClassName="text-xs font-medium text-green-300/80"
-                enClassName="text-[10px] text-green-200/60"
-              />
-            </div>
-          </div>
-        ) : (
-          <div
-            className={cn(
-              'flex min-h-[260px] animate-fade-in flex-col items-center justify-center space-y-3 rounded-3xl border p-6 text-center shadow-story backdrop-blur-md transition-all sm:min-h-[290px] sm:p-8',
-              flow.feedback === 'correct'
-                ? 'border-green-500/30 bg-green-500/10'
-                : 'border-red-400/40 bg-red-500/10'
-            )}
-          >
-            {domainLabel && (
-              <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-center text-xs font-semibold text-green-300">
-                {domainLabel}
-              </span>
-            )}
-
-            {currentWord.imageUrl && !imageFailed && (
-              <img
-                src={currentWord.imageUrl}
-                alt={currentWord.word}
-                onError={() => setImageFailed(true)}
-                width={160}
-                height={160}
-                decoding="async"
-                className="h-32 w-32 animate-bounce-in rounded-2xl border border-white/10 bg-white/5 object-contain p-2 drop-shadow-md sm:h-40 sm:w-40"
-              />
-            )}
-
-            <div className="font-heading text-3xl font-extrabold uppercase tracking-wider text-white sm:text-4xl">
-              {currentWord.word}
-            </div>
-
-            <FeedbackBanner
-              variant={flow.feedback ?? 'incorrect'}
-              assertive={flow.feedback === 'incorrect'}
-              className="w-full max-w-sm justify-center"
+            <PromptStage
+              variant="image-word"
+              ariaLabel="Pakinggan at basahin ang salita (Listen and read the word)"
             >
-              {flow.feedback === 'correct' ? (
-                <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
-              ) : (
-                <span>
-                  <BilingualText
-                    as="span"
-                    fil="Halos! Ang tamang salita ay:"
-                    en="Almost! The correct word is:"
-                  />
-                  <span className="ml-1 font-bold text-white underline">
-                    {currentWord.word}
-                  </span>
+              {domainLabel && (
+                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-center text-xs font-semibold text-green-300">
+                  {domainLabel}
                 </span>
               )}
-            </FeedbackBanner>
-          </div>
-        )}
 
-        <OptionGrid
-          options={roundData.options}
-          selectedId={flow.selectedId}
-          correctId={flow.correctId}
-          onSelect={handleSelect}
-          type="text"
-          disabled={flow.isProcessing}
-        />
-      </div>
+              {flow.selectedId === null ? (
+                <>
+                  <div className="space-y-1">
+                    <h2 className="font-heading text-2xl font-bold text-white sm:text-3xl">
+                      Pakinggan ang Salita
+                    </h2>
+                    <BilingualText
+                      as="p"
+                      fil="Makinig nang mabuti at piliin ang tamang salita sa ibaba."
+                      en="Listen carefully and choose the correct word below."
+                      className="max-w-sm"
+                      filClassName="text-sm text-green-300"
+                      enClassName="text-xs text-green-200/70"
+                    />
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <AudioPlayer
+                      key={`${currentWord.wordId}-${npcIntroDone}`}
+                      audioUrl={currentWord.audioUrl}
+                      autoPlay={npcIntroDone}
+                      size="lg"
+                      label={STRINGS.listenWord.fil}
+                      labelEn={STRINGS.listenWord.en}
+                    />
+                    <BilingualText
+                      as="p"
+                      fil="Pindutin para pakinggan muli"
+                      en="Press to hear it again"
+                      className="text-center"
+                      filClassName="text-xs font-medium text-green-300/80"
+                      enClassName="text-[10px] text-green-200/60"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {currentWord.imageUrl && !imageFailed && (
+                    <img
+                      src={currentWord.imageUrl}
+                      alt={currentWord.word}
+                      onError={() => setImageFailed(true)}
+                      width={160}
+                      height={160}
+                      decoding="async"
+                      className="h-32 w-32 animate-bounce-in rounded-2xl border border-white/10 bg-white/5 object-contain p-2 drop-shadow-md sm:h-40 sm:w-40"
+                    />
+                  )}
+
+                  <div className="font-heading text-3xl font-extrabold uppercase tracking-wider text-white sm:text-4xl">
+                    {currentWord.word}
+                  </div>
+                </>
+              )}
+            </PromptStage>
+
+            <FeedbackSlot>
+              {flow.selectedId !== null && (
+                <FeedbackBanner
+                  variant={flow.feedback ?? 'incorrect'}
+                  assertive={flow.feedback === 'incorrect'}
+                >
+                  {flow.feedback === 'correct' ? (
+                    <BilingualText fil={STRINGS.correct.fil} en={STRINGS.correct.en} />
+                  ) : (
+                    <span>
+                      <BilingualText
+                        as="span"
+                        fil="Halos! Ang tamang salita ay:"
+                        en="Almost! The correct word is:"
+                      />
+                      <span className="ml-1 font-bold text-white underline">
+                        {currentWord.word}
+                      </span>
+                    </span>
+                  )}
+                </FeedbackBanner>
+              )}
+            </FeedbackSlot>
+          </>
+        }
+        tray={
+          <OptionGrid
+            options={roundData.options}
+            selectedId={flow.selectedId}
+            correctId={flow.correctId}
+            onSelect={handleSelect}
+            type="text"
+            disabled={flow.isProcessing}
+          />
+        }
+      />
     )
   }
 
   return (
-    <PracticePageLayout>
+    <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
         title="Pagsasanay: Pagtutugma ng Salita"
         subtitle="Sanayin ang iyong kakayahan sa pagbasa at pagtutugma ng mga salita."
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        score={flow.score}
+        accuracy={(flow.score / totalRounds) * 100}
         progressLabel={`Tanong ${flow.roundIndex + 1} ng ${totalRounds}`}
         progressLabelEn={`Question ${flow.roundIndex + 1} of ${totalRounds}`}
         progressValue={((flow.roundIndex + 1) / totalRounds) * 100}

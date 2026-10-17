@@ -12,6 +12,7 @@ import {
 import { useCelebration } from '@/components/feedback/Celebration'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
+import { MEDAL_STYLES, getMedalTier } from '@/lib/medals'
 import { Lock, Star, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -29,21 +30,6 @@ const TRAIL_NODES: TrailNode[] = [
   { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 38 },
   { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 87, y: 21 },
 ]
-
-type MedalTier = 'bronze' | 'silver' | 'gold'
-
-const getMedalTier = (accuracy: number | null): MedalTier => {
-  if (accuracy === null) return 'bronze'
-  if (accuracy >= 95) return 'gold'
-  if (accuracy >= 85) return 'silver'
-  return 'bronze'
-}
-
-const MEDAL_STYLES: Record<MedalTier, { bgColor: string; ringColor: string }> = {
-  bronze: { bgColor: 'bg-[#8B5E3C]', ringColor: 'ring-[#CD7F32]' },
-  silver: { bgColor: 'bg-[#6B7280]', ringColor: 'ring-[#C0C0C0]' },
-  gold:   { bgColor: 'bg-[#B8860B]', ringColor: 'ring-[#FFD700]' },
-}
 
 export const TrailMapPage: React.FC = () => {
   const { user } = useAuth()
@@ -199,9 +185,7 @@ export const TrailMapPage: React.FC = () => {
           {isComplete && progress?.accuracy != null && (
             <div className={cn(
               "text-[10px] font-bold mt-1 leading-none",
-              getMedalTier(progress.accuracy) === 'gold' ? 'text-[#B8860B]' :
-              getMedalTier(progress.accuracy) === 'silver' ? 'text-[#6B7280]' :
-              'text-[#CD7F32]'
+              MEDAL_STYLES[getMedalTier(progress.accuracy)].textColor
             )}>
               ⭐ {Math.round(progress.accuracy)}%
             </div>
@@ -312,8 +296,9 @@ export const TrailMapPage: React.FC = () => {
             <strong className="text-white">
               Module {confirmModal.node?.moduleNumber}
             </strong>
-            ? Ma-re-reset ang iyong progress at maaari mong pagbutihin ang
-            iyong score.
+            ? Magsisimula muli ang mga gawain, ngunit mananatili ang iyong
+            kasalukuyang score at medalya. Mapapalitan lamang ito kapag
+            natapos mo ang bagong pagsubok na may mas mataas na score.
           </ModalDescription>
 
           <div className="flex gap-3 mt-6">

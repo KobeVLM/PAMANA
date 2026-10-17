@@ -39,11 +39,13 @@ public class VocabularyController {
 
     @GetMapping("/vocabulary/next")
     @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<VocabularyWordResponse> getNextWord(Principal principal) {
+    public ResponseEntity<VocabularyWordResponse> getNextWord(
+            @RequestParam(required = false) Integer moduleNumber,
+            Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
-        log.info("REST API: Fetch next vocabulary word for user: {}", userId);
+        log.info("REST API: Fetch next vocabulary word for user: {}, module: {}", userId, moduleNumber);
 
-        VocabularyWordResponse response = vocabularyService.getNextWord(userId);
+        VocabularyWordResponse response = vocabularyService.getNextWord(userId, moduleNumber);
         if (response == null) {
             // Returns HTTP 204 No Content to indicate that the active domain vocabulary is fully mastered
             return ResponseEntity.noContent().build();
