@@ -4,9 +4,13 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { cn } from '@/lib/utils'
 import { StoryModal } from '@/components/StoryModal'
+import { ParentSidebar } from '@/components/layout/ParentSidebar'
 import {
   BarChart2,
   LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
   User,
 } from 'lucide-react'
@@ -83,6 +87,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     location.pathname.startsWith('/modules') ||
     location.pathname.startsWith('/mastery')
 
+  const isParent = user?.role === 'PARENT'
+
   const filteredNav = NAV_ITEMS.filter(
     (item) => user && item.roles.includes(user.role)
   )
@@ -125,7 +131,17 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       )}
 
       {/* SIDEBAR */}
-      {!isPracticePage && (
+      {!isPracticePage && isParent && (
+        <ParentSidebar
+          user={user}
+          isHidden={isSidebarHidden}
+          avatar={renderAvatar()}
+          onNavigate={() => setIsSidebarHidden(true)}
+          onLogout={handleLogout}
+        />
+      )}
+
+      {!isPracticePage && !isParent && (
         <aside
           className={cn(
             'fixed lg:static inset-y-0 left-0 z-40 flex flex-col',
@@ -222,63 +238,99 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         </aside>
       )}
 
-      {/* DESKTOP TOGGLE BUTTON (Gem) */}
-      {!isPracticePage && (
-        <button
-          onClick={() => setIsSidebarHidden(!isSidebarHidden)}
-          className={cn(
-            "hidden lg:flex fixed z-50 top-6 transition-all duration-300 ease-in-out",
-            "items-center justify-center w-14 h-14 rounded-[1.2rem]",
-            "bg-gradient-to-b from-[#55cfff] to-[#1f9ee6]",
-            "border-b-[6px] border-[#0d6cb5]",
-            "shadow-[0_4px_0_#074e83]",
-            "hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none",
-            isSidebarHidden ? "left-6" : "left-[304px]" 
-          )}
-          title={isSidebarHidden ? "Show Menu" : "Hide Menu"}
-        >
-          <span className="pointer-events-none absolute top-1.5 left-3 w-7 h-2.5 rounded-[100%] bg-white/50 -rotate-12 blur-[1.5px]" />
-          <img 
-            src="/images/S-Logo.png" 
-            alt="Toggle Sidebar" 
-            className="relative w-9 h-9 object-contain drop-shadow-[0_3px_0_rgba(0,0,0,0.25)]" 
-          />
-        </button>
-      )}
+      {/* DESKTOP TOGGLE BUTTON */}
+      {!isPracticePage &&
+        (isParent ? (
+          <button
+            onClick={() => setIsSidebarHidden(!isSidebarHidden)}
+            className={cn(
+              'hidden lg:flex fixed z-50 top-6 items-center justify-center w-10 h-10 rounded-xl',
+              'bg-white border border-[#e3ebe0] text-[#2b5c3b] shadow-sm hover:bg-[#f4f8f2]',
+              'transition-all duration-300 ease-in-out',
+              isSidebarHidden ? 'left-6' : 'left-[276px]'
+            )}
+            title={isSidebarHidden ? 'Show Menu' : 'Hide Menu'}
+            aria-label={isSidebarHidden ? 'Show Menu' : 'Hide Menu'}
+          >
+            {isSidebarHidden ? (
+              <PanelLeftOpen className="h-5 w-5" aria-hidden="true" />
+            ) : (
+              <PanelLeftClose className="h-5 w-5" aria-hidden="true" />
+            )}
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsSidebarHidden(!isSidebarHidden)}
+            className={cn(
+              "hidden lg:flex fixed z-50 top-6 transition-all duration-300 ease-in-out",
+              "items-center justify-center w-14 h-14 rounded-[1.2rem]",
+              "bg-gradient-to-b from-[#55cfff] to-[#1f9ee6]",
+              "border-b-[6px] border-[#0d6cb5]",
+              "shadow-[0_4px_0_#074e83]",
+              "hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none",
+              isSidebarHidden ? "left-6" : "left-[304px]" 
+            )}
+            title={isSidebarHidden ? "Show Menu" : "Hide Menu"}
+          >
+            <span className="pointer-events-none absolute top-1.5 left-3 w-7 h-2.5 rounded-[100%] bg-white/50 -rotate-12 blur-[1.5px]" />
+            <img 
+              src="/images/S-Logo.png" 
+              alt="Toggle Sidebar" 
+              className="relative w-9 h-9 object-contain drop-shadow-[0_3px_0_rgba(0,0,0,0.25)]" 
+            />
+          </button>
+        ))}
 
       <div className="flex-1 flex flex-col min-w-0 bg-[#f4f9f0] relative overflow-hidden">
-        {!isPracticePage && (
-          <header className="lg:hidden sticky top-0 z-20 h-20 bg-gradient-to-b from-[#2d5e3e] to-[#4b8a5c] border-b-4 border-[#33664a] flex items-center px-4 justify-between shadow-md">
-            
-            <button
-              onClick={() => setIsSidebarHidden(false)}
-              className="relative flex items-center justify-center w-12 h-12 rounded-[1rem] bg-gradient-to-b from-[#55cfff] to-[#1f9ee6] border-b-[4px] border-[#0d6cb5] shadow-[0_3px_0_#074e83] active:border-b-0 active:translate-y-1 active:shadow-none transition-all"
-              aria-label="Open menu"
-            >
-              <span className="pointer-events-none absolute top-1 left-2 w-6 h-2 rounded-[100%] bg-white/50 -rotate-12 blur-[1px]" />
-              <img src="/images/S-Logo.png" alt="Menu" className="relative w-8 h-8 object-contain drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
-            </button>
+        {!isPracticePage &&
+          (isParent ? (
+            <header className="lg:hidden sticky top-0 z-20 h-16 bg-white border-b border-[#e3ebe0] flex items-center px-4 justify-between">
+              <button
+                onClick={() => setIsSidebarHidden(false)}
+                className="flex items-center justify-center w-10 h-10 rounded-xl border border-[#e3ebe0] text-[#2b5c3b] hover:bg-[#f4f8f2] transition-colors"
+                aria-label="Open menu"
+              >
+                <Menu className="w-5 h-5" aria-hidden="true" />
+              </button>
 
-            <img
-              src="/images/Logo1.png"
-              alt="PAMANA"
-              className="h-12 object-contain drop-shadow-md"
-            />
-
-            <div className="w-12 h-12 rounded-full bg-[#4aa883] border-4 border-white shadow-sm flex items-center justify-center overflow-hidden text-[#2b5c3b] font-black">
-              {imageError ? (
-                <span className="text-xl">{user?.name?.charAt(0).toUpperCase() || 'P'}</span>
-              ) : (
-                <img 
-                  src={avatarSrc} 
-                  alt={`${character} Avatar`} 
-                  className="w-full h-full object-cover" 
-                  onError={() => setImageError(true)}
+              <div className="flex items-center gap-2">
+                <img
+                  src="/images/Logo1.png"
+                  alt=""
+                  className="h-8 w-8 object-contain"
                 />
-              )}
-            </div>
-          </header>
-        )}
+                <span className="font-heading text-sm font-bold text-[#2b5c3b]">
+                  Parent Portal
+                </span>
+              </div>
+
+              <div className="w-9 h-9 rounded-full border border-[#e3ebe0] bg-[#f4f8f2] flex items-center justify-center overflow-hidden text-[#2b5c3b] font-bold">
+                {renderAvatar()}
+              </div>
+            </header>
+          ) : (
+            <header className="lg:hidden sticky top-0 z-20 h-20 bg-gradient-to-b from-[#2d5e3e] to-[#4b8a5c] border-b-4 border-[#33664a] flex items-center px-4 justify-between shadow-md">
+              
+              <button
+                onClick={() => setIsSidebarHidden(false)}
+                className="relative flex items-center justify-center w-12 h-12 rounded-[1rem] bg-gradient-to-b from-[#55cfff] to-[#1f9ee6] border-b-[4px] border-[#0d6cb5] shadow-[0_3px_0_#074e83] active:border-b-0 active:translate-y-1 active:shadow-none transition-all"
+                aria-label="Open menu"
+              >
+                <span className="pointer-events-none absolute top-1 left-2 w-6 h-2 rounded-[100%] bg-white/50 -rotate-12 blur-[1px]" />
+                <img src="/images/S-Logo.png" alt="Menu" className="relative w-8 h-8 object-contain drop-shadow-[0_2px_0_rgba(0,0,0,0.2)]" />
+              </button>
+
+              <img
+                src="/images/Logo1.png"
+                alt="PAMANA"
+                className="h-12 object-contain drop-shadow-md"
+              />
+
+              <div className="w-12 h-12 rounded-full bg-[#4aa883] border-4 border-white shadow-sm flex items-center justify-center overflow-hidden text-[#2b5c3b] font-black">
+                {renderAvatar()}
+              </div>
+            </header>
+          ))}
 
         <main className="flex-1 overflow-auto relative">
           {children}
@@ -288,9 +340,14 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {!isSidebarHidden && (
         <button
           onClick={() => setIsSidebarHidden(true)}
-          className="fixed top-4 right-4 z-50 lg:hidden p-3 bg-[#FCA5A5] border-b-4 border-[#EF4444] rounded-full text-white shadow-xl active:border-b-0 active:translate-y-1 transition-all"
+          className={cn(
+            'fixed top-4 right-4 z-50 lg:hidden p-3 rounded-full shadow-xl transition-all',
+            isParent
+              ? 'bg-white border border-[#e3ebe0] text-[#5a6b5d] hover:bg-[#f4f8f2]'
+              : 'bg-[#FCA5A5] border-b-4 border-[#EF4444] text-white active:border-b-0 active:translate-y-1'
+          )}
         >
-          <X className="w-7 h-7 stroke-[3]" />
+          <X className={cn('stroke-[3]', isParent ? 'w-5 h-5' : 'w-7 h-7')} />
         </button>
       )}
 
