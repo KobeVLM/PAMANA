@@ -379,10 +379,6 @@ export const SyllableModulePage: React.FC = () => {
       })
     : undefined
 
-  const lessonsLeft = status
-    ? SUB_LEVELS.filter((sl) => (status.subLevelAccuracies[sl] ?? 0) < 80).length
-    : null
-
   return (
     <PracticePageLayout maxWidth="5xl">
       <PracticeHeader
@@ -392,15 +388,6 @@ export const SyllableModulePage: React.FC = () => {
         onBack={() => navigate('/trail')}
         sticky
         steps={steps}
-        accuracy={status ? Math.round(status.moduleAccuracy) : null}
-        itemsLeft={
-          lessonsLeft === null
-            ? undefined
-            : {
-                fil: `Natitira: ${lessonsLeft} aralin`,
-                en: `${lessonsLeft} ${lessonsLeft === 1 ? 'lesson' : 'lessons'} left`,
-              }
-        }
         progressLabel={
           status
             ? `Katumpakan ng Module · Kailangan: 80%`
@@ -478,18 +465,18 @@ export const SyllableModulePage: React.FC = () => {
                         label="Pakinggan ang katinig"
                         labelEn="Listen to the consonant"
                       />
-                      <span className="font-heading text-2xl font-bold text-white">
+                      <span className="font-heading text-2xl font-bold text-[#2b5c3b]">
                         {currentSet.consonant}
                       </span>
                       <BilingualText
                         as="span"
                         fil={UI_TEXT.consonant.fil}
                         en={UI_TEXT.consonant.en}
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
-                    <span className="text-3xl text-white/40" aria-hidden="true">
+                    <span className="text-3xl text-[#2b5c3b]/50" aria-hidden="true">
                       +
                     </span>
                     <div className="flex min-w-0 flex-col items-center gap-2">
@@ -499,30 +486,30 @@ export const SyllableModulePage: React.FC = () => {
                         label="Pakinggan ang patinig"
                         labelEn="Listen to the vowel"
                       />
-                      <span className="font-heading text-2xl font-bold text-white">
+                      <span className="font-heading text-2xl font-bold text-[#2b5c3b]">
                         {currentSet.vowel}
                       </span>
                       <BilingualText
                         as="span"
                         fil={UI_TEXT.vowel.fil}
                         en={UI_TEXT.vowel.en}
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
-                    <span className="text-3xl text-white/40" aria-hidden="true">
+                    <span className="text-3xl text-[#2b5c3b]/50" aria-hidden="true">
                       =
                     </span>
                     <div className="flex min-w-0 flex-col items-center gap-2">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
-                        <span className="text-3xl font-bold text-white/30">?</span>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-[#D4A017]/70 bg-white sm:h-20 sm:w-20">
+                        <span className="text-3xl font-bold text-[#2b5c3b]/30">?</span>
                       </div>
                       <BilingualText
                         as="span"
                         fil={UI_TEXT.result.fil}
                         en={UI_TEXT.result.en}
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
                   </div>
@@ -543,8 +530,8 @@ export const SyllableModulePage: React.FC = () => {
                     fil={UI_TEXT.listenAgain.fil}
                     en={UI_TEXT.listenAgain.en}
                     className="text-center"
-                    filClassName="text-sm text-green-300"
-                    enClassName="text-xs text-green-200/70"
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
                   />
                 </PromptStage>
               )}

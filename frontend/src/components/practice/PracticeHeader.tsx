@@ -26,10 +26,6 @@ export interface PracticeHeaderProps {
   progressValue?: number
   /** Sub-level / phase rail rendered as snoopy-style pill tabs. */
   steps?: PracticeStep[]
-  /** @deprecated HUD star meter removed in the snoopy light re-skin. */
-  accuracy?: number | null
-  /** @deprecated HUD counter removed in the snoopy light re-skin. */
-  itemsLeft?: { fil: string; en: string }
   /** Stick to the top of the scroll container (module screens). */
   sticky?: boolean
   className?: string

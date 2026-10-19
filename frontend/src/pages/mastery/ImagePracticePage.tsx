@@ -285,8 +285,8 @@ export const ImagePracticePage: React.FC = () => {
                 fil={STRINGS.listenAgain.fil}
                 en={STRINGS.listenAgain.en}
                 className="text-center"
-                filClassName="text-xs font-medium text-green-300/80"
-                enClassName="text-[10px] text-green-200/60"
+                filClassName="text-xs font-medium text-[#3f7d52]/80"
+                enClassName="text-[10px] text-[#5a7a63]"
               />
             </PromptStage>
 
@@ -334,7 +334,6 @@ export const ImagePracticePage: React.FC = () => {
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        accuracy={(flow.score / totalRounds) * 100}
         progressLabel={`Tanong ${flow.roundIndex + 1} ng ${totalRounds}`}
         progressLabelEn={`Question ${flow.roundIndex + 1} of ${totalRounds}`}
         progressValue={((flow.roundIndex + 1) / totalRounds) * 100}

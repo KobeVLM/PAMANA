@@ -302,7 +302,7 @@ export const WordPracticePage: React.FC = () => {
               ariaLabel="Pakinggan at basahin ang salita (Listen and read the word)"
             >
               {domainLabel && (
-                <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-center text-xs font-semibold text-green-300">
+                <span className="rounded-full border-2 border-white bg-white px-3 py-1 text-center text-xs font-semibold text-[#3f7d52]">
                   {domainLabel}
                 </span>
               )}
@@ -310,7 +310,7 @@ export const WordPracticePage: React.FC = () => {
               {flow.selectedId === null ? (
                 <>
                   <div className="space-y-1">
-                    <h2 className="font-heading text-2xl font-bold text-white sm:text-3xl">
+                    <h2 className="font-heading text-2xl font-bold text-[#2b5c3b] sm:text-3xl">
                       Pakinggan ang Salita
                     </h2>
                     <BilingualText
@@ -318,8 +318,8 @@ export const WordPracticePage: React.FC = () => {
                       fil="Makinig nang mabuti at piliin ang tamang salita sa ibaba."
                       en="Listen carefully and choose the correct word below."
                       className="max-w-sm"
-                      filClassName="text-sm text-green-300"
-                      enClassName="text-xs text-green-200/70"
+                      filClassName="text-sm text-[#3f7d52]"
+                      enClassName="text-xs text-[#5a7a63]"
                     />
                   </div>
 
@@ -337,8 +337,8 @@ export const WordPracticePage: React.FC = () => {
                       fil="Pindutin para pakinggan muli"
                       en="Press to hear it again"
                       className="text-center"
-                      filClassName="text-xs font-medium text-green-300/80"
-                      enClassName="text-[10px] text-green-200/60"
+                      filClassName="text-xs font-medium text-[#3f7d52]/80"
+                      enClassName="text-[10px] text-[#5a7a63]"
                     />
                   </div>
                 </>
@@ -352,11 +352,11 @@ export const WordPracticePage: React.FC = () => {
                       width={160}
                       height={160}
                       decoding="async"
-                      className="h-32 w-32 animate-bounce-in rounded-2xl border border-white/10 bg-white/5 object-contain p-2 drop-shadow-md sm:h-40 sm:w-40"
+                      className="h-32 w-32 animate-bounce-in rounded-2xl border-2 border-white/70 bg-white object-contain p-2 drop-shadow-md sm:h-40 sm:w-40"
                     />
                   )}
 
-                  <div className="font-heading text-3xl font-extrabold uppercase tracking-wider text-white sm:text-4xl">
+                  <div className="font-heading text-3xl font-extrabold uppercase tracking-wider text-[#2b5c3b] sm:text-4xl">
                     {currentWord.word}
                   </div>
                 </>
@@ -378,7 +378,7 @@ export const WordPracticePage: React.FC = () => {
                         fil="Halos! Ang tamang salita ay:"
                         en="Almost! The correct word is:"
                       />
-                      <span className="ml-1 font-bold text-white underline">
+                      <span className="ml-1 font-bold text-[#8f1d1d] underline">
                         {currentWord.word}
                       </span>
                     </span>
@@ -410,7 +410,6 @@ export const WordPracticePage: React.FC = () => {
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        accuracy={(flow.score / totalRounds) * 100}
         progressLabel={`Tanong ${flow.roundIndex + 1} ng ${totalRounds}`}
         progressLabelEn={`Question ${flow.roundIndex + 1} of ${totalRounds}`}
         progressValue={((flow.roundIndex + 1) / totalRounds) * 100}

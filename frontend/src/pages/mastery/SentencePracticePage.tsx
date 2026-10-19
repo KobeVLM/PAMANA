@@ -267,7 +267,6 @@ export const SentencePracticePage: React.FC = () => {
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        accuracy={(score / MAX_ROUNDS) * 100}
         progressLabel={`Pangungusap ${round} ng ${MAX_ROUNDS}`}
         progressLabelEn={`Sentence ${round} of ${MAX_ROUNDS}`}
         progressValue={(round / MAX_ROUNDS) * 100}
@@ -308,8 +307,8 @@ export const SentencePracticePage: React.FC = () => {
                     fil="Pakinggan ang tamang pagkakasunod ng pangungusap"
                     en="Listen to the correct order of the sentence"
                     className="text-center"
-                    filClassName="text-sm text-green-300"
-                    enClassName="text-xs text-green-200/70"
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
                   />
                 </PromptStage>
               )}
@@ -318,10 +317,10 @@ export const SentencePracticePage: React.FC = () => {
                 variant="canvas"
                 ariaLabel="Iyong pangungusap (Your sentence)"
               >
-                <p className="text-xs font-medium text-green-300 sm:text-sm">
+                <p className="text-xs font-medium text-[#3f7d52] sm:text-sm">
                   Iyong pangungusap:
                 </p>
-                <p className="min-h-[28px] font-heading text-lg font-bold tracking-wide text-white sm:text-xl">
+                <p className="min-h-[28px] font-heading text-lg font-bold tracking-wide text-[#2b5c3b] sm:text-xl">
                   {arrangedSentence}
                 </p>
               </PromptStage>
@@ -345,12 +344,12 @@ export const SentencePracticePage: React.FC = () => {
                             fil="Tamang sagot:"
                             en="Correct answer:"
                             className="mt-0.5"
-                            filClassName="text-sm text-pamana-gold"
-                            enClassName="text-xs text-pamana-gold/70"
+                            filClassName="text-sm text-[#8f1d1d]"
+                            enClassName="text-xs text-[#8f1d1d]/80"
                           />
                         )}
                         {!isCorrect && (
-                          <p className="font-semibold text-white">
+                          <p className="font-semibold text-[#8f1d1d]">
                             {task.correctOrder.join(' ')}
                           </p>
                         )}
@@ -373,17 +372,17 @@ export const SentencePracticePage: React.FC = () => {
             <div className="space-y-4">
               <div className="card-story space-y-3 p-5">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-green-300 sm:text-sm">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-[#3f7d52] sm:text-sm">
                     <MousePointerClick
-                      className="h-4 w-4 text-pamana-gold"
+                      className="h-4 w-4 text-[#D4A017]"
                       aria-hidden="true"
                     />
                     <BilingualText
                       as="span"
                       fil="I-drag o i-click ang dalawang salita para pagpalitin:"
                       en="Drag or click two words to swap them:"
-                      filClassName="text-xs font-medium text-green-300 sm:text-sm"
-                      enClassName="text-[10px] text-green-200/60"
+                      filClassName="text-xs font-medium text-[#3f7d52] sm:text-sm"
+                      enClassName="text-[10px] text-[#5a7a63]"
                     />
                   </div>
                   {!submitted && (
@@ -392,7 +391,7 @@ export const SentencePracticePage: React.FC = () => {
                       size="sm"
                       onClick={handleResetOrder}
                       title="I-reset ang pagkakasunod (Reset the order)"
-                      className="text-white/60 hover:text-white"
+                      className="text-[#5a7a63] hover:text-[#2b5c3b]"
                     >
                       <Undo2 aria-hidden="true" />
                       <BilingualText
@@ -421,8 +420,8 @@ export const SentencePracticePage: React.FC = () => {
                     fil="Pumili ng isa pang salita na nais mong ipalit sa napiling salita."
                     en="Choose another word to swap with the selected word."
                     className="animate-pulse"
-                    filClassName="text-xs text-amber-300"
-                    enClassName="text-[10px] text-amber-200/70"
+                    filClassName="text-xs text-[#7a5200]"
+                    enClassName="text-[10px] text-[#7a5200]/80"
                   />
                 )}
               </div>

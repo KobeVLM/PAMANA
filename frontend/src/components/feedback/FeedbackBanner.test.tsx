@@ -18,7 +18,7 @@ describe("FeedbackBanner", () => {
     )
     const alert = screen.getByRole("alert")
     expect(alert).toHaveAttribute("aria-live", "assertive")
-    expect(alert).toHaveClass("border-red-400/60")
+    expect(alert).toHaveClass("border-[#EF5350]")
   })
 
   it("marks the status icon as decorative", () => {

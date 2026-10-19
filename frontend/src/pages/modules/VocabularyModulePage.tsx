@@ -359,7 +359,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const moduleTitle =
     moduleNumber === 2 ? 'Module 2: Salita ng Katawan' : 'Module 3: Salita ng Pamilya'
   const moduleLocation = moduleNumber === 2 ? 'Hardin ni Lola' : 'Kusina ni Lolo'
-  const wordsLeft = upcomingWords.length
   const nextModuleNumber = moduleNumber === 2 ? 3 : 4
   const nextModuleTitle =
     moduleNumber === 2 ? 'Module 3: Salita ng Pamilya' : 'Module 4: Bumuo ng Pangungusap'
@@ -407,7 +406,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             decoding="async"
             className="mx-auto mb-4 h-40 w-40 object-contain drop-shadow-2xl sm:h-48 sm:w-48"
           />
-          <h2 className="mb-2 font-heading text-xl font-bold text-white">
+          <h2 className="mb-2 font-heading text-xl font-bold text-[#2b5c3b]">
             Natuto ka ng bagong salita!
           </h2>
           <BilingualText
@@ -415,8 +414,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             fil={`"${currentWord?.word}" — naitala na sa iyong talasalitaan!`}
             en={`"${currentWord?.word}" — added to your vocabulary!`}
             className="mb-6"
-            filClassName="text-green-300"
-            enClassName="text-sm text-green-200/70"
+            filClassName="text-[#3f7d52]"
+            enClassName="text-sm text-[#5a7a63]"
           />
           <Button
             variant="pamana"
@@ -488,11 +487,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             onBack={() => navigate('/trail')}
             sticky
             steps={steps}
-            accuracy={moduleAccuracy}
-            itemsLeft={{
-              fil: `Natitira: ${wordsLeft} salita`,
-              en: `${wordsLeft} ${wordsLeft === 1 ? 'word' : 'words'} left`,
-            }}
             progressLabel={
               moduleAccuracy === null
                 ? 'Katumpakan ng Module'
@@ -541,14 +535,14 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                           width={160}
                           height={160}
                           decoding="async"
-                          className="h-40 w-40 rounded-2xl border-2 border-white/20 object-contain"
+                          className="h-40 w-40 rounded-2xl border-2 border-white/70 object-contain"
                         />
                       ) : (
-                        <div className="flex h-40 w-40 items-center justify-center rounded-2xl border-2 border-white/20 bg-white/5 font-heading text-xl font-bold text-white/80">
+                        <div className="flex h-40 w-40 items-center justify-center rounded-2xl border-2 border-white/70 bg-white font-heading text-xl font-bold text-[#2b5c3b]/80">
                           {currentWord.word}
                         </div>
                       )}
-                      <p className="font-heading text-3xl font-bold text-white">
+                      <p className="font-heading text-3xl font-bold text-[#2b5c3b]">
                         {currentWord.word}
                       </p>
                       <AudioPlayer
@@ -561,8 +555,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                         as="p"
                         fil={STRINGS.listenAgain.fil}
                         en={STRINGS.listenAgain.en}
-                        filClassName="text-sm text-green-300"
-                        enClassName="text-xs text-green-200/70"
+                        filClassName="text-sm text-[#3f7d52]"
+                        enClassName="text-xs text-[#5a7a63]"
                       />
                       <Button
                         variant="pamana"
@@ -602,8 +596,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                         fil={STRINGS.listenAgain.fil}
                         en={STRINGS.listenAgain.en}
                         className="text-center"
-                        filClassName="text-sm text-green-300"
-                        enClassName="text-xs text-green-200/70"
+                        filClassName="text-sm text-[#3f7d52]"
+                        enClassName="text-xs text-[#5a7a63]"
                       />
                     </PromptStage>
                   )}
