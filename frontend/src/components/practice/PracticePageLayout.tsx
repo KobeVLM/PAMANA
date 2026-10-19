@@ -22,8 +22,8 @@ const MAX_WIDTH: Record<
 
 /**
  * Standard page frame for gameplay/practice screens:
- * AppShell + animated dot-grid backdrop + centred, padded,
- * safe-area aware content column.
+ * AppShell + snoopy sky-to-meadow gradient backdrop + animated dot grid +
+ * centred, padded, safe-area aware content column.
  */
 export function PracticePageLayout({
   children,
@@ -34,14 +34,14 @@ export function PracticePageLayout({
     <AppShell>
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-0"
+        className="pointer-events-none fixed inset-0 z-0 bg-gradient-to-b from-[#87CEEB] to-[#98FB98]"
       >
         <DotGrid
-          baseColor="#2d4301"
-          activeColor="#d3ca19"
+          baseColor="#2b5c3b"
+          activeColor="#FFC107"
           shape="circle"
-          dotSize={5}
-          gap={17}
+          dotSize={4}
+          gap={18}
           proximity={175}
           strength={0.9}
           bounce={0.3}
@@ -49,9 +49,9 @@ export function PracticePageLayout({
           returnDuration={0.5}
           swell={0.45}
           stretch={0.2}
-          glow={0.65}
+          glow={0.5}
           fade={0.35}
-          opacity={0.55}
+          opacity={0.18}
           intro
           mouseInteraction
           clickShock={false}
