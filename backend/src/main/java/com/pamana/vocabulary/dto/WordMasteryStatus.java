@@ -9,18 +9,16 @@ public class WordMasteryStatus {
     private String word;
     private String domain;
     private double overallAccuracy;
-    private int hamonFailCount;
     private String status;
 
     public WordMasteryStatus() {
     }
 
-    public WordMasteryStatus(UUID wordId, String word, String domain, double overallAccuracy, int hamonFailCount, String status) {
+    public WordMasteryStatus(UUID wordId, String word, String domain, double overallAccuracy, String status) {
         this.wordId = wordId;
         this.word = word;
         this.domain = domain;
         this.overallAccuracy = overallAccuracy;
-        this.hamonFailCount = hamonFailCount;
         this.status = status;
     }
 
@@ -55,14 +53,6 @@ public class WordMasteryStatus {
 
     public void setOverallAccuracy(double overallAccuracy) {
         this.overallAccuracy = overallAccuracy;
-    }
-
-    public int getHamonFailCount() {
-        return hamonFailCount;
-    }
-
-    public void setHamonFailCount(int hamonFailCount) {
-        this.hamonFailCount = hamonFailCount;
     }
 
     public String getStatus() {

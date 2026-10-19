@@ -15,7 +15,7 @@ interface NavItem {
   label: string
   to: string
   icon: React.ReactNode
-  roles: ('LEARNER' | 'PARENT' | 'TEACHER')[]
+  roles: ('LEARNER' | 'PARENT')[]
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -114,7 +114,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       
       {/* MOBILE OVERLAY */}
       {!isModulePage && !isSidebarHidden && (
-        <div
+        <button
+          type="button"
+          aria-label="Isara ang menu"
           className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setIsSidebarHidden(true)}
         />

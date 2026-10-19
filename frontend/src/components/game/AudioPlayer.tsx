@@ -7,6 +7,8 @@ interface AudioPlayerProps {
   autoPlay?: boolean
   className?: string
   label?: string
+  /** English label appended for screen readers. */
+  labelEn?: string
   size?: 'sm' | 'md' | 'lg'
 }
 
@@ -21,13 +23,14 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   autoPlay = false,
   className,
   label = 'Pakinggan',
+  labelEn,
   size = 'md',
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [hasError, setHasError] = React.useState(false)
   const [isPlaying, setIsPlaying] = React.useState(false)
 
-  const playFallbackBeep = (err: any) => {
+  const playFallbackBeep = (err: unknown) => {
     console.error('Audio playback failed!', err);
   }
 
@@ -73,7 +76,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       />
       <button
         onClick={play}
-        aria-label={label}
+        aria-label={labelEn ? `${label} (${labelEn})` : label}
         className={cn(
           'rounded-full flex flex-col items-center justify-center gap-1',
           'bg-gradient-to-br from-pamana-gold to-pamana-amber',

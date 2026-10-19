@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Eye, EyeOff, Loader2, Info, ArrowLeft } from 'lucide-react'
+import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export const RegisterPage: React.FC = () => {
   const { register, user } = useAuth()
@@ -11,15 +11,14 @@ export const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [role, setRole] = useState<'LEARNER' | 'PARENT' | 'TEACHER'>('LEARNER')
-  const [joinCode, setJoinCode] = useState('')
+  const [role, setRole] = useState<'LEARNER' | 'PARENT'>('LEARNER')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   React.useEffect(() => {
     if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/trail'
+      const dest = user.role === 'PARENT' ? '/dashboard' : '/trail'
       navigate(dest, { replace: true })
     }
   }, [user, navigate])
@@ -46,7 +45,7 @@ export const RegisterPage: React.FC = () => {
     setErrors({})
     try {
       localStorage.setItem('show_intro_story', 'true')
-      await register(name.trim(), email.trim(), password, role, joinCode || undefined)
+      await register(name.trim(), email.trim(), password, role)
       navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -170,9 +169,9 @@ export const RegisterPage: React.FC = () => {
 
               {/* Role Selection */}
               <div className="space-y-1 pt-1">
-                <label className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">Role</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['LEARNER', 'PARENT', 'TEACHER'] as const).map((r) => (
+                <span className="block text-xs text-slate-600 font-black uppercase tracking-wider ml-1">Role</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['LEARNER', 'PARENT'] as const).map((r) => (
                     <button
                       key={r}
                       type="button"
@@ -183,31 +182,11 @@ export const RegisterPage: React.FC = () => {
                           : "bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200"
                       }`}
                     >
-                      {r === 'LEARNER' ? 'Learner' : r === 'PARENT' ? 'Parent' : 'Teacher'}
+                      {r === 'LEARNER' ? 'Learner' : 'Parent'}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Join Code (optional) */}
-              {role === 'LEARNER' && (
-                <div className="space-y-1 pt-1">
-                  <label htmlFor="join-code" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1 flex items-center gap-1">
-                    Class Code <span className="text-slate-400 text-[10px]">(optional)</span>
-                    <Info className="w-3 h-3 text-slate-400" />
-                  </label>
-                  <input
-                    id="join-code"
-                    type="text"
-                    placeholder="6-digit code"
-                    value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase().slice(0, 6))}
-                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] font-mono tracking-widest uppercase"
-                    maxLength={6}
-                    disabled={isLoading}
-                  />
-                </div>
-              )}
 
               {/* General error */}
               {errors.general && (

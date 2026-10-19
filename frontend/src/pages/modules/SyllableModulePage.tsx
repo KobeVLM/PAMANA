@@ -1,15 +1,30 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
-import { AppShell } from '@/components/layout/AppShell'
+import { useAudio } from '@/contexts/AudioContext'
+import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
+import {
+  PracticeHeader,
+  type PracticeStep,
+} from '@/components/practice/PracticeHeader'
+import { PracticeStage } from '@/components/practice/PracticeStage'
+import { PromptStage } from '@/components/practice/PromptStage'
+import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
+import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
-import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
+import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
+import { FeedbackBanner } from '@/components/feedback/FeedbackBanner'
+import { LoadingState } from '@/components/common/LoadingState'
+import { ErrorState } from '@/components/common/ErrorState'
+import { Button } from '@/components/ui/button'
+import { BilingualText } from '@/components/common/BilingualText'
+import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useScrollToTop } from '@/hooks/useScrollToTop'
+import { STRINGS, bi, type Bi } from '@/lib/i18n'
 import api from '@/lib/api'
-import { cn } from '@/lib/utils'
-import { ArrowLeft, CheckCircle2 } from 'lucide-react'
 
 type SubLevel = 'pagsama' | 'pakinggan' | 'kilalanin' | 'rhyming'
 
@@ -31,25 +46,50 @@ interface SyllableStatus {
   subLevelAccuracies: Record<SubLevel, number>
   moduleAccuracy: number
   module2Unlocked: boolean
+  overallAccuracy?: number
+  isComplete?: boolean
 }
 
-const SUB_LEVEL_LABELS: Record<SubLevel, string> = {
-  pagsama: '1. Pagsama ng Tunog',
-  pakinggan: '2. Pakinggan',
-  kilalanin: '3. Kilalanin',
-  rhyming: '4. Tumalinghaga',
+const SUB_LEVELS: SubLevel[] = ['pagsama', 'pakinggan', 'kilalanin', 'rhyming']
+
+const SUB_LEVEL_LABELS: Record<SubLevel, Bi> = {
+  pagsama: bi('1. Pagsama ng Tunog', '1. Blending Sounds'),
+  pakinggan: bi('2. Pakinggan', '2. Listen'),
+  kilalanin: bi('3. Kilalanin', '3. Identify'),
+  rhyming: bi('4. Tumalinghaga', '4. Rhyming'),
 }
 
-const NPC_LINES: Record<SubLevel, string> = {
-  pagsama: 'Pakinggan at pagsamahin ang mga tunog! Alin ang resulta?',
-  pakinggan: 'Pakinggan nang mabuti! Alin ang pantig na narinig mo?',
-  kilalanin: 'Kilalanin ang pantig na nagsisimula sa salitang ito!',
-  rhyming: 'Alin sa mga salitang ito ang magkatunog sa narinig?',
+const NPC_LINES: Record<SubLevel, Bi> = {
+  pagsama: bi(
+    'Pakinggan at pagsamahin ang mga tunog! Alin ang resulta?',
+    'Listen and blend the sounds! Which one is the result?'
+  ),
+  pakinggan: bi(
+    'Pakinggan nang mabuti! Alin ang pantig na narinig mo?',
+    'Listen carefully! Which syllable did you hear?'
+  ),
+  kilalanin: bi(
+    'Kilalanin ang pantig na nagsisimula sa salitang ito!',
+    'Identify the syllable that begins this word!'
+  ),
+  rhyming: bi(
+    'Alin sa mga salitang ito ang magkatunog sa narinig?',
+    'Which of these words rhymes with what you heard?'
+  ),
+}
+
+const UI_TEXT = {
+  consonant: bi('Katinig', 'Consonant'),
+  vowel: bi('Patinig', 'Vowel'),
+  result: bi('Ano ang resulta?', 'What is the result?'),
+  listenAgain: bi('Pindutin para marinig ulit', 'Tap to hear it again'),
 }
 
 export const SyllableModulePage: React.FC = () => {
   const { user } = useAuth()
+  const { stopAudio } = useAudio()
   const navigate = useNavigate()
+  const { playWrong } = useSfx()
 
   const [status, setStatus] = useState<SyllableStatus | null>(null)
   const [currentSet, setCurrentSet] = useState<SyllableSet | null>(null)
@@ -57,374 +97,510 @@ export const SyllableModulePage: React.FC = () => {
   const [correctId, setCorrectId] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<unknown>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [moduleComplete, setModuleComplete] = useState(false)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
+  const [advanceError, setAdvanceError] = useState<{
+    subLevel: SubLevel
+    setId: number
+  } | null>(null)
+  const [isResetting, setIsResetting] = useState(false)
+  const [celebrate, setCelebrate] = useState(0)
 
-  const fetchStatus = useCallback(async () => {
-    try {
-      const res = await api.get(`/syllables/status?userId=${user?.id}`)
-      const data = res.data
-      
-      let currentSubLevel: SubLevel = 'pagsama'
-      if (data.pagsamaAccuracy >= 80) currentSubLevel = 'pakinggan'
-      if (data.pakingganAccuracy >= 80) currentSubLevel = 'kilalanin'
-      if (data.kilalaninAccuracy >= 80) currentSubLevel = 'rhyming'
+  const { replay: replayVoice } = useAudioElement(currentSet?.audioUrl ?? null)
 
-      const mappedStatus: SyllableStatus = {
-        currentSubLevel,
-        currentSetId: 1, // Defaulting to 1 for MVP mock data
-        subLevelAccuracies: {
-          pagsama: data.pagsamaAccuracy || 0,
-          pakinggan: data.pakingganAccuracy || 0,
-          kilalanin: data.kilalaninAccuracy || 0,
-          rhyming: data.rhymingAccuracy || 0
-        },
-        moduleAccuracy: data.module1Accuracy || 0,
-        module2Unlocked: data.module2Unlocked || false
-      }
-      
-      setStatus(mappedStatus)
-      return mappedStatus
-    } catch {
-      return null
-    }
-  }, [user?.id])
-
-  const fetchCurrentSet = useCallback(async (subLevel: SubLevel, setId: number) => {
-    try {
-      const res = await api.get(`/syllables/set?subLevel=${subLevel}&setId=${setId}&userId=${user?.id}`)
-      setCurrentSet(res.data)
-    } catch {
-      // Fallback mock data for development
-      const mockSyllables = ['BA', 'MA', 'TA', 'SA', 'PA', 'KA', 'NA', 'LA']
-      const idx = (setId - 1) % mockSyllables.length
-      const target = mockSyllables[idx]
-      const c = target.charAt(0)
-      
-      setCurrentSet({
-        setId,
-        subLevel,
-        targetSyllable: target,
-        options: [
-          { id: target.toLowerCase(), label: target },
-          { id: c.toLowerCase() + 'e', label: c + 'E' },
-          { id: c.toLowerCase() + 'i', label: c + 'I' },
-          { id: c.toLowerCase() + 'o', label: c + 'O' },
-        ].sort(() => Math.random() - 0.5),
-        audioUrl: `/audio/syllables/${target.toLowerCase()}.mp3`,
-        consonant: c,
-        vowel: 'A',
-        consonantAudioUrl: `/audio/phonemes/${c.toLowerCase()}.mp3`,
-        vowelAudioUrl: '/audio/phonemes/a.mp3',
-      })
-    }
-  }, [user?.id])
+  useScrollToTop(`${currentSet?.subLevel ?? ''}-${currentSet?.setId ?? ''}`)
 
   useEffect(() => {
-    const init = async () => {
-      setIsLoading(true)
-      const s = await fetchStatus()
-      if (s) {
-        await fetchCurrentSet(s.currentSubLevel, s.currentSetId)
+    return () => {
+      stopAudio()
+    }
+  }, [stopAudio])
+
+  const fetchStatus = useCallback(async (): Promise<SyllableStatus> => {
+    const res = await api.get('/syllables/status')
+    const data = res.data
+
+    let currentSubLevel: SubLevel = 'pagsama'
+    if (data.pagsamaAccuracy >= 80) currentSubLevel = 'pakinggan'
+    if (data.pakingganAccuracy >= 80) currentSubLevel = 'kilalanin'
+    if (data.kilalaninAccuracy >= 80) currentSubLevel = 'rhyming'
+
+    return {
+      currentSubLevel,
+      currentSetId: 1,
+      subLevelAccuracies: {
+        pagsama: data.pagsamaAccuracy || 0,
+        pakinggan: data.pakingganAccuracy || 0,
+        kilalanin: data.kilalaninAccuracy || 0,
+        rhyming: data.rhymingAccuracy || 0,
+      },
+      moduleAccuracy: data.module1Accuracy || 0,
+      module2Unlocked: Boolean(data.module2Unlocked),
+      overallAccuracy:
+        (data.overallAccuracy !== undefined
+          ? data.overallAccuracy
+          : data.module1Accuracy) ?? 0,
+      isComplete: Boolean(data.isComplete),
+    }
+  }, [])
+
+  const fetchSet = useCallback(
+    async (subLevel: SubLevel, setId: number): Promise<SyllableSet> => {
+      const res = await api.get<SyllableSet>(
+        `/syllables/set?subLevel=${subLevel}&setId=${setId}`
+      )
+      const set = res.data
+      if (!set?.targetSyllable || !Array.isArray(set.options)) {
+        throw new Error('Malformed syllable set response')
       }
+      return set
+    },
+    []
+  )
+
+  const init = useCallback(async () => {
+    setIsLoading(true)
+    setLoadError(null)
+    try {
+      const s = await fetchStatus()
+      setStatus(s)
+      const set = await fetchSet(s.currentSubLevel, s.currentSetId)
+      setCurrentSet(set)
+    } catch (err) {
+      setLoadError(err)
+    } finally {
       setIsLoading(false)
     }
-    if (user?.id) init()
-  }, [user?.id, fetchStatus, fetchCurrentSet])
-
-  const voiceAudioRef = useRef<HTMLAudioElement | null>(null)
-  const wrongAudioRef = useRef<HTMLAudioElement | null>(null)
+  }, [fetchStatus, fetchSet])
 
   useEffect(() => {
-    if (!wrongAudioRef.current) {
-      wrongAudioRef.current = new Audio('/audio/sfx/wrong.mp3')
-      wrongAudioRef.current.preload = 'auto'
-    }
-    if (currentSet?.audioUrl) {
-      voiceAudioRef.current = new Audio(currentSet.audioUrl)
-      voiceAudioRef.current.preload = 'auto'
-    }
-  }, [currentSet])
+    if (user?.id) void init()
+  }, [user?.id, init])
 
-  const handleSelect = useCallback(async (optionId: string) => {
-    if (!currentSet || selectedId || isSubmitting) return
-    const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
-    setSelectedId(optionId)
-    setCorrectId(currentSet.targetSyllable.toLowerCase())
-    setFeedback(isCorrect ? 'correct' : 'incorrect')
-
-    if (isCorrect && voiceAudioRef.current) {
-      voiceAudioRef.current.currentTime = 0
-      voiceAudioRef.current.play().catch(console.warn)
-    } else if (!isCorrect && wrongAudioRef.current) {
-      wrongAudioRef.current.currentTime = 0
-      wrongAudioRef.current.play().catch(console.warn)
-    }
-
-    const newAttempts = attempts + 1
-    setAttempts(newAttempts)
-    const accuracy = isCorrect ? 100 : Math.max(0, 100 - (newAttempts * 25))
-
-    setIsSubmitting(true)
-    try {
-      const res = await api.post('/syllables/progress', {
-        userId: user?.id,
-        subLevel: currentSet.subLevel,
-        setId: currentSet.setId,
-        selectedAnswer: optionId,
-        correct: isCorrect,
-        accuracy,
-      })
-
-      if (currentSet.subLevel === 'rhyming' && !res.data.nextSetId) {
-        // Module is complete!
-        // We evaluate accuracy in backend and module2Unlocked tells us if they passed
-        setTimeout(() => setModuleComplete(true), 1200)
-      } else if (res.data.nextSetId) {
-        setTimeout(async () => {
-          setSelectedId(null)
-          setCorrectId(null)
-          setAttempts(0)
-          setFeedback(null)
-          
-          const updatedStatus = await fetchStatus()
-          if (updatedStatus) setStatus(updatedStatus)
-
-          await fetchCurrentSet(currentSet.subLevel, res.data.nextSetId)
-        }, 1500)
-      } else {
-        // nextSetId is null but we are not on rhyming. Meaning sublevel is complete!
-        // Move to the next sublevel
-        setTimeout(async () => {
-          setSelectedId(null)
-          setCorrectId(null)
-          setAttempts(0)
-          setFeedback(null)
-          
-          const updatedStatus = await fetchStatus()
-          if (updatedStatus) setStatus(updatedStatus)
-
-          const subLevels = ['pagsama', 'pakinggan', 'kilalanin', 'rhyming'] as const;
-          const currentIndex = subLevels.indexOf(currentSet.subLevel);
-          if (currentIndex < subLevels.length - 1) {
-            await fetchCurrentSet(subLevels[currentIndex + 1], 1);
-          }
-        }, 1500)
+  /** Move to a sub-level/set, refreshing progress. Retriable via banner. */
+  const advance = useCallback(
+    async (subLevel: SubLevel, setId: number) => {
+      setSelectedId(null)
+      setCorrectId(null)
+      setAttempts(0)
+      setFeedback(null)
+      setAdvanceError(null)
+      try {
+        const updatedStatus = await fetchStatus()
+        setStatus(updatedStatus)
+        const set = await fetchSet(subLevel, setId)
+        setCurrentSet(set)
+      } catch {
+        setAdvanceError({ subLevel, setId })
       }
-    } catch {
-      // Still advance UI even if API fails
-      setTimeout(() => {
+    },
+    [fetchStatus, fetchSet]
+  )
+
+  const handleSelect = useCallback(
+    async (optionId: string) => {
+      if (!currentSet || selectedId || isSubmitting) return
+      const isCorrect =
+        optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
+      setSelectedId(optionId)
+      setFeedback(isCorrect ? 'correct' : 'incorrect')
+
+      if (isCorrect) {
+        setCelebrate((count) => count + 1)
+        replayVoice()
+      } else {
+        playWrong()
+      }
+
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+      // Reveal the answer only when correct or after the hint attempt threshold.
+      setCorrectId(
+        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS
+          ? currentSet.targetSyllable.toLowerCase()
+          : null
+      )
+      const accuracy = isCorrect ? 100 : Math.max(0, 100 - newAttempts * 25)
+
+      setIsSubmitting(true)
+      let progress: { nextSetId?: number | null }
+      try {
+        const res = await api.post('/syllables/progress', {
+          userId: user?.id,
+          subLevel: currentSet.subLevel,
+          setId: currentSet.setId,
+          selectedAnswer: optionId,
+          correct: isCorrect,
+          accuracy,
+        })
+        progress = res.data
+      } catch {
+        toast.error('Hindi naitala ang sagot', {
+          description: 'Pakitingnan ang koneksyon at subukan muli. (Check your connection and try again.)',
+        })
         setSelectedId(null)
         setCorrectId(null)
-        setAttempts(0)
         setFeedback(null)
-      }, 1500)
-    } finally {
+        setAttempts((a) => Math.max(0, a - 1))
+        setIsSubmitting(false)
+        return
+      }
       setIsSubmitting(false)
+
+      if (!isCorrect) {
+        // Stay on the same set so the tiles keep their order; clear only the
+        // selection while keeping attempts and the revealed answer so the
+        // hint appears once the learner reaches the third attempt.
+        setTimeout(() => {
+          setSelectedId(null)
+          setFeedback(null)
+        }, 1200)
+        return
+      }
+
+      if (currentSet.subLevel === 'rhyming' && !progress.nextSetId) {
+        // Module complete. Best effort refresh; the completion screen can
+        // still render from the last known status if this fails.
+        try {
+          const updatedStatus = await fetchStatus()
+          setStatus(updatedStatus)
+        } catch {
+          // Keep the last known status
+        }
+        setTimeout(() => setModuleComplete(true), 1200)
+      } else if (progress.nextSetId) {
+        const nextSetId = progress.nextSetId
+        setTimeout(() => {
+          void advance(currentSet.subLevel, nextSetId)
+        }, 1500)
+      } else {
+        // Sub-level complete: move on to the next sub-level.
+        const currentIndex = SUB_LEVELS.indexOf(currentSet.subLevel)
+        if (currentIndex < SUB_LEVELS.length - 1) {
+          const nextSubLevel = SUB_LEVELS[currentIndex + 1]
+          setTimeout(() => {
+            void advance(nextSubLevel, 1)
+          }, 1500)
+        }
+      }
+    },
+    [
+      isSubmitting,
+      currentSet,
+      selectedId,
+      attempts,
+      user?.id,
+      fetchStatus,
+      advance,
+      replayVoice,
+      playWrong,
+    ]
+  )
+
+  const handleResetModule = useCallback(async () => {
+    setIsResetting(true)
+    try {
+      await api.delete(`/modules/reset/${user?.id}/1`)
+      setModuleComplete(false)
+      setSelectedId(null)
+      setCorrectId(null)
+      setFeedback(null)
+      setAttempts(0)
+      await init()
+    } catch {
+      toast.error('Hindi na-reset ang module', {
+        description: 'Subukan muli mamaya. (Try again later.)',
+      })
+    } finally {
+      setIsResetting(false)
     }
-  }, [isSubmitting, currentSet, selectedId, attempts, user?.id, fetchCurrentSet, fetchStatus])
+  }, [user?.id, init])
 
   if (moduleComplete) {
+    const hasPassed = Boolean(
+      status?.module2Unlocked ||
+        (status?.overallAccuracy ?? 0) >= 80 ||
+        status?.isComplete
+    )
+    const accuracy = Math.round(status?.overallAccuracy ?? 0)
+
     return (
-      <AppShell>
-        <div className="min-h-full flex items-center justify-center p-8">
-          <div className="max-w-sm text-center animate-bounce-in">
-            <div className="mb-6 flex justify-center">
-              <img src="/images/Lola-C.png" alt="Lola" className="w-80 h-80 px-4 object-contain drop-shadow-2xl" />
-            </div>
-            <h2 className="text-2xl font-heading font-bold text-white mb-3">Natapos mo na ang Module 1!</h2>
-            <p className="text-green-300 mb-6">
-              {status?.module2Unlocked 
-                ? "Napakahusay! Na-unlock na ang susunod na aralin." 
-                : "Ang iyong score ay hindi umabot sa 80%. Kailangan mong ulitin ang module upang ma-unlock ang susunod na aralin."}
-            </p>
-            {status?.module2Unlocked ? (
-              <button
-                onClick={() => navigate('/trail')}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:opacity-90 transition-opacity"
-              >
-                Bumalik sa Pamana Trail
-              </button>
-            ) : (
-              <button
-                onClick={async () => {
-                  try {
-                    await api.delete(`/modules/reset/${user?.id}/1`)
-                    window.location.reload()
-                  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                  } catch (e) {
-                    alert("Nagkaroon ng error. Subukan muli.")
-                  }
-                }}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold hover:opacity-90 transition-opacity"
-              >
-                Ulitin ang Module 1
-              </button>
-            )}
-          </div>
-        </div>
-      </AppShell>
+      <PracticePageLayout className="flex items-center justify-center">
+        <PracticeCompletion
+          title="Natapos mo na ang Module 1!"
+          message={
+            hasPassed
+              ? 'Napakahusay! Na-unlock mo na ang susunod na aralin sa Pamana Trail.'
+              : 'Ang iyong score ay hindi umabot sa 80%. Maaari mong subukan muli upang ma-unlock ang susunod na aralin, o magpatuloy sa Pamana Trail.'
+          }
+          messageEn={
+            hasPassed
+              ? 'Great job! You unlocked the next lesson in the Pamana Trail.'
+              : 'Your score did not reach 80%. You can try again to unlock the next lesson, or continue along the Pamana Trail.'
+          }
+          score={accuracy}
+          total={100}
+          onRetry={() => void handleResetModule()}
+          retryLabel="Subukan Ulit"
+          retryLabelEn="Try Again"
+          retrying={isResetting}
+          onExit={() => navigate('/trail')}
+          exitLabel="Pumunta sa Pamana Trail"
+          illustration={
+            <img
+              src="/images/Lola-C.png"
+              alt="Lola"
+              width={256}
+              height={256}
+              decoding="async"
+              className="mx-auto h-52 w-52 object-contain drop-shadow-2xl sm:h-64 sm:w-64"
+            />
+          }
+        />
+      </PracticePageLayout>
     )
   }
 
+  const steps: PracticeStep[] | undefined = status
+    ? SUB_LEVELS.map((sl) => {
+        const acc = status.subLevelAccuracies[sl] ?? 0
+        const label = SUB_LEVEL_LABELS[sl].fil.split('. ')[1]
+        return {
+          label: acc > 0 ? `${label} · ${Math.round(acc)}%` : label,
+          state:
+            status.currentSubLevel === sl
+              ? 'current'
+              : acc >= 80
+                ? 'done'
+                : 'pending',
+        }
+      })
+    : undefined
+
+  const lessonsLeft = status
+    ? SUB_LEVELS.filter((sl) => (status.subLevelAccuracies[sl] ?? 0) < 80).length
+    : null
+
   return (
-    <AppShell>
-      <div className="p-6 lg:p-8 max-w-2xl mx-auto">
-        {/* Back button */}
-        <button
-          onClick={() => navigate('/trail')}
-          className="flex items-center gap-2 text-green-300 hover:text-white transition-colors mb-6 group"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span className="text-sm font-medium">Pamana Trail</span>
-        </button>
+    <PracticePageLayout maxWidth="5xl">
+      <PracticeHeader
+        title="Module 1: Pakinggan at Kilalanin"
+        subtitle="Pinto ng Probinsya · Pagsama ng mga Tunog"
+        backLabel="Pamana Trail"
+        onBack={() => navigate('/trail')}
+        sticky
+        steps={steps}
+        accuracy={status ? Math.round(status.moduleAccuracy) : null}
+        itemsLeft={
+          lessonsLeft === null
+            ? undefined
+            : {
+                fil: `Natitira: ${lessonsLeft} aralin`,
+                en: `${lessonsLeft} ${lessonsLeft === 1 ? 'lesson' : 'lessons'} left`,
+              }
+        }
+        progressLabel={
+          status
+            ? `Katumpakan ng Module · Kailangan: 80%`
+            : undefined
+        }
+        progressLabelEn={
+          status
+            ? `Module Accuracy · Required: 80%`
+            : undefined
+        }
+        progressValue={status ? Math.round(status.moduleAccuracy) : undefined}
+      />
 
-        {/* Module header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-heading font-bold text-white mb-1">Module 1: Pakinggan at Kilalanin</h1>
-          <p className="text-green-400 text-sm">Pinto ng Probinsya · Pagsama ng mga Tunog</p>
-        </div>
-
-        {/* Sub-level progress tabs */}
-        {status && (
-          <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-            {(Object.keys(SUB_LEVEL_LABELS) as SubLevel[]).map((sl) => {
-              const acc = status.subLevelAccuracies[sl] ?? 0
-              const isCurrent = sl === status.currentSubLevel
-              const isComplete = acc >= 80
-
-              return (
-                <div
-                  key={sl}
-                  className={cn(
-                    'flex-shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border transition-all',
-                    isCurrent && 'bg-pamana-gold/20 border-pamana-gold text-pamana-gold',
-                    isComplete && !isCurrent && 'bg-green-500/20 border-green-500/40 text-green-300',
-                    !isCurrent && !isComplete && 'bg-white/5 border-white/10 text-white/40'
-                  )}
-                >
-                  <div className="flex items-center gap-1.5">
-                    {isComplete && <CheckCircle2 className="w-3 h-3" />}
-                    <span>{SUB_LEVEL_LABELS[sl].split('. ')[1]}</span>
-                  </div>
-                  {acc > 0 && <div className="text-center mt-0.5 opacity-70">{Math.round(acc)}%</div>}
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {/* Module overall accuracy */}
-        {status && (
-          <div className="mb-6 p-3 bg-white/5 rounded-xl border border-white/10 flex items-center gap-3">
-            <span className="text-green-300 text-sm">Katumpakan ng Module</span>
-            <div className="flex-1">
-              <Progress
-                value={Math.round(status.moduleAccuracy)}
-                className="h-2 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400"
+      {isLoading ? (
+        <LoadingState message="Naglo-load ng aralin..." />
+      ) : loadError ? (
+        <ErrorState
+          description="Hindi ma-load ang aralin ngayon. Pakisubukan muli."
+          onRetry={() => void init()}
+        />
+      ) : currentSet ? (
+        <PracticeStage
+          split={currentSet.subLevel !== 'pagsama'}
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={NPC_LINES[currentSet.subLevel].fil}
+                lineEn={NPC_LINES[currentSet.subLevel].en}
+                audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
+                celebrate={celebrate}
+                resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
               />
-            </div>
-            <span className="text-white font-bold text-sm whitespace-nowrap">{Math.round(status.moduleAccuracy)}%</span>
-            <Badge variant="outline" className="text-xs border-green-500/40 text-green-300">
-              Kailangan: 80%
-            </Badge>
-          </div>
-        )}
 
-        {isLoading ? (
-          <div className="flex flex-col items-center gap-6 py-16">
-            <div className="w-12 h-12 border-4 border-pamana-gold border-t-transparent rounded-full animate-spin" />
-            <p className="text-green-300">Naglo-load ng aralin...</p>
-          </div>
-        ) : currentSet ? (
-          <div className="space-y-6">
-            {/* NPC instruction */}
-            <NPCDialogue
-              npc="lolo"
-              line={NPC_LINES[currentSet.subLevel]}
-              audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
-            />
-
-            {/* Pagsama: Show consonant + vowel audio pair */}
-            {currentSet.subLevel === 'pagsama' && (
-              <div className="flex items-center justify-center gap-6">
-                <div className="flex flex-col items-center gap-2">
-                  <AudioPlayer audioUrl={currentSet.consonantAudioUrl ?? ''} size="lg" label="Pakinggan ang katinig" />
-                  <span className="text-white font-heading font-bold text-2xl">{currentSet.consonant}</span>
-                  <span className="text-green-300 text-xs">Katinig</span>
-                </div>
-                <span className="text-white/40 text-3xl">+</span>
-                <div className="flex flex-col items-center gap-2">
-                  <AudioPlayer audioUrl={currentSet.vowelAudioUrl ?? ''} size="lg" label="Pakinggan ang patinig" />
-                  <span className="text-white font-heading font-bold text-2xl">{currentSet.vowel}</span>
-                  <span className="text-green-300 text-xs">Patinig</span>
-                </div>
-                <span className="text-white/40 text-3xl">=</span>
-                <div className="flex flex-col items-center gap-2">
-                  <div className="w-20 h-20 rounded-2xl bg-white/10 border-2 border-dashed border-white/20 flex items-center justify-center">
-                    <span className="text-white/30 text-3xl font-bold">?</span>
+              {advanceError && (
+                <FeedbackBanner variant="info" assertive>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <BilingualText
+                      as="p"
+                      fil="Hindi ma-load ang susunod na gawain."
+                      en="The next activity could not be loaded."
+                      filClassName="text-sm"
+                      enClassName="text-xs opacity-80"
+                    />
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      className="text-stone-900 [&_svg]:text-stone-900"
+                      onClick={() =>
+                        void advance(advanceError.subLevel, advanceError.setId)
+                      }
+                    >
+                      <BilingualText
+                        as="span"
+                        fil={STRINGS.retry.fil}
+                        en={STRINGS.retry.en}
+                        filClassName="text-sm font-semibold"
+                        enClassName="text-xs font-normal opacity-80"
+                      />
+                    </Button>
                   </div>
-                  <span className="text-green-300 text-xs">Ano ang resulta?</span>
-                </div>
-              </div>
-            )}
+                </FeedbackBanner>
+              )}
 
-            {/* Pakinggan / Kilalanin / Rhyming: Single audio player */}
-            {currentSet.subLevel !== 'pagsama' && (
-              <div className="flex justify-center py-4">
-                <div className="flex flex-col items-center gap-3">
+              {currentSet.subLevel === 'pagsama' ? (
+                <PromptStage
+                  variant="equation"
+                  ariaLabel="Pagsamahin ang mga tunog (Blend the sounds)"
+                >
+                  <div className="flex flex-wrap flex-col items-center justify-center gap-4 sm:flex-row sm:gap-4">
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.consonantAudioUrl ?? ''}
+                        size="md"
+                        label="Pakinggan ang katinig"
+                        labelEn="Listen to the consonant"
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.consonant}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.consonant.fil}
+                        en={UI_TEXT.consonant.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl text-white/40" aria-hidden="true">
+                      +
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <AudioPlayer
+                        audioUrl={currentSet.vowelAudioUrl ?? ''}
+                        size="md"
+                        label="Pakinggan ang patinig"
+                        labelEn="Listen to the vowel"
+                      />
+                      <span className="font-heading text-2xl font-bold text-white">
+                        {currentSet.vowel}
+                      </span>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.vowel.fil}
+                        en={UI_TEXT.vowel.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                    <span className="text-3xl text-white/40" aria-hidden="true">
+                      =
+                    </span>
+                    <div className="flex min-w-0 flex-col items-center gap-2">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
+                        <span className="text-3xl font-bold text-white/30">?</span>
+                      </div>
+                      <BilingualText
+                        as="span"
+                        fil={UI_TEXT.result.fil}
+                        en={UI_TEXT.result.en}
+                        filClassName="text-xs text-green-300"
+                        enClassName="text-[10px] text-green-200/60"
+                      />
+                    </div>
+                  </div>
+                </PromptStage>
+              ) : (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel="Pakinggan ang tunog (Listen to the sound)"
+                >
                   <AudioPlayer
                     audioUrl={currentSet.audioUrl}
                     size="lg"
                     label="Pakinggan ang tunog"
+                    labelEn="Listen to the sound"
                   />
-                  <p className="text-green-300 text-sm">Pindutin para marinig ulit</p>
-                </div>
-              </div>
-            )}
+                  <BilingualText
+                    as="p"
+                    fil={UI_TEXT.listenAgain.fil}
+                    en={UI_TEXT.listenAgain.en}
+                    className="text-center"
+                    filClassName="text-sm text-green-300"
+                    enClassName="text-xs text-green-200/70"
+                  />
+                </PromptStage>
+              )}
 
-            {/* Feedback banner */}
-            {feedback && (
-              <div className={cn(
-                'p-3 rounded-xl text-center font-semibold text-sm animate-bounce-in',
-                feedback === 'correct'
-                  ? 'bg-green-500/20 border border-green-500/40 text-green-300'
-                  : 'bg-red-500/20 border border-red-500/40 text-red-300'
-              )}>
-                {feedback === 'correct' ? '✅ Tama! Napakahusay!' : '❌ Mali. Subukan ulit!'}
-              </div>
-            )}
+              <FeedbackSlot>
+                {feedback && (
+                  <FeedbackBanner
+                    variant={feedback}
+                    assertive={feedback === 'incorrect'}
+                  >
+                    <BilingualText
+                      fil={
+                        feedback === 'correct'
+                          ? STRINGS.correct.fil
+                          : 'Halos! Subukan ulit.'
+                      }
+                      en={
+                        feedback === 'correct'
+                          ? STRINGS.correct.en
+                          : 'Almost! Try again.'
+                      }
+                    />
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={
+            <div className="space-y-4">
+              <OptionGrid
+                options={currentSet.options}
+                selectedId={selectedId}
+                correctId={correctId}
+                onSelect={(id) => void handleSelect(id)}
+                type="text"
+                attempts={attempts}
+                disabled={isSubmitting}
+              />
 
-            {/* Options grid */}
-            <OptionGrid
-              options={currentSet.options}
-              selectedId={selectedId}
-              correctId={correctId}
-              onSelect={handleSelect}
-              type="text"
-              attempts={attempts}
-              disabled={isSubmitting}
-            />
-
-            {/* Attempt counter hint */}
-            {attempts > 0 && attempts < 3 && (
-              <p className="text-center text-yellow-400/70 text-xs">
-                Pagsubok: {attempts}/3 · Pa-{3 - attempts} bago lumabas ang pahiwatig
-              </p>
-            )}
-            {attempts >= 3 && (
-              <p className="text-center text-pamana-gold text-xs">
-                💡 Ang gintong kahon ang tamang sagot!
-              </p>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-16 text-green-300">
-            <p>Hindi ma-load ang aralin. Subukan ulit.</p>
-          </div>
-        )}
-      </div>
-    </AppShell>
+              {attempts >= HINT_AFTER_ATTEMPTS && (
+                <FeedbackBanner variant="hint">
+                  <BilingualText
+                    as="p"
+                    fil="💡 Ang gintong kahon ang tamang sagot!"
+                    en="💡 The golden box is the correct answer!"
+                    filClassName="text-sm"
+                    enClassName="text-xs opacity-80"
+                  />
+                </FeedbackBanner>
+              )}
+            </div>
+          }
+        />
+      ) : null}
+    </PracticePageLayout>
   )
 }
+
+export default SyllableModulePage

@@ -21,7 +21,6 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     const savedChar = localStorage.getItem('pamana_character')
     if (savedChar === 'Lalaki' || savedChar === 'Babae') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCharacter(savedChar as 'Lalaki' | 'Babae')
     }
 
@@ -81,19 +80,19 @@ export const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                   <div className="space-y-2">
                     {/* Changed label text to white/light for contrast */}
-                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</label>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg shadow-inner">
                       {user?.name || 'Loading...'}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Email</label>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Email</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-bold text-lg shadow-inner truncate">
                       {user?.email || 'Loading...'}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Role</label>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Role</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg capitalize shadow-inner">
                       {user?.role?.toLowerCase() || 'Loading...'}
                     </div>
@@ -153,7 +152,7 @@ export const SettingsPage: React.FC = () => {
 
                   <div className="space-y-8 flex-1">
                     <div className="space-y-3">
-                      <label className="text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Choose your character</label>
+                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Choose your character</span>
                       <div className="grid grid-cols-2 gap-4">
                         <button
                           onClick={() => handleCharacterChange('Lalaki')}
@@ -185,7 +184,7 @@ export const SettingsPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-3 pt-6 border-t-4 border-white/30 mt-auto">
-                      <label className="text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Music</label>
+                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Music</span>
                       <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
                         <div className="flex items-center gap-3 text-white">
                           <div className="bg-white/20 p-2 rounded-xl">

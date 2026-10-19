@@ -19,7 +19,7 @@ export const LoginPage: React.FC = () => {
   // If already logged in, redirect
   React.useEffect(() => {
     if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : user.role === 'TEACHER' ? '/klase' : '/home'
+      const dest = user.role === 'PARENT' ? '/dashboard' : '/home'
       navigate(dest, { replace: true })
     }
   }, [user, navigate])

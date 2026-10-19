@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, Play, Star } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -143,11 +143,12 @@ const HomePage = () => {
               {masteryItems.map((item) => {
                 const unlocked = isUnlocked(item.moduleNum)
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={item.id}
                     onClick={() => handleMasteryClick(item)}
                     className={cn(
-                      "relative h-[165px] md:h-[175px] rounded-[1.5rem] border-[5px] border-white flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 group",
+                      "relative w-full h-[165px] md:h-[175px] rounded-[1.5rem] border-[5px] border-white flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 group",
                       item.shadow,
                       unlocked 
                         ? "hover:-translate-y-1 hover:brightness-105 active:translate-y-1 active:shadow-none" 
@@ -217,7 +218,7 @@ const HomePage = () => {
                       <Star strokeWidth={2} className={cn("w-4 h-4 drop-shadow-sm", unlocked ? "text-yellow-300 fill-yellow-400 stroke-[#b45309]" : "text-gray-400 fill-gray-500/50 stroke-gray-600")} />
                       <Star strokeWidth={2} className={cn("w-4 h-4 drop-shadow-sm", unlocked ? "text-yellow-300 fill-yellow-400 stroke-[#b45309]" : "text-gray-400 fill-gray-500/50 stroke-gray-600")} />
                     </div>
-                  </div>
+                  </button>
                 )
               })}
             </div>

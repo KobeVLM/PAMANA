@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface AudioContextType {
   isAudioPlaying: boolean;
@@ -11,21 +12,50 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const location = useLocation();
 
-  // Clean up audio on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-      }
-    };
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setIsAudioPlaying(false);
   }, []);
 
-  const playAudio = (url: string, blockUi: boolean = true): Promise<void> => {
+  // Clean up audio on route change (stops dialogue/sentences when user navigates away or logs out)
+  useEffect(() => {
+    stopAudio();
+  }, [location.pathname, stopAudio]);
+
+  // Clean up audio on unmount or when tab/window is hidden or closed ("outs")
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopAudio();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('pagehide', handleVisibility);
+    window.addEventListener('beforeunload', handleVisibility);
+
+    return () => {
+      stopAudio();
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('pagehide', handleVisibility);
+      window.removeEventListener('beforeunload', handleVisibility);
+    };
+  }, [stopAudio]);
+
+  const playAudio = useCallback((url: string, blockUi: boolean = true): Promise<void> => {
     return new Promise((resolve) => {
       if (audioRef.current) {
         audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+        audioRef.current.src = '';
+        audioRef.current = null;
       }
 
       const audio = new Audio(url);
@@ -53,14 +83,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         resolve();
       });
     });
-  };
-
-  const stopAudio = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsAudioPlaying(false);
-    }
-  };
+  }, []);
 
   return (
     <AudioContext.Provider value={{ isAudioPlaying, playAudio, stopAudio }}>

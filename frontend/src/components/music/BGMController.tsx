@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 import bgMusicUrl from '@/components/music/bgmusic.mp3'
 
 export const BGMController: React.FC = () => {
   const location = useLocation()
+  const { user } = useAuth()
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
   useEffect(() => {
@@ -16,11 +18,19 @@ export const BGMController: React.FC = () => {
     const checkAndPlay = async () => {
       if (!audioRef.current) return
 
+      // Do NOT play BGM if user is not logged in ("outs" / logged out)
+      if (!user) {
+        if (!audioRef.current.paused) {
+          audioRef.current.pause()
+        }
+        return
+      }
+
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false' // default true
       
-      // Play music on trail, klase, leaderboard, settings, and dashboards
+      // Play music on trail, settings, and dashboards
       // BUT specifically stop it inside modules (the actual game levels)
-      const playPaths = ['/trail', '/klase', '/leaderboard', '/settings', '/dashboard']
+      const playPaths = ['/trail', '/settings', '/dashboard']
       const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
 
       if (isMusicEnabled && shouldPlay) {
@@ -44,8 +54,9 @@ export const BGMController: React.FC = () => {
 
     // Handle browser autoplay policies by trying to play after user interaction
     const handleInteraction = () => {
+      if (!user) return
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false'
-      const playPaths = ['/trail', '/klase', '/leaderboard', '/settings', '/dashboard']
+      const playPaths = ['/trail', '/settings', '/dashboard']
       const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
       
       if (isMusicEnabled && shouldPlay && audioRef.current?.paused) {
@@ -64,12 +75,46 @@ export const BGMController: React.FC = () => {
     
     window.addEventListener('pamana_settings_changed', onSettingsChange)
 
+    // Handle user tabbing out or switching apps / minimizing ("outs")
+    const handleVisibility = () => {
+      if (document.hidden) {
+        if (audioRef.current && !audioRef.current.paused) {
+          audioRef.current.pause()
+        }
+      } else {
+        checkAndPlay()
+      }
+    }
+
+    const handlePageHide = () => {
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('beforeunload', handlePageHide)
+
     return () => {
       window.removeEventListener('click', handleInteraction)
       window.removeEventListener('keydown', handleInteraction)
       window.removeEventListener('pamana_settings_changed', onSettingsChange)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('beforeunload', handlePageHide)
     }
-  }, [location.pathname])
+  }, [location.pathname, user])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
+  }, [])
 
   return null
 }

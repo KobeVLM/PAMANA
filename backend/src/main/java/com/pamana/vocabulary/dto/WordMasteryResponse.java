@@ -9,17 +9,15 @@ public class WordMasteryResponse {
     private double overallAccuracy;
     private String status;
     private boolean mastered;
-    private boolean hamonTriggered;
 
     public WordMasteryResponse() {
     }
 
-    public WordMasteryResponse(UUID wordId, double overallAccuracy, String status, boolean mastered, boolean hamonTriggered) {
+    public WordMasteryResponse(UUID wordId, double overallAccuracy, String status, boolean mastered) {
         this.wordId = wordId;
         this.overallAccuracy = overallAccuracy;
         this.status = status;
         this.mastered = mastered;
-        this.hamonTriggered = hamonTriggered;
     }
 
     // Getters and Setters
@@ -53,13 +51,5 @@ public class WordMasteryResponse {
 
     public void setMastered(boolean mastered) {
         this.mastered = mastered;
-    }
-
-    public boolean isHamonTriggered() {
-        return hamonTriggered;
-    }
-
-    public void setHamonTriggered(boolean hamonTriggered) {
-        this.hamonTriggered = hamonTriggered;
     }
 }

@@ -1,10 +1,11 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'  // ✅ ADD THIS BACK
 
 import { AudioProvider } from '@/contexts/AudioContext'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 // Auth Pages
 import { LoginPage } from '@/pages/auth/LoginPage'
@@ -13,20 +14,26 @@ import { RegisterPage } from '@/pages/auth/RegisterPage'
 // Landing Page
 import { LandingPage } from '@/pages/landingpage/landingpage'
 
-// Home Page - CHALLENGES layout
-import HomePage from '@/pages/homepage/HomePage'
-
-// Game Pages
-import { TrailMapPage } from '@/pages/trail/TrailMapPage'
-import { SyllableModulePage } from '@/pages/modules/SyllableModulePage'
-
-// Dashboard & Support
-import { KlaseLeaderboardPage } from '@/pages/klase/KlaseLeaderboardPage'
-import { TeacherKlasePage } from '@/pages/klase/TeacherKlasePage'
-import { ParentDashboardPage } from '@/pages/dashboard/ParentDashboardPage'
-import { TeacherDashboardPage } from '@/pages/dashboard/TeacherDashboardPage'
-import { SettingsPage } from '@/pages/settings/SettingsPage'
+// BGM & session shell components
 import { BGMController } from '@/components/music/BGMController'
+import { SessionTracker } from '@/components/SessionTracker'
+
+// Lazy-loaded module pages
+const HomePage = React.lazy(() => import('@/pages/homepage/HomePage'))
+const TrailMapPage = React.lazy(() =>
+  import('@/pages/trail/TrailMapPage').then((m) => ({ default: m.TrailMapPage }))
+)
+const SyllableModulePage = React.lazy(() =>
+  import('@/pages/modules/SyllableModulePage').then((m) => ({ default: m.SyllableModulePage }))
+)
+const ParentDashboardPage = React.lazy(() =>
+  import('@/pages/dashboard/ParentDashboardPage').then((m) => ({ default: m.ParentDashboardPage }))
+)
+const SettingsPage = React.lazy(() =>
+  import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
+)
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 // Lazy-loaded module pages
 const VocabularyModulePage = React.lazy(() =>
@@ -35,8 +42,19 @@ const VocabularyModulePage = React.lazy(() =>
 const SentenceModulePage = React.lazy(() =>
   import('@/pages/modules/SentenceModulePage').then((m) => ({ default: m.SentenceModulePage }))
 )
-const HamonGamePage = React.lazy(() =>
-  import('@/pages/modules/HamonGamePage').then((m) => ({ default: m.HamonGamePage }))
+
+// Lazy-loaded mastery practice pages
+const SyllablePracticePage = React.lazy(() =>
+  import('@/pages/mastery/SyllablePracticePage').then((m) => ({ default: m.SyllablePracticePage }))
+)
+const WordPracticePage = React.lazy(() =>
+  import('@/pages/mastery/WordPracticePage').then((m) => ({ default: m.WordPracticePage }))
+)
+const ImagePracticePage = React.lazy(() =>
+  import('@/pages/mastery/ImagePracticePage').then((m) => ({ default: m.ImagePracticePage }))
+)
+const SentencePracticePage = React.lazy(() =>
+  import('@/pages/mastery/SentencePracticePage').then((m) => ({ default: m.SentencePracticePage }))
 )
 
 const LoadingFallback = () => (
@@ -51,10 +69,13 @@ const LoadingFallback = () => (
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AudioProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AudioProvider>
           <BGMController />
-          <React.Suspense fallback={<LoadingFallback />}>
+          <SessionTracker />
+          <TooltipProvider delayDuration={250}>
+            <React.Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<LandingPage />} />
@@ -114,29 +135,37 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Mastery Practice Routes */}
               <Route
-                path="/modules/:moduleNumber/hamon"
+                path="/mastery/1"
                 element={
                   <ProtectedRoute allowedRoles={['LEARNER']}>
-                    <HamonGamePage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Shared routes */}
-              <Route
-                path="/klase"
-                element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                    <RoleBasedKlaseRoute />
+                    <SyllablePracticePage />
                   </ProtectedRoute>
                 }
               />
               <Route
-                path="/leaderboard"
+                path="/mastery/2"
                 element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'TEACHER']}>
-                    <KlaseLeaderboardPage />
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <WordPracticePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mastery/3"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <ImagePracticePage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/mastery/4"
+                element={
+                  <ProtectedRoute allowedRoles={['LEARNER']}>
+                    <SentencePracticePage />
                   </ProtectedRoute>
                 }
               />
@@ -145,18 +174,18 @@ function App() {
               <Route
                 path="/settings"
                 element={
-                  <ProtectedRoute allowedRoles={['LEARNER', 'PARENT', 'TEACHER']}>
+                  <ProtectedRoute allowedRoles={['LEARNER', 'PARENT']}>
                     <SettingsPage />
                   </ProtectedRoute>
                 }
               />
 
-              {/* Parent/Teacher dashboard */}
+              {/* Parent dashboard */}
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={['PARENT', 'TEACHER']}>
-                    <RoleBasedDashboardRoute />
+                  <ProtectedRoute allowedRoles={['PARENT']}>
+                    <ParentDashboardPage />
                   </ProtectedRoute>
                 }
               />
@@ -165,26 +194,13 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </React.Suspense>
+          </TooltipProvider>
+          <Toaster />
         </AudioProvider>
       </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   )
-}
-
-function RoleBasedDashboardRoute() {
-  const { user } = useAuth()
-  if (user?.role === 'TEACHER') {
-    return <TeacherDashboardPage />
-  }
-  return <ParentDashboardPage />
-}
-
-function RoleBasedKlaseRoute() {
-  const { user } = useAuth()
-  if (user?.role === 'TEACHER') {
-    return <TeacherKlasePage />
-  }
-  return <KlaseLeaderboardPage />
 }
 
 export default App
