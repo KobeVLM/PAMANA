@@ -31,7 +31,7 @@ export const WordSlotMachine: React.FC<WordSlotMachineProps> = ({
           {displayItems.map((word, i) => (
             <div
               key={`${word}-${i}`}
-              className="slot-machine-item rounded-xl border-2 border-white/20 bg-white/10 font-heading text-lg font-bold text-white shadow-lg backdrop-blur-sm"
+              className="slot-machine-item rounded-xl border-2 border-white bg-white font-heading text-lg font-bold text-[#2b5c3b] shadow-[0_4px_0_rgba(0,0,0,0.12)]"
               style={{ transform: `rotateX(${30 * i}deg) translateZ(120px)` }}
             >
               {word}
@@ -40,7 +40,7 @@ export const WordSlotMachine: React.FC<WordSlotMachineProps> = ({
         </div>
       </div>
 
-      <div className="absolute -top-6 z-20 w-full text-center text-sm font-bold text-green-300">
+      <div className="absolute -top-6 z-20 w-full text-center text-sm font-bold text-white drop-shadow-[0_2px_0_rgba(0,0,0,0.25)]">
         Mga Susunod na Salita...
       </div>
     </div>

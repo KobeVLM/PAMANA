@@ -103,22 +103,22 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
           celebrate={celebrate}
           resetKey={resetKey}
         />
-        <span className="text-sm font-bold text-pamana-gold">{name}</span>
+        <span className="text-sm font-bold text-[#D4A017]">{name}</span>
       </div>
 
       {/* Speech Bubble */}
-      <div className="relative w-fit min-w-0 max-w-full bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl rounded-tl-sm p-2.5 shadow-lg">
+      <div className="relative w-fit min-w-0 max-w-full rounded-2xl rounded-tl-sm border-2 border-white bg-white p-2.5 shadow-[0_6px_0_rgba(0,0,0,0.12)]">
         {/* Triangle pointer */}
-        <div className="absolute -left-2 top-4 w-0 h-0 border-y-4 border-y-transparent border-r-8 border-r-white/10" />
+        <div className="absolute -left-2 top-4 w-0 h-0 border-y-4 border-y-transparent border-r-8 border-r-white" />
 
         <div className="flex items-start justify-between gap-3">
-          <p className="flex-1 text-sm leading-relaxed text-white">{line}</p>
+          <p className="flex-1 text-sm leading-relaxed text-[#2b5c3b]">{line}</p>
           <div className="flex shrink-0 flex-col items-center gap-1">
             {(audioUrl || onPlayAudio) && (
               <button
                 onClick={handlePlay}
                 aria-label="Pakinggan ang tagubilin"
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-pamana-gold/40 bg-pamana-gold/20 text-pamana-gold transition-colors hover:bg-pamana-gold/30"
+                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-[#FFC107] bg-[#fff7db] text-[#D4A017] transition-colors hover:bg-[#FFC107]/40"
               >
                 <Volume2 className="w-4 h-4" />
               </button>
@@ -134,7 +134,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
                     ? 'Itago ang Ingles (Hide English)'
                     : 'Ipakita ang Ingles (Show English)'
                 }
-                className="rounded-full border border-pamana-gold/40 px-1.5 py-0.5 text-[10px] font-bold text-pamana-gold transition-colors hover:bg-pamana-gold/30"
+                className="rounded-full border-2 border-[#FFC107] bg-[#fff7db] px-1.5 py-0.5 text-[10px] font-bold text-[#7a5200] transition-colors hover:bg-[#FFC107]/40"
               >
                 EN
               </button>
@@ -146,7 +146,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
           <p
             id={enId}
             lang="en"
-            className="mt-1 text-xs leading-snug text-green-100/80"
+            className="mt-1 text-xs leading-snug text-[#5a7a63]"
           >
             {lineEn}
           </p>

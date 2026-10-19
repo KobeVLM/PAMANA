@@ -23,19 +23,19 @@ export function EmptyState({
     <div
       role="status"
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-white/20 bg-white/5 px-6 py-10 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-dashed border-[#cfe2c8] bg-white/60 px-6 py-10 text-center",
         className
       )}
       {...props}
     >
       {icon && (
-        <span className="text-green-300" aria-hidden="true">
+        <span className="text-[#3f7d52]" aria-hidden="true">
           {icon}
         </span>
       )}
-      <h2 className="font-heading text-lg font-bold text-white">{title}</h2>
+      <h2 className="font-heading text-lg font-bold text-[#2b5c3b]">{title}</h2>
       {description && (
-        <p className="max-w-sm text-sm leading-relaxed text-green-200">{description}</p>
+        <p className="max-w-sm text-sm leading-relaxed text-[#5a7a63]">{description}</p>
       )}
       {action && <div className="mt-2">{action}</div>}
     </div>

@@ -50,20 +50,20 @@ export function FillBlank({
 
   return (
     <div className={cn('w-full space-y-5', className)}>
-      <p className="text-center font-heading text-lg leading-relaxed text-white sm:text-xl">
+      <p className="text-center font-heading text-lg leading-relaxed text-[#2b5c3b] sm:text-xl">
         {before}
         <span
           className={cn(
             'mx-1 inline-flex min-h-[2.5rem] min-w-[6rem] items-center justify-center rounded-xl border-2 px-3 align-middle font-bold',
             isCorrect &&
-              'border-green-400 bg-green-500/25 text-green-100 shadow-green-900/40',
-            isWrong && 'animate-wiggle border-red-400/70 bg-red-500/20 text-red-100',
+              'border-[#4CAF50] bg-[#e7f6e7] text-[#1B5E20] shadow-[0_4px_0_rgba(0,0,0,0.12)]',
+            isWrong && 'animate-wiggle border-[#EF5350] bg-[#fdeaea] text-[#8f1d1d]',
             !isCorrect &&
               !isWrong &&
               selectedLabel &&
-              'border-pamana-gold/70 bg-pamana-gold/15 text-pamana-gold',
+              'border-[#FFC107] bg-[#fff7db] text-[#7a5200]',
             !selectedLabel &&
-              'border-dashed border-pamana-gold/60 bg-white/5 text-pamana-gold/70'
+              'border-dashed border-[#D4A017]/70 bg-white text-[#b8860b]'
           )}
         >
           {selectedLabel ?? '?'}
@@ -87,18 +87,18 @@ export function FillBlank({
               disabled={disabled}
               onClick={() => onSelect(option.id)}
               className={cn(
-                'game-tile relative min-h-[48px] rounded-2xl border-2 px-5 py-2.5 font-heading text-base font-bold text-white shadow-md transition-all duration-200 sm:text-lg',
+                'game-tile relative min-h-[48px] rounded-2xl border-2 px-5 py-2.5 font-heading text-base font-bold text-[#2b5c3b] shadow-[0_4px_0_rgba(0,0,0,0.12)] transition-all duration-200 sm:text-lg',
                 isThisSelected &&
                   isCorrect &&
-                  'border-green-400 bg-green-500/30 text-green-100',
+                  'border-[#4CAF50] bg-[#4CAF50] text-white',
                 isThisSelected &&
                   isWrong &&
-                  'animate-wiggle border-red-400/70 bg-red-500/20 text-red-100',
+                  'animate-wiggle border-[#EF5350] bg-[#fdeaea] text-[#8f1d1d]',
                 isThisHint &&
-                  'animate-pulse border-pamana-gold bg-pamana-gold/20 text-pamana-gold',
+                  'animate-pulse border-[#FFC107] bg-[#fff7db] text-[#7a5200]',
                 !isThisSelected &&
                   !isThisHint &&
-                  'hover:scale-105 hover:border-white/60 hover:bg-white/30',
+                  'hover:scale-105 hover:bg-[#f4f9f0]',
                 disabled && 'cursor-not-allowed opacity-60'
               )}
             >
@@ -106,15 +106,15 @@ export function FillBlank({
               {isThisSelected && (
                 <span className="absolute -right-1.5 -top-1.5" aria-hidden="true">
                   {isCorrect ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-400" />
+                    <CheckCircle2 className="h-5 w-5 text-[#2E7D32]" />
                   ) : (
-                    <RefreshCw className="h-5 w-5 text-red-300" />
+                    <RefreshCw className="h-5 w-5 text-[#c62828]" />
                   )}
                 </span>
               )}
               {isThisHint && !isThisSelected && (
                 <span className="absolute -right-1.5 -top-1.5" aria-hidden="true">
-                  <Lightbulb className="h-5 w-5 text-pamana-gold" />
+                  <Lightbulb className="h-5 w-5 text-[#D4A017]" />
                 </span>
               )}
             </button>

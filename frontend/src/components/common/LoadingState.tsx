@@ -44,8 +44,8 @@ export function LoadingState({
       )}
       {...props}
     >
-      <Loader2 className="h-8 w-8 animate-spin text-pamana-gold" aria-hidden="true" />
-      <p className="font-heading font-semibold text-green-200">{message}</p>
+      <Loader2 className="h-8 w-8 animate-spin text-[#D4A017]" aria-hidden="true" />
+      <p className="font-heading font-semibold text-[#3f7d52]">{message}</p>
     </div>
   )
 }

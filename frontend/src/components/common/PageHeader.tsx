@@ -32,16 +32,16 @@ export function PageHeader({
     >
       <div className={cn("flex items-center gap-3", centered && "justify-center")}>
         {icon && (
-          <span className="text-pamana-gold" aria-hidden="true">
+          <span className="text-[#D4A017]" aria-hidden="true">
             {icon}
           </span>
         )}
-        <h1 className="font-heading text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+        <h1 className="font-heading text-3xl font-extrabold tracking-tight text-[#2b5c3b] md:text-4xl">
           {title}
         </h1>
       </div>
       {subtitle && (
-        <p className="max-w-2xl text-sm text-green-200 md:text-base">{subtitle}</p>
+        <p className="max-w-2xl text-sm text-[#5a7a63] md:text-base">{subtitle}</p>
       )}
       {actions && <div className="mt-2 flex flex-wrap items-center gap-2">{actions}</div>}
     </header>

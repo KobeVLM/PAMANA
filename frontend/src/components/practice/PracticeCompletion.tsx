@@ -83,20 +83,20 @@ export function PracticeCompletion({
             illustration
           ) : (
             <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-pamana-gold to-amber-500 shadow-xl shadow-amber-950/40 sm:h-28 sm:w-28">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full border-4 border-white bg-gradient-to-b from-[#FFC107] to-[#F0A500] shadow-[0_6px_0_rgba(0,0,0,0.15)] sm:h-28 sm:w-28">
                 <Trophy
-                  className="h-12 w-12 text-stone-900 sm:h-14 sm:w-14"
+                  className="h-12 w-12 text-[#5D4037] sm:h-14 sm:w-14"
                   aria-hidden="true"
                 />
               </div>
-              <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-white bg-pamana-green p-2 shadow">
+              <div className="absolute -bottom-1 -right-1 rounded-full border-2 border-white bg-[#4CAF50] p-2 shadow">
                 <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
               </div>
             </div>
           )}
         </div>
 
-        <h2 className="mb-2 font-heading text-2xl font-bold text-white sm:text-3xl">
+        <h2 className="mb-2 font-heading text-2xl font-black text-[#2b5c3b] sm:text-3xl">
           {title}
         </h2>
         <BilingualText
@@ -104,37 +104,37 @@ export function PracticeCompletion({
           fil={message}
           en={messageEn ?? ""}
           className="mb-6"
-          filClassName="text-sm text-green-300"
-          enClassName="text-xs text-green-200/70"
+          filClassName="text-sm text-[#3f7d52]"
+          enClassName="text-xs text-[#5a7a63]"
         />
 
         {hasScore && (
-          <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-5">
+          <div className="mb-6 rounded-2xl border-2 border-[#e2efdc] bg-[#f4f9f0] p-5">
             <BilingualText
               as="p"
               fil={STRINGS.yourScore.fil}
               en={STRINGS.yourScore.en}
               className="mb-1"
-              filClassName="text-xs font-semibold uppercase tracking-wider text-green-300"
-              enClassName="text-[10px] uppercase tracking-wider text-green-200/60"
+              filClassName="text-xs font-semibold uppercase tracking-wider text-[#3f7d52]"
+              enClassName="text-[10px] uppercase tracking-wider text-[#5a7a63]"
             />
-            <p className="mb-1 font-heading text-4xl font-extrabold text-pamana-gold">
+            <p className="mb-1 font-heading text-4xl font-extrabold text-[#D97706]">
               {score} / {safeTotal}
             </p>
             <BilingualText
               as="p"
               fil={`${percentage}% ${STRINGS.accuracy.fil}`}
               en={`${percentage}% ${STRINGS.accuracy.en}`}
-              filClassName="text-sm font-medium text-emerald-400"
-              enClassName="text-xs text-emerald-300/70"
+              filClassName="text-sm font-medium text-[#2E7D32]"
+              enClassName="text-xs text-[#5a7a63]"
             />
             <BilingualText
               as="p"
               fil={encouragementBi.fil}
               en={encouragementBi.en}
               className="mt-3"
-              filClassName="text-xs text-white/70"
-              enClassName="text-xs text-white/60"
+              filClassName="text-xs text-[#5a7a63]"
+              enClassName="text-xs text-[#5a7a63]"
             />
           </div>
         )}
@@ -175,7 +175,7 @@ export function PracticeCompletion({
             />
           </Button>
           {onExit && (
-            <Button variant="ghost" onClick={onExit} className="w-full border border-white/20">
+            <Button variant="ghost" onClick={onExit} className="w-full border-2 border-[#d5e5d0] bg-white text-[#2b5c3b] hover:bg-[#f4f9f0]">
               <Home aria-hidden="true" />
               <span className="text-sm font-semibold">{exitLabel}</span>
             </Button>

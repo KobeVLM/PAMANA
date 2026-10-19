@@ -63,7 +63,7 @@ const ModalContent = React.forwardRef<
       {children}
       {showClose && (
         <DialogPrimitive.Close
-          className="absolute right-4 top-4 rounded-full p-2 text-green-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className="absolute right-4 top-4 rounded-full p-2 text-[#5a7a63] transition-colors hover:bg-[#f4f9f0] hover:text-[#2b5c3b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Isara ang dialog"
         >
           <X className="h-5 w-5" aria-hidden="true" />
@@ -99,7 +99,7 @@ const ModalTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Title
     ref={ref}
-    className={cn("font-heading text-xl font-bold text-white", className)}
+    className={cn("font-heading text-xl font-bold text-[#2b5c3b]", className)}
     {...props}
   />
 ))
@@ -111,7 +111,7 @@ const ModalDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm leading-relaxed text-green-200", className)}
+    className={cn("text-sm leading-relaxed text-[#5a7a63]", className)}
     {...props}
   />
 ))
