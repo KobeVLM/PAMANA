@@ -327,6 +327,7 @@ export const SentenceModulePage: React.FC = () => {
         <ErrorState onRetry={() => void fetchTask(tier)} />
       ) : task ? (
         <PracticeStage
+          split={false}
           stage={
             <>
               <NPCDialogue

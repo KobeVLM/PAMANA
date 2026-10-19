@@ -17,7 +17,6 @@ import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { OptionGrid } from '@/components/game/OptionGrid'
 import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
-import { WordSlotMachine } from '@/components/game/WordSlotMachine'
 import { FeedbackBanner } from '@/components/feedback/FeedbackBanner'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
@@ -79,38 +78,6 @@ const NPC_LINES: Record<SpiralStep, Bi> = {
 
 const SPIRAL_STEPS: SpiralStep[] = ['pakinggan', 'kilalanin', 'basahin', 'gamitin']
 
-const INITIAL_WORDS: Record<2 | 3, string[]> = {
-  2: [
-    'Mata',
-    'Kamay',
-    'Ilong',
-    'Bibig',
-    'Tenga',
-    'Ulo',
-    'Paa',
-    'Likod',
-    'Tiyan',
-    'Noo',
-  ],
-  3: [
-    'Nanay',
-    'Tatay',
-    'Lola',
-    'Lolo',
-    'Kuya',
-    'Ate',
-    'Bahay',
-    'Kain',
-    'Tulog',
-    'Laro',
-    'Luto',
-    'Linis',
-    'Basa',
-    'Ligo',
-    'Kapatid',
-  ],
-}
-
 export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -136,9 +103,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [celebrate, setCelebrate] = useState(0)
   const [gamitinSentence, setGamitinSentence] = useState<string>(
     'Ang aking _____ ay malaki at maliwanag.'
-  )
-  const [upcomingWords, setUpcomingWords] = useState<string[]>(
-    INITIAL_WORDS[moduleNumber]
   )
 
   const { replay: replayWord } = useAudioElement(currentWord?.audioUrl ?? null)
@@ -317,9 +281,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             setAttempts(0)
           } else {
             setWordComplete(true)
-            setUpcomingWords((prev) =>
-              prev.filter((w) => w.toLowerCase() !== currentWord.word.toLowerCase())
-            )
           }
         } else {
           setSelectedId(null)
@@ -345,7 +306,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     try {
       await api.delete(`/modules/reset/${user?.id}/${moduleNumber}`)
       setModuleComplete(false)
-      setUpcomingWords(INITIAL_WORDS[moduleNumber])
       await fetchNextWord()
     } catch {
       toast.error('Hindi na-reset ang module', {
@@ -473,183 +433,174 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
 
   return (
     <PracticePageLayout maxWidth="5xl">
-      <div className="flex w-full items-start justify-center gap-8 xl:gap-12">
-        {/* Slot machine: decorative, only on tall and wide viewports */}
-        <div className="mt-24 hidden w-56 [@media(min-width:1536px)_and_(min-height:820px)]:block">
-          <WordSlotMachine words={upcomingWords} />
-        </div>
+      <PracticeHeader
+        title={moduleTitle}
+        subtitle={`${moduleLocation} · Spiral Loop`}
+        backLabel="Pamana Trail"
+        onBack={() => navigate('/trail')}
+        sticky
+        steps={steps}
+        progressLabel={
+          moduleAccuracy === null
+            ? 'Katumpakan ng Module'
+            : `Katumpakan: ${Math.round(moduleAccuracy)}%`
+        }
+        progressLabelEn={
+          moduleAccuracy === null
+            ? 'Module Accuracy'
+            : `Accuracy: ${Math.round(moduleAccuracy)}%`
+        }
+        progressValue={moduleAccuracy ?? undefined}
+      />
 
-        <div className="w-full min-w-0 max-w-3xl flex-1">
-          <PracticeHeader
-            title={moduleTitle}
-            subtitle={`${moduleLocation} · Spiral Loop`}
-            backLabel="Pamana Trail"
-            onBack={() => navigate('/trail')}
-            sticky
-            steps={steps}
-            progressLabel={
-              moduleAccuracy === null
-                ? 'Katumpakan ng Module'
-                : `Katumpakan: ${Math.round(moduleAccuracy)}%`
-            }
-            progressLabelEn={
-              moduleAccuracy === null
-                ? 'Module Accuracy'
-                : `Accuracy: ${Math.round(moduleAccuracy)}%`
-            }
-            progressValue={moduleAccuracy ?? undefined}
-          />
+      {isLoading ? (
+        <LoadingState message="Naglo-load ng salita..." />
+      ) : nextWordError ? (
+        <ErrorState
+          description="Hindi ma-load ang susunod na salita. Pakisubukan muli."
+          onRetry={() => void fetchNextWord()}
+        />
+      ) : currentWord ? (
+        <PracticeStage
+          split={isSplitStep}
+          stage={
+            <>
+              <NPCDialogue
+                npc="lolo"
+                line={NPC_LINES[currentStep].fil}
+                lineEn={NPC_LINES[currentStep].en}
+                audioUrl={`/static/assets/audio/npc/lolo_mod3_${currentStep}.mp3`}
+                autoPlay={!selectedId && !wordComplete}
+                celebrate={celebrate}
+                resetKey={`${currentWord.wordId}-${currentStep}`}
+              />
 
-          {isLoading ? (
-            <LoadingState message="Naglo-load ng salita..." />
-          ) : nextWordError ? (
-            <ErrorState
-              description="Hindi ma-load ang susunod na salita. Pakisubukan muli."
-              onRetry={() => void fetchNextWord()}
-            />
-          ) : currentWord ? (
-            <PracticeStage
-              split={isSplitStep}
-              stage={
-                <>
-                  <NPCDialogue
-                    npc="lolo"
-                    line={NPC_LINES[currentStep].fil}
-                    lineEn={NPC_LINES[currentStep].en}
-                    audioUrl={`/static/assets/audio/npc/lolo_mod3_${currentStep}.mp3`}
-                    autoPlay={!selectedId && !wordComplete}
-                    celebrate={celebrate}
-                    resetKey={`${currentWord.wordId}-${currentStep}`}
+              {currentStep === 'pakinggan' && (
+                <PromptStage
+                  variant="image-word"
+                  ariaLabel="Pakinggan ang salita (Listen to the word)"
+                >
+                  {!wordImageFailed ? (
+                    <img
+                      src={currentWord.imageUrl}
+                      alt={currentWord.word}
+                      onError={() => setWordImageFailed(true)}
+                      width={160}
+                      height={160}
+                      decoding="async"
+                      className="h-40 w-40 rounded-2xl border-2 border-white/70 object-contain"
+                    />
+                  ) : (
+                    <div className="flex h-40 w-40 items-center justify-center rounded-2xl border-2 border-white/70 bg-white font-heading text-xl font-bold text-[#2b5c3b]/80">
+                      {currentWord.word}
+                    </div>
+                  )}
+                  <p className="font-heading text-3xl font-bold text-[#2b5c3b]">
+                    {currentWord.word}
+                  </p>
+                  <AudioPlayer
+                    audioUrl={currentWord.audioUrl}
+                    size="lg"
+                    label={STRINGS.listenWord.fil}
+                    labelEn={STRINGS.listenWord.en}
                   />
+                  <BilingualText
+                    as="p"
+                    fil={STRINGS.listenAgain.fil}
+                    en={STRINGS.listenAgain.en}
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
+                  />
+                  <Button
+                    variant="pamana"
+                    onClick={() => {
+                      setCurrentStep('kilalanin')
+                    }}
+                  >
+                    <BilingualText
+                      as="span"
+                      fil="Susunod"
+                      en="Next"
+                      filClassName="text-sm font-semibold"
+                      enClassName="text-xs font-normal opacity-80"
+                    />
+                    <ArrowRight aria-hidden="true" />
+                  </Button>
+                </PromptStage>
+              )}
 
-                  {currentStep === 'pakinggan' && (
-                    <PromptStage
-                      variant="image-word"
-                      ariaLabel="Pakinggan ang salita (Listen to the word)"
-                    >
-                      {!wordImageFailed ? (
-                        <img
-                          src={currentWord.imageUrl}
-                          alt={currentWord.word}
-                          onError={() => setWordImageFailed(true)}
-                          width={160}
-                          height={160}
-                          decoding="async"
-                          className="h-40 w-40 rounded-2xl border-2 border-white/70 object-contain"
-                        />
-                      ) : (
-                        <div className="flex h-40 w-40 items-center justify-center rounded-2xl border-2 border-white/70 bg-white font-heading text-xl font-bold text-[#2b5c3b]/80">
-                          {currentWord.word}
-                        </div>
-                      )}
-                      <p className="font-heading text-3xl font-bold text-[#2b5c3b]">
-                        {currentWord.word}
-                      </p>
-                      <AudioPlayer
-                        audioUrl={currentWord.audioUrl}
-                        size="lg"
-                        label={STRINGS.listenWord.fil}
-                        labelEn={STRINGS.listenWord.en}
-                      />
-                      <BilingualText
-                        as="p"
-                        fil={STRINGS.listenAgain.fil}
-                        en={STRINGS.listenAgain.en}
-                        filClassName="text-sm text-[#3f7d52]"
-                        enClassName="text-xs text-[#5a7a63]"
-                      />
-                      <Button
-                        variant="pamana"
-                        onClick={() => {
-                          setCurrentStep('kilalanin')
-                        }}
-                      >
-                        <BilingualText
-                          as="span"
-                          fil="Susunod"
-                          en="Next"
-                          filClassName="text-sm font-semibold"
-                          enClassName="text-xs font-normal opacity-80"
-                        />
-                        <ArrowRight aria-hidden="true" />
-                      </Button>
-                    </PromptStage>
-                  )}
+              {(currentStep === 'kilalanin' || currentStep === 'basahin') && (
+                <PromptStage
+                  variant="audio"
+                  ariaLabel={
+                    currentStep === 'kilalanin'
+                      ? 'Kilalanin ang larawan (Identify the picture)'
+                      : 'Basahin ang salita (Read the word)'
+                  }
+                >
+                  <AudioPlayer
+                    audioUrl={currentWord.audioUrl}
+                    size="lg"
+                    label={STRINGS.listenWord.fil}
+                    labelEn={STRINGS.listenWord.en}
+                  />
+                  <BilingualText
+                    as="p"
+                    fil={STRINGS.listenAgain.fil}
+                    en={STRINGS.listenAgain.en}
+                    className="text-center"
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
+                  />
+                </PromptStage>
+              )}
 
-                  {(currentStep === 'kilalanin' || currentStep === 'basahin') && (
-                    <PromptStage
-                      variant="audio"
-                      ariaLabel={
-                        currentStep === 'kilalanin'
-                          ? 'Kilalanin ang larawan (Identify the picture)'
-                          : 'Basahin ang salita (Read the word)'
+              {currentStep === 'gamitin' && (
+                <PromptStage
+                  variant="blank"
+                  ariaLabel="Gamitin ang salita sa pangungusap (Use the word in a sentence)"
+                >
+                  <FillBlank
+                    template={gamitinSentence}
+                    options={matchOptions.map((option) => ({
+                      id: option.id,
+                      label: option.label ?? '',
+                    }))}
+                    selectedId={selectedId}
+                    correctId={currentWord.wordId}
+                    attempts={attempts}
+                    disabled={isSubmitting}
+                    onSelect={(id) => void handleStepSelect(id)}
+                  />
+                </PromptStage>
+              )}
+
+              <FeedbackSlot>
+                {attempts >= HINT_AFTER_ATTEMPTS && (
+                  <FeedbackBanner variant="hint">
+                    <BilingualText
+                      as="p"
+                      fil={
+                        currentStep === 'gamitin'
+                          ? '💡 Ang gintong salita ang tamang sagot!'
+                          : 'Ang gintong kahon ang tamang sagot!'
                       }
-                    >
-                      <AudioPlayer
-                        audioUrl={currentWord.audioUrl}
-                        size="lg"
-                        label={STRINGS.listenWord.fil}
-                        labelEn={STRINGS.listenWord.en}
-                      />
-                      <BilingualText
-                        as="p"
-                        fil={STRINGS.listenAgain.fil}
-                        en={STRINGS.listenAgain.en}
-                        className="text-center"
-                        filClassName="text-sm text-[#3f7d52]"
-                        enClassName="text-xs text-[#5a7a63]"
-                      />
-                    </PromptStage>
-                  )}
-
-                  {currentStep === 'gamitin' && (
-                    <PromptStage
-                      variant="blank"
-                      ariaLabel="Gamitin ang salita sa pangungusap (Use the word in a sentence)"
-                    >
-                      <FillBlank
-                        template={gamitinSentence}
-                        options={matchOptions.map((option) => ({
-                          id: option.id,
-                          label: option.label ?? '',
-                        }))}
-                        selectedId={selectedId}
-                        correctId={currentWord.wordId}
-                        attempts={attempts}
-                        disabled={isSubmitting}
-                        onSelect={(id) => void handleStepSelect(id)}
-                      />
-                    </PromptStage>
-                  )}
-
-                  <FeedbackSlot>
-                    {attempts >= HINT_AFTER_ATTEMPTS && (
-                      <FeedbackBanner variant="hint">
-                        <BilingualText
-                          as="p"
-                          fil={
-                            currentStep === 'gamitin'
-                              ? '💡 Ang gintong salita ang tamang sagot!'
-                              : 'Ang gintong kahon ang tamang sagot!'
-                          }
-                          en={
-                            currentStep === 'gamitin'
-                              ? '💡 The golden word is the correct answer!'
-                              : 'The golden box is the correct answer!'
-                          }
-                          filClassName="text-sm"
-                          enClassName="text-xs opacity-80"
-                        />
-                      </FeedbackBanner>
-                    )}
-                  </FeedbackSlot>
-                </>
-              }
-              tray={isSplitStep ? renderOptions() : null}
-            />
-          ) : null}
-        </div>
-      </div>
+                      en={
+                        currentStep === 'gamitin'
+                          ? '💡 The golden word is the correct answer!'
+                          : 'The golden box is the correct answer!'
+                      }
+                      filClassName="text-sm"
+                      enClassName="text-xs opacity-80"
+                    />
+                  </FeedbackBanner>
+                )}
+              </FeedbackSlot>
+            </>
+          }
+          tray={isSplitStep ? renderOptions() : null}
+        />
+      ) : null}
     </PracticePageLayout>
   )
 }

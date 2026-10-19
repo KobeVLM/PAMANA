@@ -278,6 +278,7 @@ export const SentencePracticePage: React.FC = () => {
         <ErrorState onRetry={retryTask} />
       ) : task ? (
         <PracticeStage
+          split={false}
           stage={
             <>
               <NPCDialogue
