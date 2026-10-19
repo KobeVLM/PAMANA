@@ -3,23 +3,23 @@ import { Toaster as SonnerToaster } from "sonner"
 type ToasterProps = React.ComponentProps<typeof SonnerToaster>
 
 /**
- * App-wide toast host. Dark, storybook-styled, top-center so it never
+ * App-wide toast host. Light sticker-styled, top-center so it never
  * covers the primary action on learner screens.
  */
 const Toaster = (props: ToasterProps) => (
   <SonnerToaster
-    theme="dark"
+    theme="light"
     position="top-center"
     closeButton
     toastOptions={{
       classNames: {
         toast:
-          "!rounded-2xl !border !border-white/20 !bg-green-950 !text-white !font-heading !shadow-story",
+          "!rounded-2xl !border-4 !border-white !bg-white !text-[#2b5c3b] !font-heading !shadow-[0_8px_0_rgba(0,0,0,0.15)]",
         title: "!font-bold",
-        description: "!text-green-200",
-        actionButton: "!rounded-lg !bg-pamana-gold !text-green-950 !font-bold",
-        cancelButton: "!rounded-lg !bg-white/10 !text-white",
-        closeButton: "!border-white/20 !bg-green-900 !text-white",
+        description: "!text-[#5a7a63]",
+        actionButton: "!rounded-lg !bg-[#4CAF50] !text-white !font-bold",
+        cancelButton: "!rounded-lg !bg-[#e8f2e4] !text-[#2b5c3b] !font-bold",
+        closeButton: "!border-[#d5e5d0] !bg-white !text-[#2b5c3b]",
       },
     }}
     {...props}
