@@ -24,7 +24,6 @@ import { useSfx } from '@/hooks/useGameAudio'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS } from '@/lib/i18n'
 import api from '@/lib/api'
-import type { ModuleProgress } from '@/types'
 import { Home } from 'lucide-react'
 
 interface SentenceTask {
@@ -64,27 +63,9 @@ export const SentenceModulePage: React.FC = () => {
   const [attempts, setAttempts] = useState(0)
   const [showReunionEnding, setShowReunionEnding] = useState(false)
   const [showTierAnnouncement, setShowTierAnnouncement] = useState(false)
-  const [moduleAccuracy, setModuleAccuracy] = useState<number | null>(null)
   const [celebrate, setCelebrate] = useState(0)
 
   useScrollToTop(`${tier}-${taskIndex}`)
-
-  /** Best-effort refresh of the live module accuracy for the star meter. */
-  const refreshAccuracy = useCallback(async () => {
-    try {
-      const res = await api.get(`/modules/progress/${user?.id}`)
-      const mod = (res.data as ModuleProgress[]).find(
-        (p) => p.moduleNumber === 4
-      )
-      setModuleAccuracy(mod?.accuracy ?? null)
-    } catch {
-      // Keep the last known accuracy
-    }
-  }, [user?.id])
-
-  useEffect(() => {
-    if (user?.id) void refreshAccuracy()
-  }, [user?.id, refreshAccuracy])
 
   const fetchTask = useCallback(
     async (tierNum: 1 | 2) => {
@@ -156,7 +137,6 @@ export const SentenceModulePage: React.FC = () => {
         submittedOrder: orderedWords,
         accuracy,
       })
-      void refreshAccuracy()
 
       if (res.data.moduleComplete) {
         setTimeout(() => setShowReunionEnding(true), 1500)
@@ -190,7 +170,6 @@ export const SentenceModulePage: React.FC = () => {
     fetchTask,
     playAudio,
     playWrong,
-    refreshAccuracy,
   ])
 
   // ── Tier 2 announcement screen ──────────────────────────────────────────
@@ -204,12 +183,12 @@ export const SentenceModulePage: React.FC = () => {
           <div>
             <div className="mb-4 flex items-center gap-3">
               <div
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-pamana-gold/30 text-2xl"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFC107]/40 text-2xl"
                 aria-hidden="true"
               >
                 👵
               </div>
-              <span className="font-heading font-bold text-pamana-gold">
+              <span className="font-heading font-bold text-[#D4A017]">
                 Lola
               </span>
             </div>
@@ -217,33 +196,33 @@ export const SentenceModulePage: React.FC = () => {
               as="p"
               fil='"Napakahusay mo, apo! Handa na tayo sa susunod na hamon!"'
               en='"Great job, my grandchild! We are ready for the next challenge!"'
-              filClassName="font-heading text-lg font-bold leading-relaxed text-white"
-              enClassName="text-sm leading-relaxed text-white/70"
+              filClassName="font-heading text-lg font-bold leading-relaxed text-[#2b5c3b]"
+              enClassName="text-sm leading-relaxed text-[#5a7a63]"
             />
           </div>
-          <div className="rounded-2xl border border-white/20 bg-white/5 p-4 text-left">
+          <div className="rounded-2xl border-2 border-[#d5e5d0] bg-[#f4f9f0] p-4 text-left">
             <BilingualText
               as="p"
               fil="✅ Tier 1: Paturol — Natapos na!"
               en="✅ Tier 1: Statements — Finished!"
               className="mb-1"
-              filClassName="text-sm font-semibold text-green-300"
-              enClassName="text-xs text-green-200/70"
+              filClassName="text-sm font-semibold text-[#3f7d52]"
+              enClassName="text-xs text-[#5a7a63]"
             />
             <BilingualText
               as="p"
               fil="Susunod: Tier 2 — Patanong (Tanong)"
               en="Next: Tier 2 — Questions"
-              filClassName="text-sm text-white/70"
-              enClassName="text-xs text-white/50"
+              filClassName="text-sm text-[#5a7a63]"
+              enClassName="text-xs text-[#5a7a63]"
             />
             <BilingualText
               as="p"
               fil="Gawing tanong ang mga pangungusap!"
               en="Turn the sentences into questions!"
               className="mt-1"
-              filClassName="text-xs text-white/50"
-              enClassName="text-[10px] text-white/40"
+              filClassName="text-xs text-[#5a7a63]"
+              enClassName="text-[10px] text-[#5a7a63]"
             />
           </div>
           <Button
@@ -273,7 +252,7 @@ export const SentenceModulePage: React.FC = () => {
           <div className="mb-4 text-6xl" aria-hidden="true">
             🎊
           </div>
-          <h2 className="mb-3 font-heading text-3xl font-bold text-white">
+          <h2 className="mb-3 font-heading text-3xl font-bold text-[#2b5c3b]">
             Tagpuan!
           </h2>
           <div className="mb-4 text-5xl" aria-hidden="true">
@@ -284,20 +263,20 @@ export const SentenceModulePage: React.FC = () => {
             fil="Nagawa mo! Nakausap mo na ang iyong mga magulang sa Filipino. Ipinagmamalaki ka ng iyong pamilya!"
             en="You did it! You spoke with your parents in Filipino. Your family is proud of you!"
             className="mb-6"
-            filClassName="text-base leading-relaxed text-green-200"
-            enClassName="text-sm leading-relaxed text-green-200/70"
+            filClassName="text-base leading-relaxed text-[#3f7d52]"
+            enClassName="text-sm leading-relaxed text-[#5a7a63]"
           />
-          <div className="mb-6 rounded-2xl border border-pamana-gold/40 bg-pamana-gold/20 p-4">
+          <div className="mb-6 rounded-2xl border-2 border-[#FFC107] bg-[#fff7db] p-4">
             <BilingualText
               as="p"
               fil='"Anak, ipinagmamalaki kita. Natuto ka ng wikang Filipino at naihanda ka ng pamana ng aming wika."'
               en='"Child, we are proud of you. You learned the Filipino language and prepared for the heritage of our tongue."'
-              filClassName="italic text-pamana-gold"
-              enClassName="text-sm italic text-pamana-gold/70"
+              filClassName="italic text-[#7a5200]"
+              enClassName="text-sm italic text-[#7a5200]/80"
             />
-            <p className="mt-2 text-sm text-white/60">
+            <p className="mt-2 text-sm text-[#5a7a63]">
               — Lolo at Lola{' '}
-              <span className="text-xs text-white/40">(Grandpa and Grandma)</span>
+              <span className="text-xs text-[#5a7a63]">(Grandpa and Grandma)</span>
             </p>
           </div>
           <Button
@@ -325,9 +304,6 @@ export const SentenceModulePage: React.FC = () => {
     { label: 'Tier 2: Patanong', state: tier === 2 ? 'current' : 'pending' },
   ]
   const clampedTaskNumber = Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER)
-  const tasksLeft =
-    (tier === 1 ? TOTAL_TASKS_PER_TIER : 0) +
-    (TOTAL_TASKS_PER_TIER - clampedTaskNumber)
 
   return (
     <PracticePageLayout maxWidth="5xl">
@@ -340,11 +316,6 @@ export const SentenceModulePage: React.FC = () => {
         onBack={() => navigate('/trail')}
         sticky
         steps={steps}
-        accuracy={moduleAccuracy}
-        itemsLeft={{
-          fil: `Natitira: ${tasksLeft} gawain`,
-          en: `${tasksLeft} ${tasksLeft === 1 ? 'task' : 'tasks'} left`,
-        }}
         progressLabel={`Gawain ${clampedTaskNumber} ng ${TOTAL_TASKS_PER_TIER}`}
         progressLabelEn={`Task ${clampedTaskNumber} of ${TOTAL_TASKS_PER_TIER}`}
         progressValue={(clampedTaskNumber / TOTAL_TASKS_PER_TIER) * 100}
@@ -356,6 +327,7 @@ export const SentenceModulePage: React.FC = () => {
         <ErrorState onRetry={() => void fetchTask(tier)} />
       ) : task ? (
         <PracticeStage
+          split={false}
           stage={
             <>
               <NPCDialogue
@@ -391,8 +363,8 @@ export const SentenceModulePage: React.FC = () => {
                     fil="Pakinggan ang tamang pagkakasunod"
                     en="Listen to the correct order"
                     className="text-center"
-                    filClassName="text-sm text-green-300"
-                    enClassName="text-xs text-green-200/70"
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
                   />
                 </PromptStage>
               )}
@@ -405,10 +377,10 @@ export const SentenceModulePage: React.FC = () => {
                   as="p"
                   fil="Iyong pangungusap:"
                   en="Your sentence:"
-                  filClassName="text-xs font-medium text-green-300 sm:text-sm"
-                  enClassName="text-[10px] text-green-200/60"
+                  filClassName="text-xs font-medium text-[#3f7d52] sm:text-sm"
+                  enClassName="text-[10px] text-[#5a7a63]"
                 />
-                <p className="font-heading text-lg font-bold leading-relaxed text-white sm:text-xl">
+                <p className="font-heading text-lg font-bold leading-relaxed text-[#2b5c3b] sm:text-xl">
                   {tiles.map((t) => t.word).join(' ')}
                 </p>
               </PromptStage>
@@ -429,10 +401,10 @@ export const SentenceModulePage: React.FC = () => {
                           as="p"
                           fil="Tamang sagot:"
                           en="Correct answer:"
-                          filClassName="text-xs text-pamana-gold"
-                          enClassName="text-[10px] text-pamana-gold/70"
+                          filClassName="text-xs text-[#8f1d1d]"
+                          enClassName="text-[10px] text-[#8f1d1d]/80"
                         />
-                        <strong className="text-white">
+                        <strong className="text-[#8f1d1d]">
                           {task.correctOrder.join(' ')}
                         </strong>
                       </div>
@@ -449,8 +421,8 @@ export const SentenceModulePage: React.FC = () => {
                   as="p"
                   fil="I-drag ang mga salita sa tamang pagkakasunod:"
                   en="Drag the words into the correct order:"
-                  filClassName="text-xs font-medium text-green-300 sm:text-sm"
-                  enClassName="text-[10px] text-green-200/60"
+                  filClassName="text-xs font-medium text-[#3f7d52] sm:text-sm"
+                  enClassName="text-[10px] text-[#5a7a63]"
                 />
                 <WordTiles
                   items={tiles}

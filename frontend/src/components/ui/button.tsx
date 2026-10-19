@@ -20,8 +20,8 @@ const buttonVariants = cva(
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         pamana:
-          "bg-gradient-to-r from-pamana-green to-emerald-500 text-white hover:opacity-90 active:scale-95",
-        gold: "bg-gradient-to-r from-pamana-gold to-pamana-amber text-white hover:opacity-90 active:scale-95",
+          "border-2 border-white bg-gradient-to-b from-pamana-green to-emerald-600 text-white shadow-[0_6px_0_rgba(0,0,0,0.25)] hover:brightness-110 active:translate-y-[4px] active:shadow-[0_2px_0_rgba(0,0,0,0.25)]",
+        gold: "border-2 border-white bg-gradient-to-b from-pamana-gold to-pamana-amber text-white shadow-[0_6px_0_rgba(0,0,0,0.2)] hover:brightness-110 active:translate-y-[4px] active:shadow-[0_2px_0_rgba(0,0,0,0.2)]",
         success: "bg-success text-success-foreground hover:bg-success/90 active:scale-95",
         jellyPink:
           "border-2 border-[#FF9EC0] bg-gradient-to-b from-[#FF6FA1] to-[#E6005C] text-white shadow-[0_6px_0_0_#990033] hover:brightness-110 active:translate-y-[4px] active:shadow-[0_2px_0_0_#990033]",

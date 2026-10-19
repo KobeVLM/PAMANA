@@ -79,7 +79,9 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     navigate('/login')
   }
 
-  const isModulePage = location.pathname.startsWith('/modules')
+  const isPracticePage =
+    location.pathname.startsWith('/modules') ||
+    location.pathname.startsWith('/mastery')
 
   const filteredNav = NAV_ITEMS.filter(
     (item) => user && item.roles.includes(user.role)
@@ -113,7 +115,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     <div className="h-screen w-full overflow-hidden bg-[#f4f9f0] flex font-sans select-none">
       
       {/* MOBILE OVERLAY */}
-      {!isModulePage && !isSidebarHidden && (
+      {!isPracticePage && !isSidebarHidden && (
         <button
           type="button"
           aria-label="Isara ang menu"
@@ -123,7 +125,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       )}
 
       {/* SIDEBAR */}
-      {!isModulePage && (
+      {!isPracticePage && (
         <aside
           className={cn(
             'fixed lg:static inset-y-0 left-0 z-40 flex flex-col',
@@ -221,7 +223,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       )}
 
       {/* DESKTOP TOGGLE BUTTON (Gem) */}
-      {!isModulePage && (
+      {!isPracticePage && (
         <button
           onClick={() => setIsSidebarHidden(!isSidebarHidden)}
           className={cn(
@@ -245,7 +247,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 bg-[#f4f9f0] relative overflow-hidden">
-        {!isModulePage && (
+        {!isPracticePage && (
           <header className="lg:hidden sticky top-0 z-20 h-20 bg-gradient-to-b from-[#2d5e3e] to-[#4b8a5c] border-b-4 border-[#33664a] flex items-center px-4 justify-between shadow-md">
             
             <button

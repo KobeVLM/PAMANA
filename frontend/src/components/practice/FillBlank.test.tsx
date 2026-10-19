@@ -42,7 +42,7 @@ describe("FillBlank", () => {
     const { container } = renderFillBlank({ selectedId: "w", correctId: "w" })
     const blank = container.querySelector("p span")
     expect(blank).toHaveTextContent("maliwanag")
-    expect(blank?.className).toContain("border-green-400")
+    expect(blank?.className).toContain("border-[#4CAF50]")
   })
 
   it("places the word inside a four-underscore backend template", () => {

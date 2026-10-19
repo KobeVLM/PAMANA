@@ -80,16 +80,16 @@ const OptionTile: React.FC<OptionTileProps> = ({
 
         !isSelected &&
           !isHint &&
-          'hover:scale-105 hover:border-white/60 hover:bg-white/30',
+          'hover:scale-105 hover:bg-[#f4f9f0]',
 
         isSelected && isCorrect &&
-          'border-green-400 bg-green-500/30 text-green-200 shadow-green-900/50 scale-105',
+          'border-green-400 bg-[#e7f6e7] text-[#1B5E20] scale-105',
 
-        isWrong && 'animate-wiggle border-red-400/70 bg-red-500/20 text-red-100',
+        isWrong && 'animate-wiggle border-red-400/70 bg-[#fdeaea] text-[#8f1d1d]',
 
-        isHint && 'animate-pulse border-pamana-gold bg-pamana-gold/20 text-pamana-gold',
+        isHint && 'animate-pulse border-pamana-gold bg-[#fff7db] text-[#7a5200]',
 
-        isDimmed && 'border-white/20 bg-white/10 opacity-65',
+        isDimmed && 'border-white/60 bg-white/40 opacity-65',
 
         disabled && 'cursor-not-allowed opacity-60'
       )}
@@ -110,7 +110,7 @@ const OptionTile: React.FC<OptionTileProps> = ({
       {type === 'image' && (!option.imageUrl || imageFailed) && (
         <div
           className={cn(
-            'flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-center text-white/80',
+            'flex items-center justify-center rounded-xl border-2 border-[#d5e5d0] bg-[#f4f9f0] p-2 text-center text-[#2b5c3b]/80',
             isBig ? 'h-24 w-24 text-lg sm:h-28 sm:w-28' : 'h-14 w-14 text-sm lg:h-20 lg:w-20'
           )}
         >
@@ -119,7 +119,7 @@ const OptionTile: React.FC<OptionTileProps> = ({
       )}
 
       {type === 'image' && showLabels && option.label && (
-        <span className="text-xs font-semibold tracking-wide text-green-200/90 sm:text-sm">
+        <span className="text-xs font-semibold tracking-wide text-[#3f7d52] sm:text-sm">
           {option.label}
         </span>
       )}
@@ -133,16 +133,16 @@ const OptionTile: React.FC<OptionTileProps> = ({
       {isSelected && (
         <div className="absolute right-2 top-2" aria-hidden="true">
           {isCorrect ? (
-            <CheckCircle2 className="h-5 w-5 text-green-400" />
+            <CheckCircle2 className="h-5 w-5 text-[#2E7D32]" />
           ) : (
-            <RefreshCw className="h-5 w-5 text-red-300" />
+            <RefreshCw className="h-5 w-5 text-[#c62828]" />
           )}
         </div>
       )}
 
       {isHint && (
         <div className="absolute right-2 top-2" aria-hidden="true">
-          <Lightbulb className="h-5 w-5 text-pamana-gold" />
+          <Lightbulb className="h-5 w-5 text-[#D4A017]" />
         </div>
       )}
     </button>

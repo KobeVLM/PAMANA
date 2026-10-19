@@ -199,7 +199,6 @@ export const SyllablePracticePage: React.FC = () => {
         badge="Practice Mode"
         backLabel="Bumalik sa Home"
         onBack={() => navigate('/home')}
-        accuracy={(flow.score / SUB_LEVELS.length) * 100}
         progressLabel={`${SUB_LEVEL_LABELS[subLevel].fil} (${flow.roundIndex + 1} of ${SUB_LEVELS.length})`}
         progressLabelEn={`${SUB_LEVEL_LABELS[subLevel].en} (${flow.roundIndex + 1} of ${SUB_LEVELS.length})`}
         progressValue={((flow.roundIndex + 1) / SUB_LEVELS.length) * 100}
@@ -237,7 +236,7 @@ export const SyllablePracticePage: React.FC = () => {
                         label={STRINGS.listenConsonant.fil}
                         labelEn={STRINGS.listenConsonant.en}
                       />
-                      <span className="font-heading text-2xl font-bold text-white">
+                      <span className="font-heading text-2xl font-bold text-[#2b5c3b]">
                         {currentSet.consonant}
                       </span>
                       <BilingualText
@@ -245,11 +244,11 @@ export const SyllablePracticePage: React.FC = () => {
                         fil={UI_TEXT.consonant.fil}
                         en={UI_TEXT.consonant.en}
                         className="text-center"
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
-                    <span className="text-3xl font-bold text-white/40" aria-hidden="true">
+                    <span className="text-3xl font-bold text-[#2b5c3b]/50" aria-hidden="true">
                       +
                     </span>
                     <div className="flex min-w-0 flex-col items-center gap-2">
@@ -259,7 +258,7 @@ export const SyllablePracticePage: React.FC = () => {
                         label={STRINGS.listenVowel.fil}
                         labelEn={STRINGS.listenVowel.en}
                       />
-                      <span className="font-heading text-2xl font-bold text-white">
+                      <span className="font-heading text-2xl font-bold text-[#2b5c3b]">
                         {currentSet.vowel}
                       </span>
                       <BilingualText
@@ -267,24 +266,24 @@ export const SyllablePracticePage: React.FC = () => {
                         fil={UI_TEXT.vowel.fil}
                         en={UI_TEXT.vowel.en}
                         className="text-center"
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
-                    <span className="text-3xl font-bold text-white/40" aria-hidden="true">
+                    <span className="text-3xl font-bold text-[#2b5c3b]/50" aria-hidden="true">
                       =
                     </span>
                     <div className="flex min-w-0 flex-col items-center gap-2">
-                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-white/10 sm:h-20 sm:w-20">
-                        <span className="text-3xl font-bold text-white/30">?</span>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-[#D4A017]/70 bg-white sm:h-20 sm:w-20">
+                        <span className="text-3xl font-bold text-[#2b5c3b]/30">?</span>
                       </div>
                       <BilingualText
                         as="span"
                         fil={UI_TEXT.result.fil}
                         en={UI_TEXT.result.en}
                         className="text-center"
-                        filClassName="text-xs text-green-300"
-                        enClassName="text-[10px] text-green-200/60"
+                        filClassName="text-xs text-[#3f7d52]"
+                        enClassName="text-[10px] text-[#5a7a63]"
                       />
                     </div>
                   </div>
@@ -307,8 +306,8 @@ export const SyllablePracticePage: React.FC = () => {
                     fil={STRINGS.listenAgain.fil}
                     en={STRINGS.listenAgain.en}
                     className="text-center"
-                    filClassName="text-sm text-green-300"
-                    enClassName="text-xs text-green-200/70"
+                    filClassName="text-sm text-[#3f7d52]"
+                    enClassName="text-xs text-[#5a7a63]"
                   />
                 </PromptStage>
               )}

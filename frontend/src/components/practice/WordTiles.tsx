@@ -72,20 +72,20 @@ function SortableTile({
       }}
       disabled={disabled}
       className={cn(
-        "game-tile flex min-h-[56px] items-center gap-2.5 rounded-2xl border-2 px-5 py-3.5 font-heading text-base font-bold shadow-md transition-all duration-200 select-none sm:text-lg",
+        "game-tile flex min-h-[56px] items-center gap-2.5 rounded-2xl border-2 px-5 py-3.5 font-heading text-base font-bold shadow-[0_4px_0_rgba(0,0,0,0.12)] transition-all duration-200 select-none sm:text-lg",
         disabled
           ? "cursor-default opacity-85"
-          : "cursor-grab hover:scale-105 hover:border-pamana-gold/70 active:cursor-grabbing active:scale-95",
-        isDragging && "z-10 scale-105 border-pamana-gold opacity-80",
+          : "cursor-grab hover:scale-105 hover:border-[#FFC107] active:cursor-grabbing active:scale-95",
+        isDragging && "z-10 scale-105 border-[#FFC107] opacity-80",
         isSelected
-          ? "animate-pulse border-pamana-gold bg-pamana-gold/30 text-amber-200 shadow-lg shadow-amber-500/20 ring-2 ring-pamana-gold"
+          ? "animate-pulse border-[#FFC107] bg-[#fff7db] text-[#7a5200] shadow-lg shadow-amber-500/20 ring-2 ring-[#FFC107]"
           : ""
       )}
     >
       <GripVertical
         className={cn(
           "h-4 w-4 flex-shrink-0",
-          isSelected ? "text-amber-300" : "text-white/40"
+          isSelected ? "text-[#D4A017]" : "text-[#2b5c3b]/40"
         )}
         aria-hidden="true"
       />
@@ -138,7 +138,7 @@ export function WordTiles({
           role="group"
           aria-label={ariaLabel}
           className={cn(
-            "flex min-h-[76px] flex-wrap items-center gap-2.5 rounded-xl bg-black/20 p-3 sm:gap-3",
+            "flex min-h-[76px] flex-wrap items-center gap-2.5 rounded-2xl border-2 border-white/70 bg-white/40 p-3 sm:gap-3",
             className
           )}
         >

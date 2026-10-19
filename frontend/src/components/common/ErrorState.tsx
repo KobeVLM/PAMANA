@@ -28,14 +28,14 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-red-400/40 bg-red-500/10 px-6 py-10 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-3xl border-2 border-[#EF5350]/60 bg-[#fdeaea] px-6 py-10 text-center",
         className
       )}
       {...props}
     >
-      <CloudOff className="h-10 w-10 text-red-300" aria-hidden="true" />
-      <h2 className="font-heading text-lg font-bold text-white">{title}</h2>
-      <p className="max-w-sm text-sm leading-relaxed text-red-100/90">{description}</p>
+      <CloudOff className="h-10 w-10 text-[#c62828]" aria-hidden="true" />
+      <h2 className="font-heading text-lg font-bold text-[#8f1d1d]">{title}</h2>
+      <p className="max-w-sm text-sm leading-relaxed text-[#8f1d1d]/90">{description}</p>
       {onRetry && (
         <Button
           variant="pamana"

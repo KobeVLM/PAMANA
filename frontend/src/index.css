@@ -7,35 +7,36 @@
 
 @layer base {
   :root {
-    --background: 142 76% 8%;
-    --foreground: 120 20% 90%;
-    --card: 142 50% 12%;
-    --card-foreground: 120 20% 90%;
-    --popover: 142 50% 12%;
-    --popover-foreground: 120 20% 90%;
-    --primary: 142 70% 45%;
+    /* Snoopy light theme: cream paper, deep-leaf ink, sunny gold accents */
+    --background: 100 40% 96%;
+    --foreground: 140 36% 26%;
+    --card: 0 0% 100%;
+    --card-foreground: 140 36% 26%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 36% 26%;
+    --primary: 122 38% 49%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 38 92% 50%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 142 30% 18%;
-    --muted-foreground: 120 15% 60%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 24 30% 29%;
+    --muted: 105 30% 92%;
+    --muted-foreground: 140 18% 42%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 24 30% 29%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --success: 142 71% 45%;
-    --success-foreground: 138 76% 8%;
-    --warning: 38 92% 50%;
+    --success: 122 39% 49%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
     --warning-foreground: 26 83% 14%;
-    --border: 142 30% 20%;
-    --input: 142 30% 18%;
-    --ring: 38 92% 50%;
+    --border: 110 28% 84%;
+    --input: 110 28% 88%;
+    --ring: 45 100% 51%;
     --radius: 1rem;
-    --chart-1: 142 70% 45%;
-    --chart-2: 38 92% 50%;
-    --chart-3: 220 70% 60%;
+    --chart-1: 122 38% 49%;
+    --chart-2: 45 100% 51%;
+    --chart-3: 220 70% 55%;
     --chart-4: 340 75% 55%;
-    --chart-5: 280 65% 60%;
+    --chart-5: 280 65% 55%;
   }
 
   * {
@@ -69,33 +70,50 @@
 @layer components {
   /* Game tile base styles - minimum 44px touch target */
   .game-tile {
-    @apply min-h-[44px] min-w-[44px] rounded-2xl border-2 border-white/40 bg-white/20
-           font-heading font-bold text-white transition-all duration-200
-           active:scale-95 select-none cursor-pointer;
+    @apply min-h-[44px] min-w-[44px] rounded-2xl border-2 border-white bg-white/80
+           font-heading font-bold text-[#2b5c3b] shadow-[0_4px_0_rgba(0,0,0,0.12)]
+           transition-all duration-200 active:scale-95 select-none cursor-pointer;
   }
 
-  /* Glassmorphic card */
+  /* Frosted sticker card (light) */
   .glass-card {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl;
+    @apply bg-white/80 backdrop-blur-xl border-2 border-white rounded-2xl
+           shadow-[0_6px_0_rgba(0,0,0,0.1)];
   }
 
-  /* Layered storybook surface: glass + depth + soft inner highlight */
+  /* Layered storybook surface: sticker-white panel with a solid drop shadow */
   .card-story {
-    @apply relative bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl shadow-story;
+    @apply relative bg-white border-4 border-white rounded-[1.75rem]
+           shadow-[0_10px_0_rgba(0,0,0,0.12)];
   }
 
-  /* PAMANA gradient button */
+  /* Snoopy sticker panel */
+  .panel-snoopy {
+    @apply relative rounded-[2rem] border-4 border-white bg-white
+           shadow-[0_8px_0_rgba(0,0,0,0.15)];
+  }
+
+  /* Snoopy chunky heading */
+  .heading-snoopy {
+    @apply font-black uppercase tracking-wide text-[#2b5c3b];
+  }
+
+  /* PAMANA gradient button - chunky 3D press */
   .btn-pamana {
-    @apply bg-gradient-to-r from-pamana-green to-emerald-500
-           text-white font-bold rounded-xl
-           hover:opacity-90 active:scale-95 transition-all duration-200;
+    @apply bg-gradient-to-b from-[#66BB6A] to-[#4CAF50]
+           border-b-4 border-[#2E7D32]
+           text-white font-black rounded-2xl
+           hover:brightness-105 active:border-b-0 active:translate-y-1
+           transition-all duration-100;
   }
 
-  /* Gold accent button */
+  /* Gold accent button - chunky 3D press */
   .btn-gold {
-    @apply bg-gradient-to-r from-pamana-gold to-pamana-amber
-           text-white font-bold rounded-xl
-           hover:opacity-90 active:scale-95 transition-all duration-200;
+    @apply bg-gradient-to-b from-[#FFC107] to-[#F0A500]
+           border-b-4 border-[#C98A00]
+           text-[#5D4037] font-black rounded-2xl
+           hover:brightness-105 active:border-b-0 active:translate-y-1
+           transition-all duration-100;
   }
 
   /* Parchment/paper texture for elevated storybook surfaces */
@@ -205,17 +223,17 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(43, 92, 59, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(43, 92, 59, 0.32);
 }
 
 /* Honor OS-level motion preferences for all CSS-driven animation */

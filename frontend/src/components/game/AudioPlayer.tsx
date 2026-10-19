@@ -79,8 +79,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         aria-label={labelEn ? `${label} (${labelEn})` : label}
         className={cn(
           'rounded-full flex flex-col items-center justify-center gap-1',
-          'bg-gradient-to-br from-pamana-gold to-pamana-amber',
-          'text-white shadow-lg transition-all duration-200',
+          'border-4 border-white bg-gradient-to-br from-pamana-gold to-pamana-amber',
+          'text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-200',
           'hover:scale-105 active:scale-95',
           isPlaying && 'animate-pulse-glow',
           sizeClasses[size],

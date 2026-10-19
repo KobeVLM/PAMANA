@@ -76,11 +76,24 @@ export default {
           parchment: "#FAF3E0",
           moss: "#4D7C0F",
         },
+        // Snoopy (kids game) light theme
+        snoopy: {
+          cream: "#f4f9f0",
+          sky: "#87CEEB",
+          meadow: "#98FB98",
+          leaf: "#4CAF50",
+          deep: "#2E7D32",
+          ink: "#2b5c3b",
+          sun: "#FFC107",
+          "sun-dark": "#D4A017",
+        },
       },
       boxShadow: {
         story:
           "0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 4px 12px -4px rgba(0, 0, 0, 0.4)",
         tile: "0 5px 0 0 rgba(0, 0, 0, 0.35), 0 12px 20px -10px rgba(0, 0, 0, 0.5)",
+        snoopy: "0 8px 0 rgba(0, 0, 0, 0.15)",
+        "snoopy-sm": "0 4px 0 rgba(0, 0, 0, 0.12)",
         "glow-gold":
           "0 0 0 3px rgba(245, 158, 11, 0.35), 0 0 24px rgba(245, 158, 11, 0.25)",
         "inner-soft": "inset 0 1px 0 0 rgba(255, 255, 255, 0.12)",
