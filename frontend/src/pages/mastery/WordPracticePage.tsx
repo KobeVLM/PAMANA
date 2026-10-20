@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { useAudio } from '@/contexts/AudioContext'
 import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
 import { PracticeHeader } from '@/components/practice/PracticeHeader'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
@@ -71,14 +70,12 @@ const pickRoundWords = (words: VocabWord[]): VocabWord[] => {
 export const WordPracticePage: React.FC = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { isAudioPlaying } = useAudio()
 
   const [roundWords, setRoundWords] = useState<VocabWord[]>([])
   const [npcIntroDone, setNpcIntroDone] = useState(false)
   const [imageFailed, setImageFailed] = useState(false)
   const [celebrate, setCelebrate] = useState(0)
   const hasPlayedNpcRef = React.useRef(false)
-  const prevIsAudioPlayingRef = React.useRef(false)
 
   const totalRounds = roundWords.length || ROUND_TOTAL
 
@@ -168,30 +165,11 @@ export const WordPracticePage: React.FC = () => {
   const { replay: playTarget } = useAudioElement(currentWord?.audioUrl)
   const { playWrong } = useSfx()
 
-  // NPC intro: play once on the first question, then unlock the word audio.
-  useEffect(() => {
-    if (flow.roundIndex > 0 || hasPlayedNpcRef.current) {
-      setNpcIntroDone(true)
-      return
-    }
-
-    const fallbackTimer = setTimeout(() => {
-      setNpcIntroDone(true)
-      hasPlayedNpcRef.current = true
-    }, 3500)
-
-    return () => clearTimeout(fallbackTimer)
-  }, [flow.roundIndex])
-
-  useEffect(() => {
-    if (flow.roundIndex === 0 && !hasPlayedNpcRef.current) {
-      if (prevIsAudioPlayingRef.current && !isAudioPlaying) {
-        setNpcIntroDone(true)
-        hasPlayedNpcRef.current = true
-      }
-    }
-    prevIsAudioPlayingRef.current = isAudioPlaying
-  }, [isAudioPlaying, flow.roundIndex])
+  // Unlock the word audio only after Lolo's instruction has finished (or failed).
+  const handleNpcAudioEnd = useCallback(() => {
+    hasPlayedNpcRef.current = true
+    setNpcIntroDone(true)
+  }, [])
 
   useEffect(() => setImageFailed(false), [currentWord?.wordId])
 
@@ -211,7 +189,6 @@ export const WordPracticePage: React.FC = () => {
     if (vocabulary) setRoundWords(pickRoundWords(vocabulary))
     setNpcIntroDone(false)
     hasPlayedNpcRef.current = false
-    prevIsAudioPlayingRef.current = false
     flow.reset()
   }, [vocabulary, flow])
 
@@ -293,6 +270,7 @@ export const WordPracticePage: React.FC = () => {
               lineEn={NPC_LINE.en}
               audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
               autoPlay={flow.roundIndex === 0 && !npcIntroDone}
+              onAudioEnd={handleNpcAudioEnd}
               celebrate={celebrate}
               resetKey={flow.roundIndex}
             />
@@ -328,6 +306,7 @@ export const WordPracticePage: React.FC = () => {
                       key={`${currentWord.wordId}-${npcIntroDone}`}
                       audioUrl={currentWord.audioUrl}
                       autoPlay={npcIntroDone}
+                      fallbackText={currentWord.word}
                       size="lg"
                       label={STRINGS.listenWord.fil}
                       labelEn={STRINGS.listenWord.en}

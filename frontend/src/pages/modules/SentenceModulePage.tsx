@@ -122,7 +122,9 @@ export const SentenceModulePage: React.FC = () => {
 
     if (isCorrect && task.audioUrl) {
       try {
-        await playAudio(task.audioUrl, true)
+        await playAudio(task.audioUrl, {
+          fallbackText: task.correctOrder.join(' '),
+        })
       } catch {
         // Playback failure should not block progress
       }
@@ -354,6 +356,7 @@ export const SentenceModulePage: React.FC = () => {
                 >
                   <AudioPlayer
                     audioUrl={task.audioUrl}
+                    fallbackText={task.correctOrder.join(' ')}
                     size="lg"
                     label={STRINGS.listenSentence.fil}
                     labelEn={STRINGS.listenSentence.en}

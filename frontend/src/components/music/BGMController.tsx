@@ -3,6 +3,12 @@ import { useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import bgMusicUrl from '@/components/music/bgmusic.mp3'
 
+/** Pages where the background music is allowed to play. */
+const MUSIC_PATHS = ['/home', '/trail', '/settings', '/dashboard']
+
+const shouldPlayHere = (pathname: string) =>
+  MUSIC_PATHS.some((path) => pathname.startsWith(path))
+
 export const BGMController: React.FC = () => {
   const location = useLocation()
   const { user } = useAuth()
@@ -28,10 +34,9 @@ export const BGMController: React.FC = () => {
 
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false' // default true
       
-      // Play music on trail, settings, and dashboards
+      // Play music on home, trail, settings, and dashboards
       // BUT specifically stop it inside modules (the actual game levels)
-      const playPaths = ['/trail', '/settings', '/dashboard']
-      const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
+      const shouldPlay = shouldPlayHere(location.pathname)
 
       if (isMusicEnabled && shouldPlay) {
         try {
@@ -56,8 +61,7 @@ export const BGMController: React.FC = () => {
     const handleInteraction = () => {
       if (!user) return
       const isMusicEnabled = localStorage.getItem('pamana_bgm') !== 'false'
-      const playPaths = ['/trail', '/settings', '/dashboard']
-      const shouldPlay = playPaths.some(p => location.pathname.startsWith(p))
+      const shouldPlay = shouldPlayHere(location.pathname)
       
       if (isMusicEnabled && shouldPlay && audioRef.current?.paused) {
         audioRef.current.play().catch(e => console.warn('Still blocked', e))

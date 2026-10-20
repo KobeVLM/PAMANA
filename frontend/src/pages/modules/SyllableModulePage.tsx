@@ -461,6 +461,7 @@ export const SyllableModulePage: React.FC = () => {
                     <div className="flex min-w-0 flex-col items-center gap-2">
                       <AudioPlayer
                         audioUrl={currentSet.consonantAudioUrl ?? ''}
+                        fallbackText={currentSet.consonant}
                         size="md"
                         label="Pakinggan ang katinig"
                         labelEn="Listen to the consonant"
@@ -482,6 +483,7 @@ export const SyllableModulePage: React.FC = () => {
                     <div className="flex min-w-0 flex-col items-center gap-2">
                       <AudioPlayer
                         audioUrl={currentSet.vowelAudioUrl ?? ''}
+                        fallbackText={currentSet.vowel}
                         size="md"
                         label="Pakinggan ang patinig"
                         labelEn="Listen to the vowel"
@@ -521,6 +523,7 @@ export const SyllableModulePage: React.FC = () => {
                 >
                   <AudioPlayer
                     audioUrl={currentSet.audioUrl}
+                    fallbackText={currentSet.targetSyllable}
                     size="lg"
                     label="Pakinggan ang tunog"
                     labelEn="Listen to the sound"

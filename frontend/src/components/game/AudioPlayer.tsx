@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import { Volume2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAudio } from '@/contexts/AudioContext'
 
 interface AudioPlayerProps {
   audioUrl: string
@@ -9,14 +10,16 @@ interface AudioPlayerProps {
   label?: string
   /** English label appended for screen readers. */
   labelEn?: string
+  /** Spoken via speechSynthesis if the clip cannot be loaded. */
+  fallbackText?: string
   size?: 'sm' | 'md' | 'lg'
 }
 
 /**
- * Reusable audio player component using HTML5 Audio.
- * Accepts a local static asset URL from Spring Boot.
+ * Reusable speaker button. Playback goes through the shared voice channel, so
+ * tapping it always stops any instruction that is currently speaking.
  * Auto-plays on mount if autoPlay=true.
- * Shows retry button on playback failure.
+ * Shows a retry icon when the clip cannot be played.
  */
 export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   audioUrl,
@@ -24,34 +27,40 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   className,
   label = 'Pakinggan',
   labelEn,
+  fallbackText,
   size = 'md',
 }) => {
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const { playAudio } = useAudio()
   const [hasError, setHasError] = React.useState(false)
   const [isPlaying, setIsPlaying] = React.useState(false)
-
-  const playFallbackBeep = (err: unknown) => {
-    console.error('Audio playback failed!', err);
-  }
-
-  const play = useCallback(() => {
-    if (!audioRef.current) return
-    setHasError(false)
-    audioRef.current.currentTime = 0
-    audioRef.current.play().catch((err) => {
-      playFallbackBeep(err)
-      setHasError(true)
-    })
-  }, [])
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
-    if (autoPlay && audioRef.current) {
-      audioRef.current.play().catch((err) => {
-        playFallbackBeep(err)
-        setHasError(true)
-      })
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
     }
-  }, [audioUrl, autoPlay])
+  }, [])
+
+  const play = useCallback(async () => {
+    if (!audioUrl) {
+      setHasError(true)
+      return
+    }
+    setHasError(false)
+    setIsPlaying(true)
+    const result = await playAudio(audioUrl, { fallbackText })
+    if (!isMountedRef.current) return
+    setIsPlaying(false)
+    if (result === 'error') setHasError(true)
+  }, [audioUrl, fallbackText, playAudio])
+
+  useEffect(() => {
+    if (autoPlay && audioUrl) {
+      void play()
+    }
+  }, [autoPlay, audioUrl, play])
+
   const sizeClasses = {
     sm: 'w-10 h-10 text-sm',
     md: 'w-14 h-14 text-base',
@@ -65,35 +74,25 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   }
 
   return (
-    <>
-      <audio 
-        ref={audioRef} 
-        src={audioUrl} 
-        autoPlay={autoPlay}
-        onPlay={() => setIsPlaying(true)} 
-        onEnded={() => setIsPlaying(false)}
-        onError={() => { setIsPlaying(false); setHasError(true); }} 
-      />
-      <button
-        onClick={play}
-        aria-label={labelEn ? `${label} (${labelEn})` : label}
-        className={cn(
-          'rounded-full flex flex-col items-center justify-center gap-1',
-          'border-4 border-white bg-gradient-to-br from-pamana-gold to-pamana-amber',
-          'text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-200',
-          'hover:scale-105 active:scale-95',
-          isPlaying && 'animate-pulse-glow',
-          sizeClasses[size],
-          className
-        )}
-      >
-        {hasError ? (
-          <RefreshCw className={iconSizes[size]} />
-        ) : (
-          <Volume2 className={iconSizes[size]} />
-        )}
-      </button>
-    </>
+    <button
+      type="button"
+      onClick={() => void play()}
+      aria-label={labelEn ? `${label} (${labelEn})` : label}
+      className={cn(
+        'rounded-full flex flex-col items-center justify-center gap-1',
+        'border-4 border-white bg-gradient-to-br from-pamana-gold to-pamana-amber',
+        'text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-200',
+        'hover:scale-105 active:scale-95',
+        isPlaying && 'animate-pulse-glow',
+        sizeClasses[size],
+        className
+      )}
+    >
+      {hasError ? (
+        <RefreshCw className={iconSizes[size]} aria-hidden="true" />
+      ) : (
+        <Volume2 className={iconSizes[size]} aria-hidden="true" />
+      )}
+    </button>
   )
 }
-

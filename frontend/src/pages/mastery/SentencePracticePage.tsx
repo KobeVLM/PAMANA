@@ -299,6 +299,7 @@ export const SentencePracticePage: React.FC = () => {
                 >
                   <AudioPlayer
                     audioUrl={task.audioUrl}
+                    fallbackText={task.correctOrder.join(' ')}
                     size="lg"
                     label={STRINGS.listenSentence.fil}
                     labelEn={STRINGS.listenSentence.en}
@@ -358,6 +359,7 @@ export const SentencePracticePage: React.FC = () => {
                       {task.audioUrl && (
                         <AudioPlayer
                           audioUrl={task.audioUrl}
+                          fallbackText={task.correctOrder.join(' ')}
                           size="sm"
                           label={STRINGS.listenSentence.fil}
                           labelEn={STRINGS.listenSentence.en}

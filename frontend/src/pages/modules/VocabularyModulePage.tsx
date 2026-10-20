@@ -233,7 +233,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           try {
             await playAudio(
               `/static/assets/audio/npc/sentence_${currentWord.word.toLowerCase()}.mp3`,
-              true
+              { fallbackText: gamitinSentence.replace(/_{3,}/g, currentWord.word) }
             )
           } catch {
             // Playback failure should not block progress
@@ -294,6 +294,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       attempts,
       user?.id,
       currentStep,
+      gamitinSentence,
       playAudio,
       replayWord,
       playWrong,
@@ -500,6 +501,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                   </p>
                   <AudioPlayer
                     audioUrl={currentWord.audioUrl}
+                    fallbackText={currentWord.word}
                     size="lg"
                     label={STRINGS.listenWord.fil}
                     labelEn={STRINGS.listenWord.en}
@@ -540,6 +542,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                 >
                   <AudioPlayer
                     audioUrl={currentWord.audioUrl}
+                    fallbackText={currentWord.word}
                     size="lg"
                     label={STRINGS.listenWord.fil}
                     labelEn={STRINGS.listenWord.en}

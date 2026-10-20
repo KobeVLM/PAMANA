@@ -232,6 +232,7 @@ export const SyllablePracticePage: React.FC = () => {
                     <div className="flex min-w-0 flex-col items-center gap-2">
                       <AudioPlayer
                         audioUrl={currentSet.consonantAudioUrl ?? ''}
+                        fallbackText={currentSet.consonant}
                         size="md"
                         label={STRINGS.listenConsonant.fil}
                         labelEn={STRINGS.listenConsonant.en}
@@ -254,6 +255,7 @@ export const SyllablePracticePage: React.FC = () => {
                     <div className="flex min-w-0 flex-col items-center gap-2">
                       <AudioPlayer
                         audioUrl={currentSet.vowelAudioUrl ?? ''}
+                        fallbackText={currentSet.vowel}
                         size="md"
                         label={STRINGS.listenVowel.fil}
                         labelEn={STRINGS.listenVowel.en}
@@ -297,6 +299,7 @@ export const SyllablePracticePage: React.FC = () => {
                 >
                   <AudioPlayer
                     audioUrl={currentSet.audioUrl}
+                    fallbackText={currentSet.targetSyllable}
                     size="lg"
                     label={STRINGS.listenSound.fil}
                     labelEn={STRINGS.listenSound.en}

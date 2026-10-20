@@ -276,6 +276,7 @@ export const ImagePracticePage: React.FC = () => {
                 key={currentWord.wordId}
                 audioUrl={currentWord.audioUrl}
                 autoPlay={false}
+                fallbackText={currentWord.word}
                 size="lg"
                 label={STRINGS.listenWord.fil}
                 labelEn={STRINGS.listenWord.en}

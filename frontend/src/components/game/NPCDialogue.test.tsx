@@ -1,10 +1,13 @@
+import { StrictMode } from "react"
 import { describe, it, expect, vi } from "vitest"
-import { render, screen } from "@testing-library/react"
+import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { NPCDialogue } from "./NPCDialogue"
 
+const { playAudioMock } = vi.hoisted(() => ({ playAudioMock: vi.fn() }))
+
 vi.mock("@/contexts/AudioContext", () => ({
-  useAudio: () => ({ playAudio: vi.fn().mockResolvedValue(undefined) }),
+  useAudio: () => ({ playAudio: playAudioMock }),
 }))
 
 function sheetUrls(button: HTMLElement) {
@@ -85,5 +88,31 @@ describe("NPCDialogue", () => {
     await user.click(screen.getByRole("button", { name: /show english/i }))
 
     expect(screen.getByText("Listen carefully!")).toBeInTheDocument()
+  })
+
+  it("reports the instruction ending under StrictMode", async () => {
+    playAudioMock.mockReset()
+    let finish!: (result: "ended") => void
+    playAudioMock.mockImplementation(
+      () => new Promise((resolve) => { finish = resolve })
+    )
+    const onAudioEnd = vi.fn()
+
+    render(
+      <StrictMode>
+        <NPCDialogue
+          npc="lolo"
+          line="Pakinggan ang salita."
+          audioUrl="/audio/npc/test.mp3"
+          autoPlay
+          onAudioEnd={onAudioEnd}
+        />
+      </StrictMode>
+    )
+
+    await waitFor(() => expect(playAudioMock).toHaveBeenCalledTimes(1))
+    finish("ended")
+
+    await waitFor(() => expect(onAudioEnd).toHaveBeenCalledTimes(1))
   })
 })

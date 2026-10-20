@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Volume2 } from 'lucide-react'
 import { Mascot } from './Mascot'
 import { cn } from '@/lib/utils'
@@ -61,31 +61,38 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   }, [onAudioEnd])
 
   const lastPlayedUrlRef = useRef<string | null>(null)
+  const playbackTokenRef = useRef(0)
+  const isMountedRef = useRef(true)
 
   useEffect(() => {
-    let isCurrent = true
-    if (audioUrl && autoPlay && lastPlayedUrlRef.current !== audioUrl) {
-      lastPlayedUrlRef.current = audioUrl
-      playAudio(audioUrl, true)
-        .catch(console.error)
-        .finally(() => {
-          if (isCurrent) {
-            onAudioEndRef.current?.()
-          }
-        })
-    }
+    isMountedRef.current = true
     return () => {
-      isCurrent = false
+      isMountedRef.current = false
     }
-  }, [audioUrl, autoPlay, playAudio])
+  }, [])
+
+  const playInstruction = useCallback(
+    (url: string) => {
+      const token = playbackTokenRef.current + 1
+      playbackTokenRef.current = token
+      void playAudio(url, { fallbackText: line }).then((result) => {
+        if (token !== playbackTokenRef.current || !isMountedRef.current) return
+        if (result !== 'interrupted') onAudioEndRef.current?.()
+      })
+    },
+    [line, playAudio]
+  )
+
+  useEffect(() => {
+    if (!audioUrl || !autoPlay || lastPlayedUrlRef.current === audioUrl) return
+    lastPlayedUrlRef.current = audioUrl
+    playInstruction(audioUrl)
+  }, [audioUrl, autoPlay, playInstruction])
 
   const handlePlay = () => {
     if (audioUrl) {
-      playAudio(audioUrl, true)
-        .catch(console.error)
-        .finally(() => {
-          onAudioEndRef.current?.()
-        })
+      lastPlayedUrlRef.current = audioUrl
+      playInstruction(audioUrl)
     } else if (onPlayAudio) {
       onPlayAudio()
     }
