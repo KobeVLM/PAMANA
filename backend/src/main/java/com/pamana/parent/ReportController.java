@@ -2,6 +2,7 @@ package com.pamana.parent;
 
 import com.pamana.parent.ReportController;
 import com.pamana.parent.ReportService;
+import com.pamana.security.LearnerAccessService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,16 +25,20 @@ public class ReportController {
     private static final Logger log = LoggerFactory.getLogger(ReportController.class);
 
     private final ReportService reportService;
+    private final LearnerAccessService learnerAccessService;
 
-    public ReportController(ReportService reportService) {
+    public ReportController(ReportService reportService, LearnerAccessService learnerAccessService) {
         this.reportService = reportService;
+        this.learnerAccessService = learnerAccessService;
     }
 
     @GetMapping("/generate/{userId}/{moduleNumber}")
     @PreAuthorize("hasAnyRole('PARENT', 'TEACHER', 'LEARNER')")
     public ResponseEntity<byte[]> generateReport(
             @PathVariable UUID userId,
-            @PathVariable int moduleNumber) {
+            @PathVariable int moduleNumber,
+            Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Generate PDF report for learner ID: {}, module: {}", userId, moduleNumber);
 
         byte[] pdfBytes = reportService.generateReport(userId, moduleNumber);

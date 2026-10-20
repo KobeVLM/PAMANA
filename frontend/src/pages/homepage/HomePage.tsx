@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Map, Award, BookOpen, ChevronRight, Trophy, Lock, CheckCircle } from 'lucide-react'
+import { Lock, Play, Star } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
+import { cn } from '@/lib/utils'
 
 const HomePage = () => {
   const navigate = useNavigate()
@@ -29,10 +30,42 @@ const HomePage = () => {
   }
 
   const masteryItems = [
-    { id: 1, title: 'Syllable Matching', moduleNum: 1, route: '/mastery/1', bgImage: '/images/Farm.png' },
-    { id: 2, title: 'Word Matching', moduleNum: 2, route: '/mastery/2', bgImage: '/images/Garden.png' },
-    { id: 3, title: 'Image Matching', moduleNum: 3, route: '/mastery/3', bgImage: '/images/Kitchen.png' },
-    { id: 4, title: 'Sentence Creation', moduleNum: 4, route: '/mastery/4', bgImage: '/images/House.png' },
+    { 
+      id: 1, 
+      title: 'Syllable Matching', 
+      moduleNum: 1, 
+      route: '/mastery/1', 
+      icon: '🐃', 
+      bgImage: '/images/m-Farm.jpg', 
+      shadow: 'shadow-[0_8px_0_#0077b6]' 
+    },
+    { 
+      id: 2, 
+      title: 'Word Matching', 
+      moduleNum: 2, 
+      route: '/mastery/2', 
+      icon: '🍪', 
+      bgImage: '/images/m-Garden.jpg', 
+      shadow: 'shadow-[0_8px_0_#a66310]' 
+    },
+    { 
+      id: 3, 
+      title: 'Image Matching', 
+      moduleNum: 3, 
+      route: '/mastery/3', 
+      icon: '🖼️', 
+      bgImage: '/images/m-Kitchen.jpg', 
+      shadow: 'shadow-[0_8px_0_#6c3483]' 
+    },
+    { 
+      id: 4, 
+      title: 'Sentence Creation', 
+      moduleNum: 4, 
+      route: '/mastery/4', 
+      icon: '💬', 
+      bgImage: '/images/m-House.jpg', 
+      shadow: 'shadow-[0_8px_0_#b03a2e]' 
+    },
   ]
 
   const handleMasteryClick = (item: typeof masteryItems[0]) => {
@@ -44,161 +77,207 @@ const HomePage = () => {
     }
   }
 
+  // Balanced text size
+  const headerStyle = "text-2xl md:text-3xl font-black text-white tracking-widest mb-3 uppercase [-webkit-text-stroke:1.5px_#1a2e05] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#1a2e05]";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 p-6 md:p-10">
-      <div className="max-w-6xl mx-auto">
+    <div 
+      className="min-h-screen p-6 md:p-10 bg-cover bg-center bg-no-repeat relative overflow-y-auto"
+      style={{ backgroundImage: "url('/images/HomeB.png')" }}
+    >
+      {/* Balanced top padding and max-width */}
+      <div className="max-w-5xl mx-auto relative z-10 pt-6 md:pt-10 pb-8">
         
-        {/* CHALLENGES Header */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="w-8 h-8 text-pamana-green" />
-            <h1 className="text-5xl md:text-6xl font-bold text-white font-heading tracking-tight">
-              CHALLENGES
-            </h1>
-          </div>
-          <p className="text-green-200 mt-2">
-            Test your skills and unlock new levels.
-          </p>
+        {/* CHALLENGES IMAGE */}
+        <div className="w-full flex justify-center mb-6 md:mb-8 -mt-4 md:-mt-6">
+          <img
+            src="/images/CH.png"
+            alt="Challenges"
+            className="w-[90%] max-w-[700px] object-contain drop-shadow-[0_8px_10px_rgba(0,0,0,0.4)]"
+          />
         </div>
 
-        {/* 2-Column Layout: Beginner + Mastery - MORE BALANCED */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-          {/* LEFT: Beginner - TRAIL MAP (takes 3 columns) */}
-          <div className="md:col-span-3">
-            <div className="flex items-center gap-3 text-green-300 mb-3">
-              <Map className="w-6 h-6 text-pamana-green" />
-              <span className="font-semibold text-xl">Beginner</span>
-            </div>
-            <div 
-              className="relative overflow-hidden rounded-2xl p-8 border border-white/10 hover:border-pamana-green/50 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.02] transition-all duration-300 cursor-pointer group h-[290px] flex items-center"
-              onClick={() => navigate('/trail')}
-            >
-              {/* Background image */}
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/TrailMap.png')" }} />
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-green-950/60 group-hover:bg-green-950/40 transition-colors duration-300" />
+        {/* Main 2-Column Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-10">
+          
+          {/* LEFT: Beginner - TRAIL MAP */}
+          <div className="flex flex-col">
+            <h2 className={headerStyle}>
+              Beginner
+            </h2>
+            
+            {/* Changed to flex-1 and min-h to stretch and match the Mastery height */}
+            <div className="relative w-full flex-1 min-h-[310px] md:min-h-[330px] rounded-[2rem] border-[6px] border-white shadow-[0_8px_0_rgba(0,0,0,0.15)] overflow-hidden group transition-all duration-200 hover:-translate-y-1 hover:brightness-105 hover:shadow-[0_12px_0_rgba(0,0,0,0.15)] active:translate-y-1 active:shadow-none cursor-pointer">
+              
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/TrailMap1.jpg')" }} />
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
 
-              {/* Content */}
-              <div className="relative z-10 flex items-center justify-between w-full">
-                <div className="flex items-center gap-5">
-                  <div className="p-4 bg-pamana-green/20 rounded-2xl group-hover:bg-pamana-green/30 group-hover:scale-125 transition-all duration-300">
-                    <Map className="w-10 h-10 text-pamana-green group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  <div>
-                    <p className="text-white font-bold text-2xl group-hover:text-pamana-white group-hover:scale-105 transition-all duration-300">
-                      TRAIL MAP
-                    </p>
-                    <p className="text-green-200/80 text-base mt-1 group-hover:text-green-300 transition-colors duration-300">
-                      Start your learning journey
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-7 h-7 text-green-200/60 group-hover:text-pamana-green group-hover:translate-x-3 group-hover:scale-125 transition-all duration-300" />
+              <div className="absolute top-4 left-0 w-full text-center z-10">
+                <h3 className="text-3xl font-black text-white tracking-wider [-webkit-text-stroke:1.5px_#1a2e05] [paint-order:stroke_fill] drop-shadow-[0_3px_0_#1a2e05]">
+                  TRAIL MAP
+                </h3>
+              </div>
+
+              <div className="absolute bottom-5 left-0 w-full flex justify-center z-20">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    navigate('/trail');
+                  }}
+                  className="flex items-center gap-2 bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white px-8 py-2.5 rounded-full border-4 border-white shadow-[0_6px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none transition-all font-black text-xl tracking-wider"
+                >
+                  PLAY <Play className="w-5 h-5 fill-white" />
+                </button>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Mastery - 4 squares (takes 2 columns) - BIGGER */}
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 text-green-300 mb-3">
-              <Award className="w-6 h-6 text-pamana-green" />
-              <span className="font-semibold text-xl">Mastery</span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 h-[280px]">
+          {/* RIGHT: Mastery */}
+          <div className="flex flex-col">
+            <h2 className={headerStyle}>
+              Mastery
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-4 h-full">
               {masteryItems.map((item) => {
                 const unlocked = isUnlocked(item.moduleNum)
                 return (
-                  <div
+                  <button
+                    type="button"
                     key={item.id}
-                    className={`relative overflow-hidden p-3 rounded-xl border transition-all duration-300 cursor-pointer text-center flex flex-col items-center justify-center group ${
-                      unlocked
-                        ? 'border-emerald-400/50 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/25 hover:scale-[1.02]'
-                        : 'border-white/10 hover:border-amber-500/40 opacity-85 hover:opacity-100'
-                    }`}
                     onClick={() => handleMasteryClick(item)}
+                    className={cn(
+                      "relative w-full h-[165px] md:h-[175px] rounded-[1.5rem] border-[5px] border-white flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 group",
+                      item.shadow,
+                      unlocked 
+                        ? "hover:-translate-y-1 hover:brightness-105 active:translate-y-1 active:shadow-none" 
+                        : "brightness-[0.6] grayscale-[0.2] active:translate-y-1"
+                    )}
                   >
-                    {/* Background image */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center"
-                      style={{ backgroundImage: `url('${item.bgImage}')` }}
-                    />
-                    {/* Overlay */}
-                    <div
-                      className={`absolute inset-0 transition-colors duration-300 ${
-                        unlocked
-                          ? 'bg-green-950/60 group-hover:bg-green-950/40'
-                          : 'bg-black/75 backdrop-blur-[1.5px]'
-                      }`}
-                    />
+                    {/* Background Image */}
+                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${item.bgImage}')` }} />
 
-                    {/* Lock badge or Unlocked indicator */}
+                    {/* Dark Overlay so text is readable */}
+                    <div className={cn(
+                      "absolute inset-0 transition-colors duration-300",
+                      unlocked ? "bg-black/20" : "bg-black/50"
+                    )} />
+
+                    {/* Smooth Glossy Shine */}
+                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
+
                     <div className="absolute top-2 right-2 z-20">
                       {unlocked ? (
-                        <span className="flex items-center gap-1 bg-emerald-500/30 text-emerald-300 border border-emerald-400/40 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          Bukas
+                        <span className="bg-[#A8E6CF] text-[#1E5631] border-2 border-white px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                          BUKAS <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1 bg-black/60 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">
-                          <Lock className="w-3 h-3 text-amber-400" />
-                          Lock
+                        <span className="bg-[#3E2723] text-white border-2 border-[#5D4037] px-2 py-0.5 rounded-full text-[10px] md:text-xs font-black uppercase tracking-wider shadow-sm flex items-center gap-1">
+                          <img src="/images/Lock.png" alt="lock" className="w-3 h-3 md:w-4 md:h-4 object-contain brightness-150" /> LOCK
                         </span>
                       )}
                     </div>
 
-                    {/* Content */}
-                    <div className="relative z-10 flex flex-col items-center justify-center h-full pt-1">
-                      <div
-                        className={`w-11 h-11 rounded-full flex items-center justify-center text-lg font-bold transition-all duration-300 ${
-                          unlocked
-                            ? 'bg-emerald-500/20 text-emerald-200 group-hover:bg-emerald-500/30 group-hover:text-white'
-                            : 'bg-white/10 text-stone-300'
-                        }`}
-                      >
-                        {unlocked ? item.id : <Lock className="w-5 h-5 text-amber-300" />}
+                    <div className="relative z-10 flex items-center justify-center w-full px-4 gap-2 mt-2">
+                      
+                      <div className={cn(
+                        "text-5xl md:text-6xl drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] transition-all",
+                        !unlocked && "opacity-40 grayscale"
+                      )}>
+                        {item.icon}
                       </div>
-                      <p
-                        className={`text-xs font-semibold mt-1.5 transition-all duration-300 ${
-                          unlocked
-                            ? 'text-green-100 group-hover:text-white'
-                            : 'text-stone-300'
-                        }`}
-                      >
-                        {item.title}
-                      </p>
+
+                      {unlocked && (
+                        <div className="relative flex items-center justify-center w-12 h-12 md:w-14 md:h-14 rotate-12">
+                          <Star className="absolute inset-0 w-full h-full text-yellow-400 fill-yellow-400 drop-shadow-md stroke-[#b45309] stroke-[2px]" />
+                          <span className="relative z-10 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)] mt-0.5">
+                            {item.moduleNum}
+                          </span>
+                        </div>
+                      )}
+
+                      {/* GLOWING REMOVED, JUST SCALES UP */}
                       {!unlocked && (
-                        <span className="text-[10px] text-amber-300/90 font-medium mt-0.5">
-                          Module {item.moduleNum}
-                        </span>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <img 
+                            src="/images/Lock.png" 
+                            alt="Locked" 
+                            className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] transition-all duration-300 group-hover:scale-110 brightness-150 contrast-125" 
+                          />
+                        </div>
                       )}
                     </div>
-                  </div>
+
+                    <p className="text-white font-black text-sm md:text-base drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] z-10 text-center px-2 leading-tight mt-1">
+                      {item.title}
+                    </p>
+
+                    <div className="absolute bottom-2 right-2 flex gap-0.5 z-10">
+                      <Star strokeWidth={2} className={cn("w-4 h-4 drop-shadow-sm", unlocked ? "text-yellow-300 fill-yellow-400 stroke-[#b45309]" : "text-gray-400 fill-gray-500/50 stroke-gray-600")} />
+                      <Star strokeWidth={2} className={cn("w-4 h-4 drop-shadow-sm", unlocked ? "text-yellow-300 fill-yellow-400 stroke-[#b45309]" : "text-gray-400 fill-gray-500/50 stroke-gray-600")} />
+                      <Star strokeWidth={2} className={cn("w-4 h-4 drop-shadow-sm", unlocked ? "text-yellow-300 fill-yellow-400 stroke-[#b45309]" : "text-gray-400 fill-gray-500/50 stroke-gray-600")} />
+                    </div>
+                  </button>
                 )
               })}
             </div>
           </div>
         </div>
 
-        {/* Spacer */}
-        <div className="h-10"></div>
-
         {/* STORY Section */}
-        <div>
-          <div className="flex items-center gap-3 text-green-300 mb-3">
-            <BookOpen className="w-6 h-6 text-pamana-green" />
-            <span className="font-semibold text-xl">STORY</span>
-          </div>
-          <div 
-            className="bg-gradient-to-r from-pamana-green/10 to-transparent rounded-2xl p-6 border border-pamana-green/20 hover:border-pamana-green/40 hover:bg-pamana-green/10 hover:shadow-2xl hover:shadow-pamana-green/20 hover:scale-[1.01] transition-all duration-300 cursor-pointer group"
+        <div className="w-full">
+          <h2 className={headerStyle}>
+            Story
+          </h2>
+          
+          <button 
             onClick={() => console.log('Open Story')}
+            className="relative w-full bg-gradient-to-b from-[#00D2FF] via-[#00A8E8] to-[#0080C0] hover:brightness-110 border-[5px] border-white rounded-[2rem] p-2 md:p-3 flex items-center justify-between shadow-[0_10px_0_#005A9C] hover:-translate-y-1 hover:shadow-[0_12px_0_#005A9C] active:translate-y-1 active:shadow-[0_4px_0_#005A9C] transition-all duration-200 ease-out group overflow-hidden"
           >
-            <div className="flex items-center justify-between">
-              <p className="text-white font-semibold text-2xl group-hover:text-pamana-green group-hover:scale-105 transition-all duration-300">
-                Pamana Story
-              </p>
-              <ChevronRight className="w-7 h-7 text-pamana-green group-hover:translate-x-3 group-hover:scale-125 transition-all duration-300" />
+            {/* Background Decorations */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
+              <Star className="absolute top-2 left-[35%] w-5 h-5 md:w-6 md:h-6 text-yellow-400 fill-yellow-400 -rotate-12 opacity-80" />
+              <Star className="absolute bottom-2 left-[45%] w-4 h-4 text-pink-400 fill-pink-400 rotate-45 opacity-80" />
+              <Star className="absolute top-4 right-[35%] w-6 h-6 md:w-8 md:h-8 text-yellow-300 fill-yellow-300 rotate-12 opacity-90" />
+              <Star className="absolute bottom-3 right-[25%] w-4 h-4 text-green-400 fill-green-400 -rotate-12 opacity-80" />
             </div>
-          </div>
+            
+            <div className="flex items-center gap-3 z-10 pl-1 md:pl-2">
+              {/* Rotated Book Icon */}
+              <img 
+                src="/images/BK.png" 
+                alt="Book Icon" 
+                className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] -rotate-6 group-hover:scale-105 transition-transform" 
+              />
+              <span 
+                className="text-2xl md:text-4xl font-black tracking-wide mt-1"
+                style={{
+                  color: '#ffffff',
+                  WebkitTextStroke: '2px #005A9C',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 4px 0 #005A9C'
+                }}
+              >
+                Pamana Story
+              </span>
+            </div>
+
+            <div className="ml-auto z-10 flex items-center gap-1 md:gap-2 pr-2 md:pr-4">
+              <span 
+                className="text-2xl md:text-4xl font-black mt-1"
+                style={{
+                  color: '#ffffff',
+                  WebkitTextStroke: '2px #005A9C',
+                  paintOrder: 'stroke fill',
+                  textShadow: '0 4px 0 #005A9C'
+                }}
+              >
+                GO
+              </span>
+              <Play className="w-8 h-8 md:w-10 md:h-10 text-white fill-white drop-shadow-[0_3px_0_#005A9C]" />
+            </div>
+          </button>
         </div>
 
         {/* Toast Notification */}
@@ -208,9 +287,6 @@ const HomePage = () => {
             <span>{toastMessage}</span>
           </div>
         )}
-
-        {/* Extra spacing at bottom */}
-        <div className="h-12"></div>
 
       </div>
     </div>

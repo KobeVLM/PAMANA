@@ -6,9 +6,7 @@ import com.pamana.auth.dto.LoginRequest;
 import com.pamana.auth.dto.RegisterRequest;
 import com.pamana.vocabulary.VocabularyItemRepository;
 import com.pamana.vocabulary.WordMasteryRepository;
-import com.pamana.vocabulary.VocabularyItem;
 import com.pamana.vocabulary.dto.VocabularyProgressRequest;
-import com.pamana.hamon.HamonSessionRepository;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleProgress;
 
@@ -23,9 +21,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
@@ -52,9 +47,6 @@ public class VocabularyControllerTest {
         private WordMasteryRepository wordMasteryRepository;
 
         @Autowired
-        private HamonSessionRepository hamonSessionRepository;
-
-        @Autowired
         private VocabularyItemRepository vocabularyItemRepository;
 
         @Autowired
@@ -65,7 +57,6 @@ public class VocabularyControllerTest {
 
         @BeforeEach
         public void setup() throws Exception {
-                hamonSessionRepository.deleteAll();
                 wordMasteryRepository.deleteAll();
                 moduleProgressRepository.deleteAll();
                 userRepository.deleteAll();
@@ -148,8 +139,7 @@ public class VocabularyControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(reqPakinggan)))
                                 .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.mastered", is(false)))
-                                .andExpect(jsonPath("$.hamonTriggered", is(false)));
+                                .andExpect(jsonPath("$.mastered", is(false)));
 
                 // 5. Submit Kilalanin progress
                 VocabularyProgressRequest reqKilalanin = new VocabularyProgressRequest(wordId, "kilalanin", true);
@@ -177,81 +167,5 @@ public class VocabularyControllerTest {
                                 .andExpect(jsonPath("$.mastered", is(true)))
                                 .andExpect(jsonPath("$.overallAccuracy", is(100.0)))
                                 .andExpect(jsonPath("$.status", is("green")));
-        }
-
-        @Test
-        public void testHamonTriggerAndSubmissionFlow() throws Exception {
-                // Master first 5 vocabulary words to trigger Hamon session milestone!
-                List<VocabularyItem> firstFive = vocabularyItemRepository.findByDomainOrderByOrdinalAsc("self_body")
-                                .subList(0, 5);
-                assertEquals(5, firstFive.size());
-
-                for (int i = 0; i < 5; i++) {
-                        UUID wordId = firstFive.get(i).getId();
-                        // Complete all matching/active steps correct for each word to mark status green
-                        mockMvc.perform(post("/api/vocabulary/progress")
-                                        .header("Authorization", "Bearer " + token)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(
-                                                        new VocabularyProgressRequest(wordId, "pakinggan", true))));
-
-                        mockMvc.perform(post("/api/vocabulary/progress")
-                                        .header("Authorization", "Bearer " + token)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(
-                                                        new VocabularyProgressRequest(wordId, "kilalanin", true))));
-
-                        mockMvc.perform(post("/api/vocabulary/progress")
-                                        .header("Authorization", "Bearer " + token)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(
-                                                        new VocabularyProgressRequest(wordId, "basahin", true))));
-
-                        MvcResult finalStepResult = mockMvc.perform(post("/api/vocabulary/progress")
-                                        .header("Authorization", "Bearer " + token)
-                                        .contentType(MediaType.APPLICATION_JSON)
-                                        .content(objectMapper.writeValueAsString(
-                                                        new VocabularyProgressRequest(wordId, "gamitin", true))))
-                                        .andExpect(status().isCreated())
-                                        .andReturn();
-
-                        // The 5th word completion should return hamonTriggered = true!
-                        if (i == 4) {
-                                String responseStr = finalStepResult.getResponse().getContentAsString();
-                                boolean triggered = objectMapper.readTree(responseStr).get("hamonTriggered")
-                                                .asBoolean();
-                                assertEquals(true, triggered, "Hamon session milestone 1 should be triggered.");
-                        }
-                }
-
-                // Fetch the active Hamon Session
-                MvcResult activeSessionResult = mockMvc.perform(get("/api/hamon/session/active")
-                                .header("Authorization", "Bearer " + token))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.words", hasSize(5)))
-                                .andReturn();
-
-                String sessionContent = activeSessionResult.getResponse().getContentAsString();
-                String sessionIdStr = objectMapper.readTree(sessionContent).get("sessionId").asText();
-                UUID sessionId = UUID.fromString(sessionIdStr);
-
-                // Submit Hamon results: 4 words pass (100%), 1 word fails (30.0%) to test
-                // At-Risk queue
-                Map<UUID, Double> results = new HashMap<>();
-                results.put(firstFive.get(0).getId(), 100.0);
-                results.put(firstFive.get(1).getId(), 100.0);
-                results.put(firstFive.get(2).getId(), 100.0);
-                results.put(firstFive.get(3).getId(), 100.0);
-                results.put(firstFive.get(4).getId(), 30.0); // Fails (scores < 60)
-
-                mockMvc.perform(post("/api/hamon/results/" + sessionIdStr)
-                                .header("Authorization", "Bearer " + token)
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(results)))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.passRate", is(80.0)))
-                                .andExpect(jsonPath("$.masteredCount", is(4)))
-                                .andExpect(jsonPath("$.reQueuedCount", is(1)))
-                                .andExpect(jsonPath("$.reQueuedWords", hasItem(firstFive.get(4).getWord())));
         }
 }

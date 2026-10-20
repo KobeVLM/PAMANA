@@ -11,7 +11,6 @@ public class DashboardResponse {
     private List<ModuleAccuracy> accuracyTrend;
     private int masteredCount;
     private int needsReviewCount;
-    private double hamonPassRate;
     private double avgSessionDuration;
     private double trailCompletion;
     private List<WordMasteryStatus> wordMasteryList;
@@ -20,11 +19,10 @@ public class DashboardResponse {
     public DashboardResponse() {
     }
 
-    public DashboardResponse(List<ModuleAccuracy> accuracyTrend, int masteredCount, int needsReviewCount, double hamonPassRate, double avgSessionDuration, double trailCompletion, List<WordMasteryStatus> wordMasteryList, List<SessionLog> sessionHistory) {
+    public DashboardResponse(List<ModuleAccuracy> accuracyTrend, int masteredCount, int needsReviewCount, double avgSessionDuration, double trailCompletion, List<WordMasteryStatus> wordMasteryList, List<SessionLog> sessionHistory) {
         this.accuracyTrend = accuracyTrend;
         this.masteredCount = masteredCount;
         this.needsReviewCount = needsReviewCount;
-        this.hamonPassRate = hamonPassRate;
         this.avgSessionDuration = avgSessionDuration;
         this.trailCompletion = trailCompletion;
         this.wordMasteryList = wordMasteryList;
@@ -54,14 +52,6 @@ public class DashboardResponse {
 
     public void setNeedsReviewCount(int needsReviewCount) {
         this.needsReviewCount = needsReviewCount;
-    }
-
-    public double getHamonPassRate() {
-        return hamonPassRate;
-    }
-
-    public void setHamonPassRate(double hamonPassRate) {
-        this.hamonPassRate = hamonPassRate;
     }
 
     public double getAvgSessionDuration() {

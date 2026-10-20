@@ -15,4 +15,5 @@ public interface WordMasteryRepository extends JpaRepository<WordMastery, UUID> 
     List<WordMastery> findByUserId(UUID userId);
     List<WordMastery> findByUserIdAndStatus(UUID userId, String status);
     long countByUserIdAndStatus(UUID userId, String status);
+    void deleteByUserIdAndVocabItemIdIn(UUID userId, List<UUID> vocabItemIds);
 }

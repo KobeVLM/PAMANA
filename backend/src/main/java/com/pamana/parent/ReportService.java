@@ -239,16 +239,10 @@ public class ReportService {
         stream.beginText();
         stream.setFont(fontBold, 12);
         stream.newLineAtOffset(50, yOffset);
-        stream.showText("Hamon ng Pamana Pass Rate: " + metrics.getHamonPassRate() + "%");
+        stream.showText("Pagsusuri ng mga Salita (Vocabulary Word Analysis):");
         stream.endText();
 
         yOffset -= 30;
-
-        stream.beginText();
-        stream.setFont(fontBold, 12);
-        stream.newLineAtOffset(50, yOffset);
-        stream.showText("Pagsusuri ng mga Salita (Vocabulary Word Analysis):");
-        stream.endText();
 
         int masteredWords = metrics.getMasteredCount();
         int reviewWords = metrics.getNeedsReviewCount();

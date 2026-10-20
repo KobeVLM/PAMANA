@@ -11,11 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
+
+import com.pamana.security.LearnerAccessService;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,18 +32,22 @@ public class ModuleController {
     private final ModuleProgressRepository moduleProgressRepository;
     private final ModuleAttemptHistoryRepository moduleAttemptHistoryRepository;
     private final com.pamana.progress.ModuleLockService moduleLockService;
+    private final LearnerAccessService learnerAccessService;
 
     public ModuleController(ModuleProgressRepository moduleProgressRepository,
                             ModuleAttemptHistoryRepository moduleAttemptHistoryRepository,
-                            com.pamana.progress.ModuleLockService moduleLockService) {
+                            com.pamana.progress.ModuleLockService moduleLockService,
+                            LearnerAccessService learnerAccessService) {
         this.moduleProgressRepository = moduleProgressRepository;
         this.moduleAttemptHistoryRepository = moduleAttemptHistoryRepository;
         this.moduleLockService = moduleLockService;
+        this.learnerAccessService = learnerAccessService;
     }
 
     @GetMapping("/progress/{userId}")
     @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
-    public ResponseEntity<List<ModuleProgress>> getModuleProgress(@PathVariable UUID userId) {
+    public ResponseEntity<List<ModuleProgress>> getModuleProgress(@PathVariable UUID userId, Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Fetch module progress for user ID: {}", userId);
         List<ModuleProgress> progress = moduleProgressRepository.findByUserId(userId);
         return ResponseEntity.ok(progress);
@@ -48,7 +55,8 @@ public class ModuleController {
 
     @GetMapping("/history/{userId}")
     @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
-    public ResponseEntity<List<ModuleAttemptHistory>> getModuleHistory(@PathVariable UUID userId) {
+    public ResponseEntity<List<ModuleAttemptHistory>> getModuleHistory(@PathVariable UUID userId, Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Fetch module attempt history for user ID: {}", userId);
         List<ModuleAttemptHistory> history = moduleAttemptHistoryRepository.findByUserIdOrderByCompletedAtAsc(userId);
         return ResponseEntity.ok(history);
@@ -56,7 +64,8 @@ public class ModuleController {
 
     @DeleteMapping("/reset/{userId}/{moduleNumber}")
     @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
-    public ResponseEntity<Void> resetModuleProgress(@PathVariable UUID userId, @PathVariable int moduleNumber) {
+    public ResponseEntity<Void> resetModuleProgress(@PathVariable UUID userId, @PathVariable int moduleNumber, Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Reset module progress for user ID: {}, module: {}", userId, moduleNumber);
         moduleLockService.resetModuleGameData(userId, moduleNumber);
         return ResponseEntity.ok().build();

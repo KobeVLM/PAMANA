@@ -8,7 +8,6 @@ import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
-import com.pamana.hamon.HamonService;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.common.BaseGameService;
 import com.pamana.common.dto.DialogueResponse;
@@ -30,7 +29,6 @@ public class VocabularyService extends BaseGameService {
 
     private final VocabularyItemRepository vocabularyItemRepository;
     private final WordMasteryRepository wordMasteryRepository;
-    private final HamonService hamonService;
 
     // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG
     // competencies
@@ -67,11 +65,9 @@ public class VocabularyService extends BaseGameService {
     }
 
     public VocabularyService(VocabularyItemRepository vocabularyItemRepository,
-            WordMasteryRepository wordMasteryRepository,
-            HamonService hamonService) {
+            WordMasteryRepository wordMasteryRepository) {
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.wordMasteryRepository = wordMasteryRepository;
-        this.hamonService = hamonService;
     }
 
     @Transactional(readOnly = true)
@@ -88,8 +84,8 @@ public class VocabularyService extends BaseGameService {
     }
 
     @Transactional
-    public VocabularyWordResponse getNextWord(UUID userId) {
-        String activeDomain = getActiveDomain(userId);
+    public VocabularyWordResponse getNextWord(UUID userId, Integer moduleNumber) {
+        String activeDomain = resolveDomain(userId, moduleNumber);
         log.info("Fetching next unmastered word for user: {}, activeDomain: {}", userId, activeDomain);
 
         List<VocabularyItem> domainItems = vocabularyItemRepository.findByDomainOrderByOrdinalAsc(activeDomain);
@@ -110,6 +106,22 @@ public class VocabularyService extends BaseGameService {
 
         log.info("All vocabulary words in domain '{}' are mastered for user: {}", activeDomain, userId);
         return null; // Return null to indicate domain completion
+    }
+
+    /**
+     * Picks the domain to play. An explicit module number (from a module screen
+     * or a retake) wins; otherwise fall back to the unlock-based active domain.
+     */
+    private String resolveDomain(UUID userId, Integer moduleNumber) {
+        if (moduleNumber != null) {
+            if (moduleNumber == 2) {
+                return "self_body";
+            }
+            if (moduleNumber == 3) {
+                return "family_home";
+            }
+        }
+        return getActiveDomain(userId);
     }
 
     @Transactional(readOnly = true)
@@ -183,6 +195,9 @@ public class VocabularyService extends BaseGameService {
     public WordMasteryResponse recordStepAccuracy(UUID userId, UUID wordId, String step, boolean isCorrect) {
         log.info("Recording step progress: userId={}, wordId={}, step={}, correct={}", userId, wordId, step, isCorrect);
 
+        VocabularyItem item = vocabularyItemRepository.findById(wordId)
+                .orElseThrow(() -> new IllegalArgumentException("Vocabulary item not found with ID: " + wordId));
+
         WordMastery mastery = wordMasteryRepository.findByUserIdAndVocabItemId(userId, wordId)
                 .orElseGet(() -> {
                     WordMastery newMastery = new WordMastery(userId, wordId);
@@ -208,9 +223,8 @@ public class VocabularyService extends BaseGameService {
         mastery.setOverallAccuracy(BigDecimal.valueOf(overall).setScale(2, RoundingMode.HALF_UP));
 
         // Evaluate Status
-        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50% OR hamon_fail_count
-        // >= 3
-        if (mastery.getHamonFailCount() >= 3 || overall < 50.0) {
+        // Green: overall_accuracy >= 75%; Yellow: 50-74%; Red: <50%
+        if (overall < 50.0) {
             mastery.setStatus("red");
         } else if (overall >= 75.0) {
             mastery.setStatus("green");
@@ -220,24 +234,20 @@ public class VocabularyService extends BaseGameService {
 
         wordMasteryRepository.save(mastery);
 
-        // Check if the current domain is now fully complete (meaning all words in it
-        // are green)
-        evaluateDomainCompletion(userId);
-
-        // Hamon ng Pamana is disabled in favor of Mastery Practice
-        boolean hamonTriggered = false;
+        // Check if the answered word's own domain is now fully complete (meaning
+        // all words in it are green). Using the word's domain (instead of the
+        // unlock-based active domain) keeps retakes of either module correct.
+        evaluateDomainCompletion(userId, item.getDomain());
 
         return new WordMasteryResponse(
                 wordId,
                 mastery.getOverallAccuracy().doubleValue(),
                 mastery.getStatus(),
-                "green".equalsIgnoreCase(mastery.getStatus()),
-                hamonTriggered);
+                "green".equalsIgnoreCase(mastery.getStatus()));
     }
 
-    private void evaluateDomainCompletion(UUID userId) {
-        String activeDomain = getActiveDomain(userId);
-        List<VocabularyItem> domainItems = vocabularyItemRepository.findByDomain(activeDomain);
+    private void evaluateDomainCompletion(UUID userId, String domain) {
+        List<VocabularyItem> domainItems = vocabularyItemRepository.findByDomain(domain);
 
         boolean allGreen = true;
         double sumAccuracy = 0.0;
@@ -253,10 +263,10 @@ public class VocabularyService extends BaseGameService {
 
         if (allGreen && !domainItems.isEmpty()) {
             double averageAccuracy = sumAccuracy / domainItems.size();
-            if ("self_body".equalsIgnoreCase(activeDomain)) {
+            if ("self_body".equalsIgnoreCase(domain)) {
                 log.info("All 10 Self & Body words are green! Unlocking Module 3. Avg accuracy: {}%", averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 2, averageAccuracy);
-            } else if ("family_home".equalsIgnoreCase(activeDomain)) {
+            } else if ("family_home".equalsIgnoreCase(domain)) {
                 log.info("All 15 Family & Home words are green! Unlocking Module 4. Avg accuracy: {}%",
                         averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 3, averageAccuracy);

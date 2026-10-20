@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
-import { Progress } from '@/components/ui/progress'
 import api from '@/lib/api'
 import type { ModuleProgress } from '@/types'
-import { Lock, Star, MapPin } from 'lucide-react'
+import { Lock, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface TrailNode {
@@ -17,26 +16,11 @@ interface TrailNode {
 }
 
 const TRAIL_NODES: TrailNode[] = [
-  { moduleNumber: 1, titleFil: 'Pantig', title: 'Pakinggan at Kilalanin', x: 14, y: 49 },
-  { moduleNumber: 2, titleFil: 'Salita', title: 'Basahin at Unawain', x: 38, y: 24 },
-  { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 38 },
-  { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 87, y: 21 },
+  { moduleNumber: 1, titleFil: 'Pantig', title: 'Pakinggan at Kilalanin', x: 14, y: 54 },
+  { moduleNumber: 2, titleFil: 'Salita', title: 'Basahin at Unawain', x: 38, y: 34 },
+  { moduleNumber: 3, titleFil: 'Talasalitaan', title: 'Salitang Pamilya', x: 62, y: 43 },
+  { moduleNumber: 4, titleFil: 'Pangungusap', title: 'Bumuo ng Pangungusap', x: 87, y: 26 },
 ]
-
-type MedalTier = 'bronze' | 'silver' | 'gold'
-
-const getMedalTier = (accuracy: number | null): MedalTier => {
-  if (accuracy === null) return 'bronze'
-  if (accuracy >= 95) return 'gold'
-  if (accuracy >= 85) return 'silver'
-  return 'bronze'
-}
-
-const MEDAL_STYLES: Record<MedalTier, { bgColor: string; ringColor: string }> = {
-  bronze: { bgColor: 'bg-[#8B5E3C]', ringColor: 'ring-[#CD7F32]' },
-  silver: { bgColor: 'bg-[#6B7280]', ringColor: 'ring-[#C0C0C0]' },
-  gold:   { bgColor: 'bg-[#B8860B]', ringColor: 'ring-[#FFD700]' },
-}
 
 export const TrailMapPage: React.FC = () => {
   const { user } = useAuth()
@@ -68,7 +52,13 @@ export const TrailMapPage: React.FC = () => {
   const getProgress = (moduleNumber: number) =>
     moduleProgress.find((p) => p.moduleNumber === moduleNumber)
 
-  const completedCount = moduleProgress.filter((p) => p.isComplete).length
+  const checkIsComplete = (moduleNumber: number) => {
+    const p = getProgress(moduleNumber)
+    const nextP = getProgress(moduleNumber + 1)
+    return p?.isComplete || (p?.isUnlocked && nextP?.isUnlocked) || false
+  }
+
+  const completedCount = TRAIL_NODES.filter(node => checkIsComplete(node.moduleNumber)).length
   const totalModules = 4
   const overallPercent = Math.round((completedCount / totalModules) * 100)
 
@@ -84,8 +74,14 @@ export const TrailMapPage: React.FC = () => {
     const progress = getProgress(node.moduleNumber)
     if (!progress?.isUnlocked) return
 
+    const isModule4Complete = getProgress(4)?.isComplete ?? false
+
     if (progress?.isComplete) {
-      // Allow retry of any completed module — show confirmation modal directly
+      if (!isModule4Complete) {
+        setToastMessage("Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!")
+        setTimeout(() => setToastMessage(null), 4000)
+        return
+      }
       setConfirmModal({ isOpen: true, node })
     } else {
       navigate(`/modules/${node.moduleNumber}`)
@@ -109,35 +105,65 @@ export const TrailMapPage: React.FC = () => {
   const renderNodeButton = (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber)
     const isUnlocked = progress?.isUnlocked ?? false
-    const isComplete = progress?.isComplete ?? false
+    const isComplete = checkIsComplete(node.moduleNumber)
     const isActive = activeModule === node.moduleNumber
 
-    let bgColor = 'bg-[#E3D5C1]'
-    let icon = <Lock className="w-8 h-8 text-[#A89A86]" />
-    let ringColor = 'ring-[#D0C2AE]'
-
     if (isComplete) {
-      const medal = getMedalTier(progress?.accuracy ?? null)
-      const medalStyle = MEDAL_STYLES[medal]
-      bgColor = medalStyle.bgColor
-      ringColor = medalStyle.ringColor
-      icon = <Star className="w-10 h-10 text-[#FDD835] fill-[#FDD835]" />
-    } else if (isActive && isUnlocked) {
+      return (
+        <div 
+          key={node.moduleNumber} 
+          className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-auto"
+          style={{ left: `${node.x}%`, top: `${node.y}%`, zIndex: 10 }}
+        >
+          <button
+            onClick={() => handleModuleClick(node)}
+            disabled={!isUnlocked}
+            title={node.title}
+            className={cn(
+              "w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center transition-all duration-300",
+              isUnlocked ? 'cursor-pointer hover:scale-105 active:translate-y-1' : 'cursor-not-allowed opacity-90'
+            )}
+          >
+            <img 
+              src="/images/Done-Module.png" 
+              alt="Completed" 
+              className="w-full h-full object-contain drop-shadow-md" 
+            />
+          </button>
+
+          {/* BRIGHT YELLOW 3D LABEL */}
+          <div className="relative bg-gradient-to-b from-[#FFEE58] to-[#FBC02D] px-4 py-2 rounded-2xl shadow-[0_5px_0_#F57F17] text-center border-2 border-[#F57F17] min-w-[130px] transition-transform hover:-translate-y-1">
+            <div className="text-[11px] font-black text-[#E65100] uppercase tracking-wide leading-none mb-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
+              Module {node.moduleNumber}
+            </div>
+            <div className="text-base font-extrabold text-white leading-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+              {node.titleFil}
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    let bgColor = 'bg-transparent'
+    let ringColor = 'ring-transparent'
+    let icon = <img src="/images/Lock-Module.png" alt="Locked" className="w-full h-full object-contain drop-shadow-md" />
+
+    if (isActive && isUnlocked) {
       bgColor = 'bg-[#E88C30]'
+      ringColor = 'ring-[#D17621]'
       icon = (
         <img 
           src={character === 'Lalaki' ? '/images/M_User.png' : '/images/F_User.png'} 
           alt="Character Avatar" 
-          className="w-14 h-14 object-cover object-top rounded-full scale-110 border-2 border-orange-200/50 shadow-sm" 
+          className="w-16 h-16 md:w-20 md:h-20 object-cover object-top rounded-full scale-110 border-2 border-orange-200/50 shadow-sm" 
         />
       )
-      ringColor = 'ring-[#D17621]'
     }
 
     return (
       <div 
         key={node.moduleNumber} 
-        className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2"
+        className="absolute transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-2 pointer-events-auto"
         style={{ left: `${node.x}%`, top: `${node.y}%`, zIndex: 10 }}
       >
         <button
@@ -145,7 +171,7 @@ export const TrailMapPage: React.FC = () => {
           disabled={!isUnlocked}
           title={node.title}
           className={cn(
-            "w-20 h-20 rounded-full flex items-center justify-center shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-300 ring-4",
+            "w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-300 ring-4",
             bgColor, ringColor,
             isUnlocked ? 'cursor-pointer hover:scale-105 active:translate-y-1 active:shadow-[0_2px_0_rgba(0,0,0,0.15)]' : 'cursor-not-allowed opacity-90'
           )}
@@ -153,19 +179,14 @@ export const TrailMapPage: React.FC = () => {
           {icon}
         </button>
 
-        <div className="bg-white px-3 py-1.5 rounded-2xl shadow-md text-center border-2 border-gray-100 min-w-[110px]">
-          <div className="text-[10px] font-bold text-gray-400 uppercase leading-none mb-1">Module {node.moduleNumber}</div>
-          <div className="text-sm font-extrabold text-gray-700 leading-none">{node.titleFil}</div>
-          {isComplete && progress?.accuracy != null && (
-            <div className={cn(
-              "text-[10px] font-bold mt-1 leading-none",
-              getMedalTier(progress.accuracy) === 'gold' ? 'text-[#B8860B]' :
-              getMedalTier(progress.accuracy) === 'silver' ? 'text-[#6B7280]' :
-              'text-[#CD7F32]'
-            )}>
-              ⭐ {Math.round(progress.accuracy)}%
-            </div>
-          )}
+        {/* BRIGHT YELLOW 3D LABEL */}
+        <div className="relative bg-gradient-to-b from-[#FFEE58] to-[#FBC02D] px-4 py-2 rounded-2xl shadow-[0_5px_0_#F57F17] text-center border-2 border-[#F57F17] min-w-[130px] transition-transform hover:-translate-y-1">
+          <div className="text-[11px] font-black text-[#E65100] uppercase tracking-wide leading-none mb-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.5)]">
+            Module {node.moduleNumber}
+          </div>
+          <div className="text-base font-extrabold text-white leading-none drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">
+            {node.titleFil}
+          </div>
         </div>
       </div>
     )
@@ -173,55 +194,106 @@ export const TrailMapPage: React.FC = () => {
 
   return (
     <AppShell>
-      <div className="p-4 lg:p-6 max-w-7xl mx-auto flex flex-col h-full min-h-[calc(100vh-80px)]">
+      <div className="relative w-full h-full overflow-hidden bg-[#eef4eb]">
         
-        {/* TRAIL MAP Title */}
-        <div className="text-center mb-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white font-heading tracking-tight inline-flex items-center gap-3">
-            TRAIL MAP
-          </h1>
+        {/* Full Bleed Map Image */}
+        <img 
+          src="/images/TrailMap1.jpg" 
+          alt="Trail Map"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/9 pointer-events-none z-0" />
+
+        {/* Top Header (Floating) */}
+        <div className="absolute top-4 left-4 right-4 z-20 flex items-start pointer-events-none">
+          
+           {/* Module Button (Top Left) */}
+          <button
+            onClick={() => {
+              // navigate('/modules')
+            }}
+            title="View Modules"
+            className="absolute left-20 top-2 pointer-events-auto cursor-pointer hover:scale-110 hover:-translate-y-1 hover:drop-shadow-xl active:scale-95 active:translate-y-1 transition-all duration-200"
+          >
+            <img 
+              src="/images/Module-btn.png" 
+              alt="Modules Button" 
+              className="h-12 md:h-14 w-auto object-contain drop-shadow-[0_6px_4px_rgba(0,0,0,0.5)]" 
+            />
+          </button>
+
+          {/* TRAIL MAP Title (Centered) */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-0 pointer-events-auto mt-2">
+            <img 
+              src="/images/TM.png" 
+              alt="Trail Map" 
+              className="h-14 md:h-16 lg:h-20 w-auto object-contain drop-shadow-md" 
+            />
+          </div>
         </div>
 
-        {/* Map Container – fills available space */}
-        <div className="flex-1 w-full bg-green-900/30 border-4 border-white/10 shadow-xl overflow-hidden relative rounded-2xl">
+        {/* Map Nodes Overlay */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none z-10">
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-16 h-16 border-4 border-pamana-green border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
-            <div className="relative w-full h-full">
-              <img 
-                src="/images/TrailMap.png" 
-                alt="Trail Map"
-                className="w-full h-full object-cover object-center"
-              />
-              
-              {/* Overlay container for module nodes */}
-              <div className="absolute inset-0 w-full h-full">
-                {TRAIL_NODES.map(renderNodeButton)}
-              </div>
-            </div>
+            TRAIL_NODES.map(renderNodeButton)
           )}
         </div>
 
-        {/* Progress Bar Box – below map */}
-        <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20 shadow-lg">
-          <div className="flex items-center gap-3">
-            <MapPin className="w-6 h-6 text-pamana-green flex-shrink-0" />
-            <div className="flex-1">
-              <Progress 
-                value={overallPercent} 
-                className="h-4 bg-green-900/50 rounded-full overflow-hidden [&>div]:bg-gradient-to-r [&>div]:from-green-300 [&>div]:to-green-500 [&>div]:rounded-full [&>div]:transition-all [&>div]:duration-500"
-              />
-            </div>
-            <div className="font-bold text-white text-lg w-16 text-right">{overallPercent}%</div>
+      {/* Floating Kids Game Progress Bar (Bottom) */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-6xl z-20 pointer-events-auto">
+        <div className="bg-white/95 backdrop-blur-md rounded-full px-6 py-4 flex items-center gap-6 shadow-[0_12px_35px_rgba(0,0,0,0.25),inset_0_2px_6px_rgba(255,255,255,0.8)] border-[5px] border-amber-200">
+          
+          {/* Static Progress Icon (Made Smaller) */}
+          <div className="relative flex-shrink-0">
+            <img 
+              src="/images/Progress-Icon.png" 
+              alt="Progress Icon" 
+              className="relative w-10 h-10 md:w-14 md:h-14 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.2)]" 
+            />
           </div>
+          
+          {/* Chunky 3D Inset Track */}
+          <div className="flex-1 h-9 md:h-12 bg-amber-100/80 rounded-full overflow-hidden shadow-[inset_0_6px_10px_rgba(0,0,0,0.15)] border-4 border-amber-300 relative p-1">
+            
+            {/* 3D Vibrant Yellow/Gold Fill */}
+            <div 
+              className="h-full bg-gradient-to-b from-yellow-300 via-amber-400 to-orange-500 rounded-full transition-all duration-700 ease-out shadow-[inset_0_3px_5px_rgba(255,255,255,0.7),0_2px_4px_rgba(0,0,0,0.2)] relative overflow-hidden flex items-center justify-end pr-2"
+              style={{ width: `${Math.max(overallPercent, 6)}%` }} // Ensures minimum width so gloss doesn't break at 0%
+            >
+              {/* Animated Glossy Shimmer Sweep */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_2s_infinite]"></div>
+
+              {/* Glossy top highlight */}
+              <div className="absolute top-1 left-3 right-3 h-2 bg-white/60 rounded-full blur-[0.5px]"></div>
+              
+              {/* Optional mini star docked at the tip of the bar for extra game flair */}
+              <div className="relative z-10 w-5 h-5 md:w-7 md:h-7 bg-white rounded-full flex items-center justify-center shadow-md border-2 border-amber-300">
+                <span className="text-[10px] md:text-xs">⭐</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Playful Chunky Percentage Text */}
+          <div className="flex items-center justify-end min-w-[5ch]">
+            <span className="font-black text-amber-500 text-3xl md:text-4xl tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.15)] [-webkit-text-stroke:1px_#b45309]">
+              {overallPercent}%
+            </span>
+          </div>
+          
         </div>
+      </div>
+
       </div>
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
           <div className="bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
             <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
             <p className="font-medium">{toastMessage}</p>
@@ -237,9 +309,9 @@ export const TrailMapPage: React.FC = () => {
               <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="w-8 h-8 fill-current" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Ulitin ang Module</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Mastery Mode</h2>
               <p className="text-gray-600">
-                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ma-re-reset ang iyong progress at maaari mong pagbutihin ang iyong score.
+                Gusto mo bang ulitin ang <strong className="text-gray-800">Module {confirmModal.node.moduleNumber}</strong>? Ang iyong panibagong score ay marerekord.
               </p>
             </div>
             

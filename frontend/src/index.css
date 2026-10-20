@@ -7,31 +7,36 @@
 
 @layer base {
   :root {
-    --background: 142 76% 8%;
-    --foreground: 120 20% 90%;
-    --card: 142 50% 12%;
-    --card-foreground: 120 20% 90%;
-    --popover: 142 50% 12%;
-    --popover-foreground: 120 20% 90%;
-    --primary: 142 70% 45%;
+    /* Snoopy light theme: cream paper, deep-leaf ink, sunny gold accents */
+    --background: 100 40% 96%;
+    --foreground: 140 36% 26%;
+    --card: 0 0% 100%;
+    --card-foreground: 140 36% 26%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 36% 26%;
+    --primary: 122 38% 49%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 38 92% 50%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 142 30% 18%;
-    --muted-foreground: 120 15% 60%;
-    --accent: 38 92% 50%;
-    --accent-foreground: 0 0% 100%;
+    --secondary: 45 100% 51%;
+    --secondary-foreground: 24 30% 29%;
+    --muted: 105 30% 92%;
+    --muted-foreground: 140 18% 42%;
+    --accent: 45 100% 51%;
+    --accent-foreground: 24 30% 29%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 142 30% 20%;
-    --input: 142 30% 18%;
-    --ring: 142 70% 45%;
-    --radius: 0.75rem;
-    --chart-1: 142 70% 45%;
-    --chart-2: 38 92% 50%;
-    --chart-3: 220 70% 60%;
+    --success: 122 39% 49%;
+    --success-foreground: 0 0% 100%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 26 83% 14%;
+    --border: 110 28% 84%;
+    --input: 110 28% 88%;
+    --ring: 45 100% 51%;
+    --radius: 1rem;
+    --chart-1: 122 38% 49%;
+    --chart-2: 45 100% 51%;
+    --chart-3: 220 70% 55%;
     --chart-4: 340 75% 55%;
-    --chart-5: 280 65% 60%;
+    --chart-5: 280 65% 55%;
   }
 
   * {
@@ -54,41 +59,119 @@
   #root {
     min-height: 100vh;
   }
+
+  /* Consistent, high-contrast focus indicator across the app */
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
 }
 
 @layer components {
   /* Game tile base styles - minimum 44px touch target */
   .game-tile {
-    @apply min-h-[44px] min-w-[44px] rounded-2xl font-heading font-bold
+    @apply min-h-[44px] min-w-[44px] rounded-2xl border-2 border-white bg-white/80
+           font-heading font-bold text-[#2b5c3b] shadow-[0_4px_0_rgba(0,0,0,0.12)]
            transition-all duration-200 active:scale-95 select-none cursor-pointer;
   }
 
-  /* Glassmorphic card */
+  /* Frosted sticker card (light) */
   .glass-card {
-    @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl;
+    @apply bg-white/80 backdrop-blur-xl border-2 border-white rounded-2xl
+           shadow-[0_6px_0_rgba(0,0,0,0.1)];
   }
 
-  /* PAMANA gradient button */
+  /* Layered storybook surface: sticker-white panel with a solid drop shadow */
+  .card-story {
+    @apply relative bg-white border-4 border-white rounded-[1.75rem]
+           shadow-[0_10px_0_rgba(0,0,0,0.12)];
+  }
+
+  /* Snoopy sticker panel */
+  .panel-snoopy {
+    @apply relative rounded-[2rem] border-4 border-white bg-white
+           shadow-[0_8px_0_rgba(0,0,0,0.15)];
+  }
+
+  /* Snoopy chunky heading */
+  .heading-snoopy {
+    @apply font-black uppercase tracking-wide text-[#2b5c3b];
+  }
+
+  /* PAMANA gradient button - chunky 3D press */
   .btn-pamana {
-    @apply bg-gradient-to-r from-pamana-green to-emerald-500
-           text-white font-bold rounded-xl
-           hover:opacity-90 active:scale-95 transition-all duration-200;
+    @apply bg-gradient-to-b from-[#66BB6A] to-[#4CAF50]
+           border-b-4 border-[#2E7D32]
+           text-white font-black rounded-2xl
+           hover:brightness-105 active:border-b-0 active:translate-y-1
+           transition-all duration-100;
   }
 
-  /* Gold accent button */
+  /* Gold accent button - chunky 3D press */
   .btn-gold {
-    @apply bg-gradient-to-r from-pamana-gold to-pamana-amber
-           text-white font-bold rounded-xl
-           hover:opacity-90 active:scale-95 transition-all duration-200;
+    @apply bg-gradient-to-b from-[#FFC107] to-[#F0A500]
+           border-b-4 border-[#C98A00]
+           text-[#5D4037] font-black rounded-2xl
+           hover:brightness-105 active:border-b-0 active:translate-y-1
+           transition-all duration-100;
+  }
+
+  /* Parchment/paper texture for elevated storybook surfaces */
+  .texture-parchment {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+  }
+
+  /* Soft vignette used behind hero / game screens */
+  .bg-vignette {
+    background-image: radial-gradient(
+      ellipse at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.35) 100%
+    );
+  }
+
+  /* Rotating 3D ring of words (decorative, hidden on short/narrow screens) */
+  .slot-machine-stage {
+    perspective: 800px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slot-machine-ring {
+    width: 100%;
+    height: 60px;
+    transform-style: preserve-3d;
+    animation: slot-spin 10s infinite linear;
+  }
+
+  .slot-machine-item {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backface-visibility: hidden;
+  }
+}
+
+@keyframes slot-spin {
+  from {
+    transform: rotateX(360deg);
+  }
+  to {
+    transform: rotateX(0deg);
   }
 }
 
 @layer utilities {
   /* Animation utilities for game feedback */
-  .animate-shake {
-    animation: shake 0.4s ease-in-out;
-  }
-
   .animate-bounce-in {
     animation: bounce-in 0.4s ease-out;
   }
@@ -104,6 +187,33 @@
   .animate-star-pop {
     animation: star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
+
+  /* Minimum touch target helpers */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Hide scrollbar while keeping scrollability (for chip rails) */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Respect safe areas on notched devices */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
 
 /* Custom scrollbar */
@@ -113,15 +223,27 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.04);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(43, 92, 59, 0.2);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(43, 92, 59, 0.32);
+}
+
+/* Honor OS-level motion preferences for all CSS-driven animation */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

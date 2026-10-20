@@ -1,12 +1,9 @@
 package com.pamana.sentence;
 
 import com.pamana.auth.UserRepository;
-import com.pamana.auth.User;
 import com.pamana.auth.Role;
 import com.pamana.auth.dto.LoginRequest;
 import com.pamana.auth.dto.RegisterRequest;
-import com.pamana.klase.KlaseRepository;
-import com.pamana.klase.Klase;
 import com.pamana.sentence.SentenceProgressRepository;
 import com.pamana.sentence.dto.SentenceProgressRequest;
 import com.pamana.progress.ModuleProgressRepository;
@@ -48,9 +45,6 @@ public class SentenceControllerTest {
         private UserRepository userRepository;
 
         @Autowired
-        private KlaseRepository klaseRepository;
-
-        @Autowired
         private ModuleProgressRepository moduleProgressRepository;
 
         @Autowired
@@ -74,7 +68,6 @@ public class SentenceControllerTest {
                 parentReportRepository.deleteAll();
                 sentenceProgressRepository.deleteAll();
                 moduleProgressRepository.deleteAll();
-                klaseRepository.deleteAll();
                 userRepository.deleteAll();
 
                 // 1. Register a Learner
@@ -149,31 +142,8 @@ public class SentenceControllerTest {
         }
 
         @Test
-        public void testClassroomLeaderboardAndDashboardAndPdfReport() throws Exception {
-                // 1. Seed a classroom
-                UUID teacherId = UUID.randomUUID();
-                Klase klase = new Klase("Grade 2-Pinoys", teacherId, "ABC123");
-                klase = klaseRepository.save(klase);
-
-                // 2. Join the classroom using joinCode
-                mockMvc.perform(post("/api/klase/join")
-                                .header("Authorization", "Bearer " + token)
-                                .param("joinCode", "ABC123"))
-                                .andExpect(status().isOk());
-
-                // Verify user klase_id updated
-                User student = userRepository.findById(userId).get();
-                assertEquals(klase.getId(), student.getKlaseId());
-
-                // 3. Fetch ranked leaderboard
-                mockMvc.perform(get("/api/klase/" + klase.getId() + "/leaderboard")
-                                .header("Authorization", "Bearer " + token))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$", hasSize(1)))
-                                .andExpect(jsonPath("$[0].learnerName", is("Nene Garcia")))
-                                .andExpect(jsonPath("$[0].modulesCompleted", is(0)));
-
-                // 4. Fetch Parent Progress Dashboard metrics
+        public void testDashboardAndPdfReport() throws Exception {
+                // 1. Fetch Parent Progress Dashboard metrics
                 mockMvc.perform(get("/api/progress/" + userId + "/dashboard")
                                 .header("Authorization", "Bearer " + token))
                                 .andExpect(status().isOk())
@@ -181,7 +151,7 @@ public class SentenceControllerTest {
                                 .andExpect(jsonPath("$.trailCompletion", is(0.0)))
                                 .andExpect(jsonPath("$.wordMasteryList", hasSize(25)));
 
-                // 5. Explicitly complete Module 1 for the user and check PDF Report Download
+                // 2. Explicitly complete Module 1 for the user and check PDF Report Download
                 // API
                 ModuleProgress m1 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 1).get();
                 m1.setIsComplete(true);

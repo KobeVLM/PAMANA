@@ -50,8 +50,9 @@ public class SyllableController {
     }
 
     @GetMapping("/status")
-    @PreAuthorize("hasAnyRole('LEARNER', 'PARENT', 'TEACHER')")
-    public ResponseEntity<SyllableStatusResponse> getStatus(@RequestParam UUID userId) {
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<SyllableStatusResponse> getStatus(Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
         log.info("REST API Request: Fetch Syllable sub-level status for user: {}", userId);
         SyllableStatusResponse response = syllableService.computeModuleStatus(userId);
         return ResponseEntity.ok(response);
@@ -62,7 +63,8 @@ public class SyllableController {
     public ResponseEntity<com.pamana.syllable.dto.SyllableSetResponse> getSyllableSet(
             @RequestParam String subLevel,
             @RequestParam int setId,
-            @RequestParam UUID userId) {
+            Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
         log.info("REST API Request: Fetch Syllable set for user: {}, subLevel: {}, setId: {}", userId, subLevel, setId);
         com.pamana.syllable.dto.SyllableSetResponse response = syllableService.getSyllableSet(subLevel, setId, userId);
         return ResponseEntity.ok(response);

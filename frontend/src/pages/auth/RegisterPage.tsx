@@ -1,9 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 
 export const RegisterPage: React.FC = () => {
@@ -60,154 +57,169 @@ export const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-950 via-green-900 to-emerald-900 flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] flex items-center justify-center p-3 md:p-4 relative overflow-hidden">
+      
       {/* Back Button */}
-      <Link 
-        to="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-white/70 hover:text-white transition-colors p-2 rounded-full hover:bg-white/10"
-        aria-label="Back to Landing Page"
+      <button 
+        onClick={() => navigate('/')}
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-2 text-white font-black text-base md:text-lg bg-black/20 hover:bg-black/30 px-3 py-1.5 md:px-4 md:py-2 rounded-2xl backdrop-blur-sm transition-all"
       >
-        <ArrowLeft className="w-6 h-6" />
-        <span className="font-medium hidden sm:inline">Back</span>
-      </Link>
+        <ArrowLeft className="w-5 h-5 md:w-6 md:h-6 stroke-[3]" /> Back
+      </button>
 
+      {/* Decorative background clouds/effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-pamana-gold/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-pamana-green/20 rounded-full blur-3xl" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/30 rounded-full blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-white/20 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md">
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/5 rounded-3xl p-8 shadow-2xl">
-          {/* Logo */}
-          <div className="flex flex-col items-center mb-6">
-            <div className="w-20 h-20 flex items-center justify-center mb-1 animate-float overflow-hidden rounded-full p-2 bg-green-500/10 backdrop-blur-sm border border-white/20">
-              <img src="/images/Logo1.png" alt="PAMANA Logo" className="w-full h-full object-cover rounded-full drop-shadow-2xl" />
-            </div>
-            <h1 className="text-2xl font-heading font-bold text-white">PAMANA</h1>
-            <p className="text-green-300 text-sm mt-1">Start your journey</p>
-          </div>
+      <div className="relative w-full max-w-sm md:max-w-md">
+        {/* Card */}
+        <div className="bg-white/95 backdrop-blur-md border-4 border-white rounded-[2rem] p-5 md:p-6 shadow-[0_8px_0_rgba(0,0,0,0.1)] relative overflow-hidden">
+          
+          {/* Glossy Top Effect */}
+          <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/60 to-transparent pointer-events-none rounded-t-[2rem]" />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-green-200 font-medium text-sm">Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Juan dela Cruz"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.name && <p className="text-red-300 text-xs">{errors.name}</p>}
+          <div className="relative z-10">
+            {/* Header */}
+            <div className="flex flex-col items-center mb-4">
+              <img src="/images/S-Logo.png" alt="PAMANA Logo" className="h-12 md:h-14 object-contain drop-shadow-md mb-2" />
+              <h1 className="text-2xl md:text-3xl font-black text-slate-800">Join the Quest!</h1>
+              <p className="text-slate-500 font-bold text-sm mt-0.5">Create your account to begin.</p>
             </div>
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <Label htmlFor="reg-email" className="text-green-200 font-medium text-sm">Email</Label>
-              <Input
-                id="reg-email"
-                type="email"
-                placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.email && <p className="text-red-300 text-xs">{errors.email}</p>}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="reg-password" className="text-green-200 font-medium text-sm">Password</Label>
-              <div className="relative">
-                <Input
-                  id="reg-password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl pr-12"
+            <form onSubmit={handleSubmit} className="space-y-3">
+              
+              {/* Name */}
+              <div className="space-y-1">
+                <label htmlFor="name" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Name
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  placeholder="Juan dela Cruz"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
                   disabled={isLoading}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                {errors.name && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.name}</p>}
               </div>
-              {errors.password && <p className="text-red-300 text-xs">{errors.password}</p>}
-            </div>
 
-            {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-password" className="text-green-200 font-medium text-sm">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Repeat your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-11 bg-white/10 border-white/20 text-white placeholder:text-white/40 focus:border-lime-400 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
-                disabled={isLoading}
-              />
-              {errors.confirmPassword && <p className="text-red-300 text-xs">{errors.confirmPassword}</p>}
-            </div>
+              {/* Email */}
+              <div className="space-y-1">
+                <label htmlFor="reg-email" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Email
+                </label>
+                <input
+                  id="reg-email"
+                  type="email"
+                  placeholder="example@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                />
+                {errors.email && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.email}</p>}
+              </div>
 
-            {/* Role Selection — 2 columns */}
-            <div className="space-y-1.5">
-              <Label className="text-green-200 font-medium text-sm">Role</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {(['LEARNER', 'PARENT'] as const).map((r) => (
+              {/* Password */}
+              <div className="space-y-1">
+                <label htmlFor="reg-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="At least 6 characters"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] pr-10"
+                    disabled={isLoading}
+                  />
                   <button
-                    key={r}
                     type="button"
-                    onClick={() => setRole(r)}
-                    className={`h-10 text-xs font-bold rounded-xl transition-all ${
-                      role === r
-                        ? 'bg-pamana-gold text-green-950 shadow-md scale-105'
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   >
-                    {r === 'LEARNER' ? 'Learner' : 'Parent'}
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
-                ))}
+                </div>
+                {errors.password && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.password}</p>}
               </div>
-            </div>
 
-            {/* General error */}
-            {errors.general && (
-              <div className="p-3 bg-red-500/20 border border-red-500/40 rounded-xl">
-                <p className="text-red-300 text-sm text-center">{errors.general}</p>
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label htmlFor="confirm-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Repeat your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                />
+                {errors.confirmPassword && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.confirmPassword}</p>}
               </div>
-            )}
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              disabled={isLoading}
-              className="w-full h-12 bg-gradient-to-r from-pamana-green to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold text-base rounded-xl shadow-lg shadow-green-900/50 transition-all duration-200 active:scale-95 mt-2"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Registering...
-                </span>
-              ) : (
-                'Register'
+              {/* Role Selection */}
+              <div className="space-y-1 pt-1">
+                <span className="block text-xs text-slate-600 font-black uppercase tracking-wider ml-1">Role</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['LEARNER', 'PARENT'] as const).map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`py-2 rounded-xl font-black text-xs transition-all border-2 ${
+                        role === r
+                          ? "bg-[#FFC107] border-[#FFC107] text-amber-950 shadow-[0_3px_0_#D4A017] scale-[1.02]"
+                          : "bg-slate-100 border-transparent text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      {r === 'LEARNER' ? 'Learner' : 'Parent'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* General error */}
+              {errors.general && (
+                <div className="p-2 bg-red-100 border-2 border-red-300 rounded-xl">
+                  <p className="text-red-600 font-bold text-xs text-center">{errors.general}</p>
+                </div>
               )}
-            </Button>
-          </form>
 
-          <p className="text-center text-green-300 text-sm mt-5">
-            Already have an account?{' '}
-            <Link to="/login" className="text-pamana-gold font-semibold hover:underline">
-              Login here
-            </Link>
-          </p>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full mt-2 bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white py-3 rounded-xl border-4 border-white shadow-[0_5px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none transition-all font-black text-lg tracking-wider disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    REGISTERING...
+                  </span>
+                ) : (
+                  'REGISTER'
+                )}
+              </button>
+            </form>
+
+            {/* Login link */}
+            <p className="text-center text-slate-500 font-bold text-sm mt-4">
+              Already have an account?{' '}
+              <Link to="/login" className="text-[#4CAF50] font-black hover:text-[#388E3C] hover:underline transition-colors">
+                Login here
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

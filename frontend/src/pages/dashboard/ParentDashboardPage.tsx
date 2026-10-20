@@ -3,11 +3,17 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AppShell } from '@/components/layout/AppShell'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import {
+  Modal,
+  ModalContent,
+  ModalTitle,
+  ModalDescription,
+} from '@/components/ui/modal'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import api from '@/lib/api'
 import type { DashboardMetrics, WordMasteryStatus } from '@/types'
-import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map, Users, UserPlus, X, Check } from 'lucide-react'
+import { Loader2, Download, AlertTriangle, TrendingUp, BookOpen, Trophy, Clock, Map, Users, UserPlus, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
   LineChart,
@@ -38,10 +44,10 @@ interface ModuleAttemptHistory {
 }
 
 const STATUS_COLORS = {
-  green: { bg: 'bg-green-500/20', border: 'border-green-500/40', text: 'text-green-300', dot: 'bg-green-400' },
-  yellow: { bg: 'bg-yellow-500/20', border: 'border-yellow-500/40', text: 'text-yellow-300', dot: 'bg-yellow-400' },
-  red: { bg: 'bg-red-500/20', border: 'border-red-500/40', text: 'text-red-300', dot: 'bg-red-400' },
-  grey: { bg: 'bg-white/5', border: 'border-white/10', text: 'text-white/40', dot: 'bg-white/30' },
+  green: { bg: 'bg-[#e7f6e7]', border: 'border-[#4CAF50]', text: 'text-[#1B5E20]', dot: 'bg-[#4CAF50]' },
+  yellow: { bg: 'bg-[#fff7db]', border: 'border-[#FFC107]', text: 'text-[#7a5200]', dot: 'bg-[#FFC107]' },
+  red: { bg: 'bg-[#fdeaea]', border: 'border-[#EF5350]', text: 'text-[#8f1d1d]', dot: 'bg-[#EF5350]' },
+  grey: { bg: 'bg-white/60', border: 'border-[#d5e5d0]', text: 'text-[#5a7a63]', dot: 'bg-[#b9cdb4]' },
 }
 
 const STATUS_LABELS = {
@@ -93,8 +99,8 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
           isComplete
-            ? 'bg-pamana-green/20 border border-pamana-green/40 text-green-300 hover:bg-pamana-green/30'
-            : 'bg-white/5 border border-white/10 text-white/30 cursor-not-allowed'
+            ? 'bg-[#e7f6e7] border-2 border-[#4CAF50] text-[#1B5E20] hover:bg-[#d6efd6]'
+            : 'bg-white/60 border-2 border-[#e2eee0] text-[#5a7a63]/60 cursor-not-allowed'
         )}
       >
         {isDownloading ? (
@@ -104,7 +110,7 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
         )}
         Module {moduleNumber} Report
       </button>
-      {error && <p className="text-red-300 text-xs mt-1">{error}</p>}
+      {error && <p className="text-[#c62828] text-xs mt-1">{error}</p>}
     </div>
   )
 }
@@ -131,7 +137,7 @@ export const ParentDashboardPage: React.FC = () => {
     const maxAttempt = Math.max(...history.map(h => h.attemptNumber));
     const data = [];
     for (let i = 1; i <= maxAttempt; i++) {
-      const row: any = { attempt: `Attempt ${i}` };
+      const row: Record<string, string | number> = { attempt: `Attempt ${i}` };
       history.filter(h => h.attemptNumber === i).forEach(h => {
         row[`module${h.moduleNumber}`] = h.accuracy;
       });
@@ -196,6 +202,8 @@ export const ParentDashboardPage: React.FC = () => {
 
   useEffect(() => {
     if (user) loadDashboard()
+    // Intentionally runs when the authenticated parent changes, not on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
   const handleSelectLearner = async (learnerId: string) => {
@@ -224,8 +232,9 @@ export const ParentDashboardPage: React.FC = () => {
         setLinkSuccess('')
       }, 1000)
       await loadDashboard(newLearnerId)
-    } catch (err: any) {
-      setLinkError(err.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: string } } }
+      setLinkError(axiosErr.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
     } finally {
       setIsLinking(false)
     }
@@ -246,8 +255,8 @@ export const ParentDashboardPage: React.FC = () => {
       <AppShell>
         <div className="min-h-full flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-10 h-10 text-pamana-gold animate-spin" />
-            <p className="text-green-300">Naglo-load ng datos...</p>
+            <Loader2 className="w-10 h-10 text-[#D4A017] animate-spin" />
+            <p className="text-[#3f7d52]">Naglo-load ng datos...</p>
           </div>
         </div>
       </AppShell>
@@ -259,10 +268,10 @@ export const ParentDashboardPage: React.FC = () => {
       <div className="p-6 lg:p-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-3xl font-heading font-bold text-white mb-1">
+          <h1 className="text-3xl font-heading font-bold text-[#2b5c3b] mb-1">
             Dashboard ng Magulang 📊
           </h1>
-          <p className="text-green-300">
+          <p className="text-[#3f7d52]">
             {linkedLearnerName 
               ? `Subaybayan ang pag-unlad ni ${linkedLearnerName} sa PAMANA.`
               : 'Subaybayan ang pag-unlad ng iyong anak sa PAMANA.'}
@@ -271,21 +280,21 @@ export const ParentDashboardPage: React.FC = () => {
 
         {/* Learner Switcher Bar (when learners exist) */}
         {learners.length > 0 && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-4 sm:p-5 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Active Learner Identity */}
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pamana-green/40 to-emerald-600/30 border border-pamana-green/50 flex items-center justify-center text-pamana-gold font-heading font-black text-xl shadow-inner shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FFC107]/40 to-[#4CAF50]/40 border-2 border-white flex items-center justify-center text-[#7a5200] font-heading font-black text-xl shadow-inner shrink-0">
                 {activeLearner?.name?.[0]?.toUpperCase() || 'L'}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-green-300/80 font-bold uppercase tracking-wider">Kasalukuyang Mag-aaral</span>
-                  {isSwitchingLearner && <Loader2 className="w-3.5 h-3.5 text-pamana-gold animate-spin" />}
+                  <span className="text-xs text-[#3f7d52]/80 font-bold uppercase tracking-wider">Kasalukuyang Mag-aaral</span>
+                  {isSwitchingLearner && <Loader2 className="w-3.5 h-3.5 text-[#D4A017] animate-spin" />}
                 </div>
-                <div className="text-xl font-heading font-bold text-white leading-tight">
+                <div className="text-xl font-heading font-bold text-[#2b5c3b] leading-tight">
                   {activeLearner?.name}
                 </div>
-                <div className="text-xs text-green-300/60 font-mono">
+                <div className="text-xs text-[#3f7d52]/60 font-mono">
                   {activeLearner?.email}
                 </div>
               </div>
@@ -295,21 +304,22 @@ export const ParentDashboardPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               {/* Learner Selector Dropdown */}
               <div className="flex items-center gap-2">
-                <label className="text-xs text-green-200/70 font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
+                <label htmlFor="learner-select" className="text-xs text-[#5a7a63] font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
                 <div className="relative">
                   <select
+                    id="learner-select"
                     value={targetUserId}
                     onChange={(e) => handleSelectLearner(e.target.value)}
                     disabled={isSwitchingLearner}
-                    className="appearance-none bg-black/40 border border-white/20 hover:border-pamana-green/50 rounded-xl px-4 py-2.5 pr-9 text-sm text-white font-medium outline-none focus:border-pamana-green transition-all cursor-pointer"
+                    className="appearance-none bg-white border-2 border-[#d5e5d0] hover:border-[#4CAF50] rounded-xl px-4 py-2.5 pr-9 text-sm text-[#2b5c3b] font-medium outline-none focus:border-[#4CAF50] transition-all cursor-pointer"
                   >
                     {learners.map((l) => (
-                      <option key={l.id} value={l.id} className="bg-green-950 text-white py-1">
+                      <option key={l.id} value={l.id} className="bg-white text-[#2b5c3b] py-1">
                         {l.name} ({l.email})
                       </option>
                     ))}
                   </select>
-                  <Users className="w-4 h-4 text-green-300 absolute right-3 top-3 pointer-events-none" />
+                  <Users className="w-4 h-4 text-[#3f7d52] absolute right-3 top-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -322,7 +332,7 @@ export const ParentDashboardPage: React.FC = () => {
                   setLearnerIdentifier('')
                   setShowLinkModal(true)
                 }}
-                className="px-4 py-2.5 rounded-xl bg-pamana-green/20 hover:bg-pamana-green/30 border border-pamana-green/40 text-green-300 font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all hover:scale-102 active:scale-98 cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-[#e7f6e7] hover:bg-[#d6efd6] border-2 border-[#4CAF50] text-[#1B5E20] font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all hover:scale-102 active:scale-98 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>+ Mag-link ng Ibang Mag-aaral</span>
@@ -332,12 +342,12 @@ export const ParentDashboardPage: React.FC = () => {
         )}
 
         {!targetUserId && (
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 sm:p-8 max-w-md mx-auto text-center mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-6 sm:p-8 max-w-md mx-auto text-center mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-[#e7f6e7] border-2 border-[#4CAF50] flex items-center justify-center text-[#2E7D32] mx-auto mb-3">
               <UserPlus className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">I-link ang iyong anak</h2>
-            <p className="text-sm text-green-300 mb-6">
+            <h2 className="text-xl font-bold text-[#2b5c3b] mb-2">I-link ang iyong anak</h2>
+            <p className="text-sm text-[#3f7d52] mb-6">
               Pakilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak (Learner) upang masubaybayan ang kanilang progreso.
             </p>
             <form onSubmit={handleLinkLearner} className="space-y-4">
@@ -346,18 +356,18 @@ export const ParentDashboardPage: React.FC = () => {
                 placeholder="Email o Student Code ng anak..."
                 value={learnerIdentifier}
                 onChange={(e) => setLearnerIdentifier(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green"
+                className="w-full px-4 py-3 rounded-xl bg-[#f4f9f0] border-2 border-[#d5e5d0] text-[#2b5c3b] placeholder-[#7a9a83] text-sm outline-none focus:border-[#4CAF50]"
                 required
               />
               <button
                 type="submit"
                 disabled={isLinking}
-                className="w-full py-3 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold hover:scale-105 transition-transform disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 rounded-xl bg-gradient-to-b from-pamana-green to-emerald-600 border-2 border-white text-white font-bold shadow-[0_6px_0_rgba(0,0,0,0.25)] hover:brightness-110 active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isLinking ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'I-link ang Account'}
               </button>
-              {linkError && <p className="text-red-400 text-sm mt-2">{linkError}</p>}
-              {linkSuccess && <p className="text-emerald-300 text-sm mt-2">{linkSuccess}</p>}
+              {linkError && <p className="text-[#c62828] text-sm mt-2">{linkError}</p>}
+              {linkSuccess && <p className="text-[#2E7D32] text-sm mt-2">{linkSuccess}</p>}
             </form>
           </div>
         )}
@@ -368,9 +378,9 @@ export const ParentDashboardPage: React.FC = () => {
         {atRiskWords.length > 0 && (
           <div className="mb-6 space-y-2">
             {atRiskWords.map((word) => (
-              <Alert key={word.wordId} className="bg-red-500/10 border-red-500/40">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                <AlertDescription className="text-red-200 text-sm">
+              <Alert key={word.wordId} className="bg-[#fdeaea] border-2 border-[#EF5350]">
+                <AlertTriangle className="h-4 w-4 text-[#c62828]" />
+                <AlertDescription className="text-[#8f1d1d] text-sm">
                   Ang iyong anak ay nahihirapan sa salitang <strong>"{word.word}"</strong>.
                   Katumpakan: {word.overallAccuracy}%. Subukan ulit!
                 </AlertDescription>
@@ -382,81 +392,81 @@ export const ParentDashboardPage: React.FC = () => {
         {/* Metric Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           {/* Trail Completion */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-pamana-green/20 flex items-center justify-center">
-                <Map className="w-5 h-5 text-pamana-green" />
+              <div className="w-10 h-10 rounded-xl bg-[#e7f6e7] flex items-center justify-center">
+                <Map className="w-5 h-5 text-[#2E7D32]" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Trail Completion</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Trail Completion</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-2">{metrics?.trailCompletion ?? 0}%</div>
+            <div className="text-3xl font-bold text-[#2b5c3b] mb-2">{metrics?.trailCompletion ?? 0}%</div>
             <Progress
               value={metrics?.trailCompletion ?? 0}
-              className="h-2 bg-white/10 [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-400"
+              className="h-2 bg-[#d9e8d3] [&>div]:bg-gradient-to-r [&>div]:from-pamana-green [&>div]:to-emerald-600"
             />
           </div>
 
           {/* Mastered Words */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-blue-400" />
+              <div className="w-10 h-10 rounded-xl bg-[#e3f2fd] flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-[#1565C0]" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Mga Salitang Natuto</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Mga Salitang Natuto</span>
             </div>
             <div className="flex items-end gap-2">
-              <div className="text-3xl font-bold text-white">{metrics?.masteredCount ?? 0}</div>
-              <div className="text-sm text-red-400 mb-1">/ {(metrics?.masteredCount ?? 0) + (metrics?.needsReviewCount ?? 0)} na natuklas</div>
+              <div className="text-3xl font-bold text-[#2b5c3b]">{metrics?.masteredCount ?? 0}</div>
+              <div className="text-sm text-[#c62828] mb-1">/ {(metrics?.masteredCount ?? 0) + (metrics?.needsReviewCount ?? 0)} na natuklas</div>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <div className="w-2 h-2 rounded-full bg-green-400" />
-              <span className="text-xs text-green-300">Natuto: {metrics?.masteredCount}</span>
-              <div className="w-2 h-2 rounded-full bg-red-400 ml-2" />
-              <span className="text-xs text-red-300">Kailangan: {metrics?.needsReviewCount}</span>
+              <div className="w-2 h-2 rounded-full bg-[#4CAF50]" />
+              <span className="text-xs text-[#3f7d52]">Natuto: {metrics?.masteredCount}</span>
+              <div className="w-2 h-2 rounded-full bg-[#EF5350] ml-2" />
+              <span className="text-xs text-[#c62828]">Kailangan: {metrics?.needsReviewCount}</span>
             </div>
           </div>
 
           {/* Mastery Practice */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-pamana-gold/20 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-pamana-gold" />
+              <div className="w-10 h-10 rounded-xl bg-[#fff7db] flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-[#D4A017]" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Pagsasanay sa Mastery</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Pagsasanay sa Mastery</span>
             </div>
-            <div className="text-3xl font-bold text-white mb-2">{metrics?.trailCompletion ?? 0}%</div>
-            <div className="text-xs text-green-400">Pangkalahatang pagsulong</div>
+            <div className="text-3xl font-bold text-[#2b5c3b] mb-2">{metrics?.trailCompletion ?? 0}%</div>
+            <div className="text-xs text-[#2E7D32]">Pangkalahatang pagsulong</div>
           </div>
 
           {/* Avg Session Duration */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 rounded-xl bg-[#f3e8fd] flex items-center justify-center">
+                <Clock className="w-5 h-5 text-[#7B1FA2]" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Avg Session</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Avg Session</span>
             </div>
-            <div className="text-3xl font-bold text-white">{metrics?.avgSessionDuration ?? 0}<span className="text-lg text-green-400 ml-1">min</span></div>
-            <div className="text-xs text-green-400 mt-1">bawat linggo</div>
+            <div className="text-3xl font-bold text-[#2b5c3b]">{metrics?.avgSessionDuration ?? 0}<span className="text-lg text-[#2E7D32] ml-1">min</span></div>
+            <div className="text-xs text-[#2E7D32] mt-1">bawat linggo</div>
           </div>
 
           {/* Accuracy Trend Chart */}
-          <div className="md:col-span-2 bg-white/10 border border-white/20 rounded-2xl p-5">
+          <div className="md:col-span-2 bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-cyan-400" />
+              <div className="w-10 h-10 rounded-xl bg-[#e0f7fa] flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-[#00838F]" />
               </div>
-              <span className="text-green-300 font-medium text-sm">Katumpakan sa bawat Module</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Katumpakan sa bawat Module</span>
             </div>
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={metrics?.accuracyTrend.map((t, i) => ({ name: MODULE_NAMES[i], accuracy: t.accuracy }))}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                <XAxis dataKey="name" tick={{ fill: '#86efac', fontSize: 11 }} axisLine={false} />
-                <YAxis domain={[0, 100]} tick={{ fill: '#86efac', fontSize: 11 }} axisLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(43,92,59,0.15)" />
+                <XAxis dataKey="name" tick={{ fill: '#3f7d52', fontSize: 11 }} axisLine={false} />
+                <YAxis domain={[0, 100]} tick={{ fill: '#3f7d52', fontSize: 11 }} axisLine={false} />
                 <Tooltip
-                  contentStyle={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
-                  labelStyle={{ color: '#86efac' }}
-                  itemStyle={{ color: '#fff' }}
+                  contentStyle={{ background: '#ffffff', border: '2px solid #d5e5d0', borderRadius: '8px' }}
+                  labelStyle={{ color: '#2b5c3b' }}
+                  itemStyle={{ color: '#3f7d52' }}
                 />
                 <Line type="monotone" dataKey="accuracy" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 4 }} />
               </LineChart>
@@ -465,14 +475,14 @@ export const ParentDashboardPage: React.FC = () => {
         </div>
 
         {/* Learning Curve Line Chart */}
-        <div className="bg-white/10 border border-white/20 rounded-2xl p-6 mb-8">
+        <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-6 mb-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-[#e3f2fd] flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-[#1565C0]" />
             </div>
             <div>
-              <h3 className="text-white font-bold text-lg">Learning Curve</h3>
-              <p className="text-green-300 text-sm">Pag-unlad ng accuracy sa bawat attempt</p>
+              <h3 className="text-[#2b5c3b] font-bold text-lg">Learning Curve</h3>
+              <p className="text-[#3f7d52] text-sm">Pag-unlad ng accuracy sa bawat attempt</p>
             </div>
           </div>
           
@@ -480,11 +490,11 @@ export const ParentDashboardPage: React.FC = () => {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={formatHistoryData(moduleHistory)} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="attempt" axisLine={false} tick={{fill: '#86efac', fontSize: 12}} />
-                  <YAxis domain={[0, 100]} axisLine={false} tick={{fill: '#86efac', fontSize: 12}} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(43,92,59,0.15)" />
+                  <XAxis dataKey="attempt" axisLine={false} tick={{fill: '#3f7d52', fontSize: 12}} />
+                  <YAxis domain={[0, 100]} axisLine={false} tick={{fill: '#3f7d52', fontSize: 12}} />
                   <Tooltip 
-                    contentStyle={{background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px'}}
+                    contentStyle={{background: '#ffffff', border: '2px solid #d5e5d0', borderRadius: '8px', color: '#2b5c3b'}}
                   />
                   <Line type="monotone" connectNulls dataKey="module1" name="Module 1" stroke="#3B82F6" strokeWidth={2} dot={{r: 4}} />
                   <Line type="monotone" connectNulls dataKey="module2" name="Module 2" stroke="#EF4444" strokeWidth={2} dot={{r: 4}} />
@@ -494,7 +504,7 @@ export const ParentDashboardPage: React.FC = () => {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-40 flex items-center justify-center text-green-300/50">
+            <div className="h-40 flex items-center justify-center text-[#3f7d52]/50">
               Wala pang history ng retake.
             </div>
           )}
@@ -503,8 +513,8 @@ export const ParentDashboardPage: React.FC = () => {
         {/* Mastered vs Needs-Review Pie + Word Mastery List */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           {/* Pie chart */}
-          <div className="bg-white/10 border border-white/20 rounded-2xl p-5 flex flex-col items-center justify-center">
-            <h3 className="text-green-300 font-medium text-sm mb-3">Katayuan ng mga Salita</h3>
+          <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5 flex flex-col items-center justify-center">
+            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Katayuan ng mga Salita</h3>
             <PieChart width={160} height={160}>
               <Pie data={pieData} cx={75} cy={75} innerRadius={45} outerRadius={70} dataKey="value" stroke="none">
                 {pieData.map((entry, index) => (
@@ -516,18 +526,18 @@ export const ParentDashboardPage: React.FC = () => {
               {pieData.map((entry) => (
                 <div key={entry.name} className="flex items-center gap-1.5">
                   <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                  <span className="text-xs text-white/60">{entry.name}: {entry.value}</span>
+                  <span className="text-xs text-[#3f7d52]">{entry.name}: {entry.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Word Mastery List */}
-          <div className="lg:col-span-2 bg-white/10 border border-white/20 rounded-2xl p-5">
-            <h3 className="text-green-300 font-medium text-sm mb-3">Listahan ng mga Salita</h3>
+          <div className="lg:col-span-2 bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
+            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Listahan ng mga Salita</h3>
             <ScrollArea className="h-52">
               {metrics?.wordMasteryList.length === 0 ? (
-                <p className="text-white/40 text-sm text-center py-8">Hindi pa nagsisimula ang pag-aaral ng salita.</p>
+                <p className="text-[#5a7a63] text-sm text-center py-8">Hindi pa nagsisimula ang pag-aaral ng salita.</p>
               ) : (
                 <div className="space-y-2 pr-2">
                   {metrics?.wordMasteryList.map((word: WordMasteryStatus) => {
@@ -548,7 +558,7 @@ export const ParentDashboardPage: React.FC = () => {
                           <Badge variant="outline" className={cn('text-xs border', colors.border, colors.text)}>
                             {STATUS_LABELS[word.status]}
                           </Badge>
-                          <span className="text-white/50 text-xs font-mono">{word.overallAccuracy}%</span>
+                          <span className="text-[#5a7a63] text-xs font-mono">{word.overallAccuracy}%</span>
                         </div>
                       </div>
                     )
@@ -560,8 +570,8 @@ export const ParentDashboardPage: React.FC = () => {
         </div>
 
         {/* PDF Download buttons */}
-        <div className="bg-white/10 border border-white/20 rounded-2xl p-5">
-          <h3 className="text-green-300 font-medium text-sm mb-4">I-download ang mga Report</h3>
+        <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
+          <h3 className="text-[#3f7d52] font-medium text-sm mb-4">I-download ang mga Report</h3>
           <div className="flex flex-wrap gap-3">
             {[1, 2, 3, 4].map((moduleNum) => (
               <PDFDownloadButton
@@ -572,7 +582,7 @@ export const ParentDashboardPage: React.FC = () => {
               />
             ))}
           </div>
-          <p className="text-white/30 text-xs mt-3">
+          <p className="text-[#5a7a63] text-xs mt-3">
             * Ang PDF report ay available lamang pagkatapos makumpleto ang bawat module.
           </p>
         </div>
@@ -580,74 +590,65 @@ export const ParentDashboardPage: React.FC = () => {
         )}
 
         {/* Link Another Learner Modal */}
-        {showLinkModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-gradient-to-b from-green-950 via-green-900 to-emerald-950 border border-pamana-green/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
-              <button
-                type="button"
-                onClick={() => setShowLinkModal(false)}
-                className="absolute top-5 right-5 text-white/50 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+        <Modal open={showLinkModal} onOpenChange={setShowLinkModal}>
+          <ModalContent className="max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-14 h-14 rounded-2xl bg-[#e7f6e7] border-2 border-[#4CAF50] flex items-center justify-center text-[#2E7D32] mx-auto mb-3 shadow-inner">
+                <UserPlus className="w-7 h-7" aria-hidden="true" />
+              </div>
+              <ModalTitle className="text-2xl">Mag-link ng Bagong Mag-aaral</ModalTitle>
+              <ModalDescription className="text-xs sm:text-sm mt-1">
+                Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
+              </ModalDescription>
+            </div>
 
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-pamana-green/20 border border-pamana-green/40 flex items-center justify-center text-pamana-green mx-auto mb-3 shadow-inner">
-                  <UserPlus className="w-7 h-7" />
-                </div>
-                <h3 className="text-2xl font-heading font-bold text-white">Mag-link ng Bagong Mag-aaral</h3>
-                <p className="text-xs sm:text-sm text-green-300/80 mt-1">
-                  Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
-                </p>
+            <form onSubmit={handleLinkLearner} className="space-y-4">
+              <div className="space-y-1.5 text-left">
+                <label htmlFor="learner-identifier" className="text-xs font-semibold text-[#3f7d52] uppercase tracking-wider">
+                  Email o Student Code
+                </label>
+                <input
+                  id="learner-identifier"
+                  type="text"
+                  placeholder="Hal. maria@example.com o Student Code..."
+                  value={learnerIdentifier}
+                  onChange={(e) => setLearnerIdentifier(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-[#f4f9f0] border-2 border-[#d5e5d0] text-[#2b5c3b] placeholder-[#7a9a83] text-sm outline-none focus:border-[#4CAF50] transition-all"
+                  required
+                />
               </div>
 
-              <form onSubmit={handleLinkLearner} className="space-y-4">
-                <div className="space-y-1.5 text-left">
-                  <label className="text-xs font-semibold text-green-300 uppercase tracking-wider">
-                    Email o Student Code
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Hal. maria@example.com o Student Code..."
-                    value={learnerIdentifier}
-                    onChange={(e) => setLearnerIdentifier(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/20 text-white placeholder-white/30 text-sm outline-none focus:border-pamana-green transition-all"
-                    required
-                  />
-                </div>
+              {linkError && (
+                <p role="alert" className="text-xs text-[#8f1d1d] bg-[#fdeaea] border-2 border-[#EF5350] rounded-lg p-2.5 text-center">
+                  {linkError}
+                </p>
+              )}
+              {linkSuccess && (
+                <p role="status" className="text-xs text-[#1B5E20] bg-[#e7f6e7] border-2 border-[#4CAF50] rounded-lg p-2.5 text-center flex items-center justify-center gap-1.5">
+                  <Check className="w-4 h-4 text-[#2E7D32]" />
+                  <span>{linkSuccess}</span>
+                </p>
+              )}
 
-                {linkError && (
-                  <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/30 rounded-lg p-2.5 text-center">
-                    {linkError}
-                  </p>
-                )}
-                {linkSuccess && (
-                  <p className="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-2.5 text-center flex items-center justify-center gap-1.5">
-                    <Check className="w-4 h-4 text-emerald-400" />
-                    <span>{linkSuccess}</span>
-                  </p>
-                )}
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowLinkModal(false)}
-                    className="w-1/2 py-2.5 rounded-xl border border-white/10 text-white/70 hover:bg-white/5 text-sm font-semibold transition-all cursor-pointer"
-                  >
-                    Kanselahin
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isLinking}
-                    className="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-pamana-green to-emerald-500 text-white font-bold text-sm hover:brightness-110 active:scale-98 transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowLinkModal(false)}
+                  className="w-1/2 py-2.5 rounded-xl border-2 border-[#d5e5d0] text-[#5a7a63] hover:bg-[#f4f9f0] text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Kanselahin
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLinking}
+                  className="w-1/2 py-2.5 rounded-xl bg-gradient-to-b from-pamana-green to-emerald-600 border-2 border-white text-white font-bold text-sm shadow-[0_6px_0_rgba(0,0,0,0.25)] hover:brightness-110 active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
+                </button>
+              </div>
+            </form>
+          </ModalContent>
+        </Modal>
       </div>
     </AppShell>
   )
