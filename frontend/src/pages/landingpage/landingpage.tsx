@@ -46,20 +46,20 @@ export const LandingPage: React.FC = () => {
 
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/40 backdrop-blur-md border-b-4 border-white/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-24">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20 md:h-24">
             
             {/* Logo Section */}
-            <div className="flex items-center space-x-3">
+            <div className="flex shrink-0 items-center space-x-1.5 sm:space-x-3">
               <img
                 src="/images/S-Logo.png"
                 alt="S Logo"
-                className="h-10 md:h-14 w-auto object-contain drop-shadow-md"
+                className="h-8 sm:h-12 md:h-14 w-auto object-contain drop-shadow-md"
               />
               <img
                 src="/images/W-Logo.png"
                 alt="PAMANA Logo"
-                className="h-16 md:h-20 w-auto object-contain drop-shadow-md"
+                className="h-9 sm:h-14 md:h-20 w-auto object-contain drop-shadow-md"
               />
             </div>
 
@@ -74,12 +74,12 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* Auth Buttons */}
-            <div className="flex items-center space-x-4">
-              <Link to="/login" className="text-[#2b5c3b] font-black hover:text-[#1a2e05] transition-colors px-4 py-2 text-lg">
+            <div className="flex shrink-0 items-center space-x-1.5 sm:space-x-3 md:space-x-4">
+              <Link to="/login" className="text-[#2b5c3b] font-black hover:text-[#1a2e05] transition-colors whitespace-nowrap px-1.5 py-2 text-sm sm:px-3 sm:text-base md:px-4 md:text-lg">
                 Log in
               </Link>
               <Link to="/register">
-                <button className="bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white px-6 py-2.5 rounded-full border-4 border-white shadow-[0_4px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1 active:shadow-none transition-all font-black text-lg tracking-wide">
+                <button className="whitespace-nowrap bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white px-3 py-2 text-sm sm:px-5 sm:py-2.5 sm:text-base md:px-6 md:text-lg rounded-full border-[3px] sm:border-4 border-white shadow-[0_4px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1 active:shadow-none transition-all font-black tracking-wide">
                   Sign Up
                 </button>
               </Link>
