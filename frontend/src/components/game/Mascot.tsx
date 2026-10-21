@@ -74,6 +74,10 @@ const layer: CSSProperties = {
   inset: 0,
   backgroundSize: '300% 300%',
   backgroundRepeat: 'no-repeat',
+  // --- ADDED TRANSFORM HERE ---
+  // Zooms the image by 10% and pushes it down by 6% to hide the gap
+  transform: 'scale(1.1) translateY(0%)', 
+  transformOrigin: 'top center',
 }
 
 export type MascotProps = {
@@ -241,8 +245,17 @@ export function Mascot(props: MascotProps) {
         width: size,
         height: size,
         padding: 0,
-        border: 0,
-        background: 'transparent',
+        
+        // --- WOOD BACKGROUND STYLES ---
+        border: '4px solid #4A2F1D', 
+        borderRadius: '50%',         
+        overflow: 'hidden',          
+        backgroundImage: 'url("/images/O_wood.png")', 
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#8B5A2B', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)', 
+        
         appearance: 'none',
         cursor: 'pointer',
         userSelect: 'none',

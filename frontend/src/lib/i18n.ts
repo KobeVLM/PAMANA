@@ -33,7 +33,7 @@ export const STRINGS = {
   listenAgain: bi('Pindutin para marinig ulit', 'Press to hear it again'),
 
   // Feedback
-  correct: bi('Tama! Napakahusay!', 'Correct! Great job!'),
+  correct: bi('Correct! Great job!'),
   tryAgain: bi('Hindi pa tama — subukan ulit!', 'Not quite — try again!'),
 
   // Step names

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Bell, Paintbrush, Check, Music, Copy, Star } from 'lucide-react'
+import { User, Bell, Paintbrush, Check, Music, Copy, Star, Volume2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
   const { user } = useAuth()
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
   const [musicEnabled, setMusicEnabled] = useState(true)
+  const [sfxEnabled, setSfxEnabled] = useState(true)
   const [copiedCode, setCopiedCode] = useState(false)
 
   const handleCopyCode = () => {
@@ -28,6 +29,11 @@ export const SettingsPage: React.FC = () => {
     if (savedBgm === 'false') {
       setMusicEnabled(false)
     }
+
+    const savedSfx = localStorage.getItem('pamana_sfx')
+    if (savedSfx === 'false') {
+      setSfxEnabled(false)
+    }
   }, [])
 
   const handleCharacterChange = (char: 'Lalaki' | 'Babae') => {
@@ -40,6 +46,13 @@ export const SettingsPage: React.FC = () => {
     const newVal = !musicEnabled
     setMusicEnabled(newVal)
     localStorage.setItem('pamana_bgm', newVal ? 'true' : 'false')
+    window.dispatchEvent(new Event('pamana_settings_changed'))
+  }
+
+  const toggleSfx = () => {
+    const newVal = !sfxEnabled
+    setSfxEnabled(newVal)
+    localStorage.setItem('pamana_sfx', newVal ? 'true' : 'false')
     window.dispatchEvent(new Event('pamana_settings_changed'))
   }
 
@@ -62,7 +75,7 @@ export const SettingsPage: React.FC = () => {
 
           <div className="space-y-8">
             
-            {/* PROFILE SECTION - Deeper Green for better contrast */}
+            {/* PROFILE SECTION */}
             <section className="bg-[#4CAF50] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2E7D32] relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
               
@@ -79,7 +92,6 @@ export const SettingsPage: React.FC = () => {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                   <div className="space-y-2">
-                    {/* Changed label text to white/light for contrast */}
                     <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg shadow-inner">
                       {user?.name || 'Loading...'}
@@ -140,7 +152,7 @@ export const SettingsPage: React.FC = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               
-              {/* PREFERENCES - Deeper Blue */}
+              {/* PREFERENCES */}
               <section className="bg-[#00B0FF] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#0083B0] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 
@@ -183,8 +195,11 @@ export const SettingsPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-3 pt-6 border-t-4 border-white/30 mt-auto">
-                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Music</span>
+                    {/* IN-GAME AUDIO SETTINGS */}
+                    <div className="space-y-4 pt-6 border-t-4 border-white/30 mt-auto">
+                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">In-Game Audio</span>
+                      
+                      {/* Background Music */}
                       <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
                         <div className="flex items-center gap-3 text-white">
                           <div className="bg-white/20 p-2 rounded-xl">
@@ -209,12 +224,39 @@ export const SettingsPage: React.FC = () => {
                           </div>
                         </button>
                       </div>
+
+                      {/* Sound Effects */}
+                      <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
+                        <div className="flex items-center gap-3 text-white">
+                          <div className="bg-white/20 p-2 rounded-xl">
+                            <Volume2 className="w-6 h-6 text-white" strokeWidth={3} />
+                          </div>
+                          <span className="font-black text-lg drop-shadow-sm">Sound Effects</span>
+                        </div>
+                        <button
+                          onClick={toggleSfx}
+                          className={cn(
+                            "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",
+                            sfxEnabled ? "bg-[#4CAF50]" : "bg-gray-400"
+                          )}
+                        >
+                          <div
+                            className={cn(
+                              "w-8 h-8 rounded-full bg-white absolute top-0.5 transition-transform duration-300 shadow-md flex items-center justify-center",
+                              sfxEnabled ? "translate-x-10" : "translate-x-0.5"
+                            )}
+                          >
+                            {sfxEnabled && <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />}
+                          </div>
+                        </button>
+                      </div>
+
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* ALERTS - Deeper Purple */}
+              {/* ALERTS */}
               <section className="bg-[#AB47BC] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#7B1FA2] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
                 
