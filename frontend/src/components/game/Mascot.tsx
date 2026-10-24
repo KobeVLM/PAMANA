@@ -99,6 +99,8 @@ export type MascotProps = {
    * the happy face never bleeds into the next question.
    */
   resetKey?: unknown
+  /** The module number to determine the background image. */
+  moduleNumber?: number
 }
 
 /**
@@ -108,7 +110,16 @@ export type MascotProps = {
  * laptops and some hybrid devices; here touch pointers are ignored instead.
  */
 export function Mascot(props: MascotProps) {
-  const { directions, reactions, size = 140, className, label = 'mascot', celebrate = 0, resetKey } = props
+  const { 
+    directions, 
+    reactions, 
+    size = 140, 
+    className, 
+    label = 'mascot', 
+    celebrate = 0, 
+    resetKey,
+    moduleNumber // 👈 Destructure the new prop
+  } = props
 
   const buttonRef = useRef<HTMLButtonElement>(null)
   const squashRef = useRef<HTMLSpanElement>(null)
@@ -119,6 +130,17 @@ export function Mascot(props: MascotProps) {
   const celebrateRef = useRef(celebrate)
   const [direction, setDirection] = useState<Direction>('center')
   const [reaction, setReaction] = useState<Reaction | null>(null)
+
+  // 👇 Helper to pick the background based on module
+  const getBackgroundImage = () => {
+    switch (moduleNumber) {
+      case 1: return '/images/module-bg/m1_w.png'
+      case 2: return '/images/module-bg/m2_w.png'
+      case 3: return '/images/module-bg/m3_w.png'
+      case 4: return '/images/module-bg/m4_w.png'
+      default: return '/images/O_wood.png' // Fallback
+    }
+  }
 
   useEffect(() => {
     let sector = -1
@@ -246,11 +268,11 @@ export function Mascot(props: MascotProps) {
         height: size,
         padding: 0,
         
-        // --- WOOD BACKGROUND STYLES ---
+        // --- DYNAMIC BACKGROUND STYLES ---
         border: '4px solid #4A2F1D', 
         borderRadius: '50%',         
         overflow: 'hidden',          
-        backgroundImage: 'url("/images/O_wood.png")', 
+        backgroundImage: `url("${getBackgroundImage()}")`, // 👈 Used here
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundColor: '#8B5A2B', 

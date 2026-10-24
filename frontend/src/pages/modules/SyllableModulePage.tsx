@@ -437,8 +437,8 @@ export const SyllableModulePage: React.FC = () => {
 
   return (
     <div
-      className="relative min-h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
-      style={{ backgroundImage: "url('/images/m-Farm.jpg')" }}
+      className="relative h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
+      style={{ backgroundImage: "url('/images/module-bg/m-Farm.jpg')" }}
     >
       {/* Top Bar */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
@@ -454,7 +454,7 @@ export const SyllableModulePage: React.FC = () => {
         {/* Center: Title Image */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-2 md:pt-4">
           <img
-            src="/images/Module1.png"
+            src="/images/moduletitles/C_m1.png"
             alt="Module 1"
             className="w-[300px] md:w-[400px] lg:w-[500px] object-contain drop-shadow-2xl"
           />
@@ -496,7 +496,6 @@ export const SyllableModulePage: React.FC = () => {
                   : 'bg-gray-200 border-gray-300 text-gray-600'
               )}
             >
-              {/* FIXED: Removed `isCurrent &&` so the percentage stays visible on all completed levels */}
               {acc > 0 ? `${label} - ${Math.round(acc)}%` : label}
             </div>
           )
@@ -515,13 +514,14 @@ export const SyllableModulePage: React.FC = () => {
             audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
             celebrate={celebrate}
             resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
+            moduleNumber={1}
           />
         </div>
 
         {/* Equation Board (Border only on bottom) */}
         <div
           className="relative w-full max-w-2xl bg-cover bg-center bg-no-repeat rounded-3xl p-6 shadow-2xl flex flex-col items-center min-h-[160px] justify-center border-b-[8px] border-[#C2410C]"
-          style={{ backgroundImage: "url('/images/O_wood.png')" }}
+          style={{ backgroundImage: "url('/images/module-bg/m1_w.png')" }}
         >
           <div className="relative z-10 w-full flex items-center justify-center">
             {currentSet.subLevel === 'pagsama' ? (

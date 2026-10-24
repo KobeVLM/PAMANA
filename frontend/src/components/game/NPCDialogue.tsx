@@ -16,6 +16,7 @@ interface NPCDialogueProps {
   onPlayAudio?: () => void
   onAudioEnd?: () => void
   className?: string
+  moduleNumber?: number // 👈 Added moduleNumber
 }
 
 export const NPCDialogue: React.FC<NPCDialogueProps> = ({
@@ -29,6 +30,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   onPlayAudio,
   onAudioEnd,
   className,
+  moduleNumber, // 👈 Destructured here
 }) => {
   const { playAudio } = useAudio()
   
@@ -102,6 +104,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
           label={name}
           celebrate={celebrate}
           resetKey={resetKey}
+          moduleNumber={moduleNumber} // 👈 Passed down here
         />
         {/* UPDATED NAME STYLE HERE */}
         <span 
