@@ -47,33 +47,32 @@ public class DbSeeder implements CommandLineRunner {
 
             List<VocabularyItem> items = Arrays.asList(
                 // Module 2: Self & Body (10 words)
-                new VocabularyItem("mata",  "self_body",   "/audio/words/mata.mp3",  "/images/mata.png",  1),
-                new VocabularyItem("kamay", "self_body",   "/audio/words/kamay.mp3", "/images/kamay.png", 2),
-                new VocabularyItem("ilong", "self_body",   "/audio/words/ilong.mp3", "/images/ilong.png", 3),
-                new VocabularyItem("bibig", "self_body",   "/audio/words/bibig.mp3", "/images/bibig.png", 4),
-                new VocabularyItem("tenga", "self_body",   "/audio/words/tenga.mp3", "/images/tenga.png", 5),
-                new VocabularyItem("ulo",   "self_body",   "/audio/words/ulo.mp3",   "/images/ulo.png",   6),
-                new VocabularyItem("paa",   "self_body",   "/audio/words/paa.mp3",   "/images/paa.png",   7),
-                new VocabularyItem("likod", "self_body",   "/audio/words/likod.mp3", "/images/likod.png", 8),
-                new VocabularyItem("tiyan", "self_body",   "/audio/words/tiyan.mp3", "/images/tiyan.png", 9),
-                new VocabularyItem("noo",   "self_body",   "/audio/words/noo.mp3",   "/images/noo.png",   10),
-
+                new VocabularyItem("mata",  "self_body",   "/audio/words/mata.mp3",  "/images/module2/mata.png",  1),
+                new VocabularyItem("kamay", "self_body",   "/audio/words/kamay.mp3", "/images/module2/kamay.png", 2),
+                new VocabularyItem("ilong", "self_body",   "/audio/words/ilong.mp3", "/images/module2/ilong.png", 3),
+                new VocabularyItem("bibig", "self_body",   "/audio/words/bibig.mp3", "/images/module2/bibig.png", 4),
+                new VocabularyItem("tenga", "self_body",   "/audio/words/tenga.mp3", "/images/module2/tenga.png", 5),
+                new VocabularyItem("ulo",   "self_body",   "/audio/words/ulo.mp3",   "/images/module2/ulo.png",   6),
+                new VocabularyItem("paa",   "self_body",   "/audio/words/paa.mp3",   "/images/module2/paa.png",   7),
+                new VocabularyItem("likod", "self_body",   "/audio/words/likod.mp3", "/images/module2/likod.png", 8),
+                new VocabularyItem("tiyan", "self_body",   "/audio/words/tiyan.mp3", "/images/module2/tiyan.png", 9),
+                new VocabularyItem("noo",   "self_body",   "/audio/words/noo.mp3",   "/images/module2/noo.png",   10),
                 // Module 3: Family & Home (15 words)
-                new VocabularyItem("Nanay",   "family_home", "/audio/words/nanay.mp3",   "/images/nanay.png",   11),
-                new VocabularyItem("Tatay",   "family_home", "/audio/words/tatay.mp3",   "/images/tatay.png",   12),
-                new VocabularyItem("Lola",    "family_home", "/audio/words/lola.mp3",    "/images/lola.png",    13),
-                new VocabularyItem("Lolo",    "family_home", "/audio/words/lolo.mp3",    "/images/lolo.png",    14),
-                new VocabularyItem("Kuya",    "family_home", "/audio/words/kuya.mp3",    "/images/kuya.png",    15),
-                new VocabularyItem("Ate",     "family_home", "/audio/words/ate.mp3",     "/images/ate.png",     16),
-                new VocabularyItem("bahay",   "family_home", "/audio/words/bahay.mp3",   "/images/bahay.png",   17),
-                new VocabularyItem("kain",    "family_home", "/audio/words/kain.mp3",    "/images/kain.png",    18),
-                new VocabularyItem("tulog",   "family_home", "/audio/words/tulog.mp3",   "/images/tulog.png",   19),
-                new VocabularyItem("laro",    "family_home", "/audio/words/laro.mp3",    "/images/laro.png",    20),
-                new VocabularyItem("luto",    "family_home", "/audio/words/luto.mp3",    "/images/luto.png",    21),
-                new VocabularyItem("linis",   "family_home", "/audio/words/linis.mp3",   "/images/linis.png",   22),
-                new VocabularyItem("basa",    "family_home", "/audio/words/basa.mp3",    "/images/basa.png",    23),
-                new VocabularyItem("ligo",    "family_home", "/audio/words/ligo.mp3",    "/images/ligo.png",    24),
-                new VocabularyItem("kapatid", "family_home", "/audio/words/kapatid.mp3", "/images/kapatid.png", 25)
+                new VocabularyItem("Nanay",   "family_home", "/audio/words/nanay.mp3",   "/images/module3/nanay.png",   11),
+                new VocabularyItem("Tatay",   "family_home", "/audio/words/tatay.mp3",   "/images/module3/tatay.png",   12),
+                new VocabularyItem("Lola",    "family_home", "/audio/words/lola.mp3",    "/images/module3/lola.png",    13),
+                new VocabularyItem("Lolo",    "family_home", "/audio/words/lolo.mp3",    "/images/module3/lolo.png",    14),
+                new VocabularyItem("Kuya",    "family_home", "/audio/words/kuya.mp3",    "/images/module3/kuya.png",    15),
+                new VocabularyItem("Ate",     "family_home", "/audio/words/ate.mp3",     "/images/module3/ate.png",     16),
+                new VocabularyItem("bahay",   "family_home", "/audio/words/bahay.mp3",   "/images/module3/bahay.png",   17),
+                new VocabularyItem("kain",    "family_home", "/audio/words/kain.mp3",    "/images/module3/kain.png",    18),
+                new VocabularyItem("tulog",   "family_home", "/audio/words/tulog.mp3",   "/images/module3/tulog.png",   19),
+                new VocabularyItem("laro",    "family_home", "/audio/words/laro.mp3",    "/images/module3/laro.png",    20),
+                new VocabularyItem("luto",    "family_home", "/audio/words/luto.mp3",    "/images/module3/luto.png",    21),
+                new VocabularyItem("linis",   "family_home", "/audio/words/linis.mp3",   "/images/module3/linis.png",   22),
+                new VocabularyItem("basa",    "family_home", "/audio/words/basa.mp3",    "/images/module3/basa.png",    23),
+                new VocabularyItem("ligo",    "family_home", "/audio/words/ligo.mp3",    "/images/module3/ligo.png",    24),
+                new VocabularyItem("kapatid", "family_home", "/audio/words/kapatid.mp3", "/images/module3/kapatid.png", 25)
             );
 
             vocabularyItemRepository.saveAll(items);
