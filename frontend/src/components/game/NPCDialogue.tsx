@@ -160,13 +160,15 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         </div>
 
         {canToggleEn && showEn && (
-          <p
-            id={enId}
-            lang="en"
-            className="mt-2 border-t-[2px] border-dashed border-[#D4A373]/50 pt-1.5 text-xs md:text-sm leading-snug text-[#6B4A2D] font-medium relative z-10"
-          >
-            {lineEn}
-          </p>
+          <div className="absolute top-full left-0 right-0 mt-2 z-50">
+            <p
+              id={enId}
+              lang="en"
+              className="border-[3px] border-[#D4A373] bg-[#FFF8E7] p-3 shadow-[0_5px_0_rgba(90,62,43,0.3)] rounded-xl text-xs md:text-sm leading-snug text-[#6B4A2D] font-bold"
+            >
+              {lineEn}
+            </p>
+          </div>
         )}
       </div>
     </div>

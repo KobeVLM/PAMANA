@@ -105,6 +105,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [gamitinSentence, setGamitinSentence] = useState<string>(
     'Ang aking _____ ay malaki at maliwanag.'
   )
+  const [, setGamitinCorrectWord] = useState<string | null>(null)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
 
   const { replay: replayWord } = useAudioElement(currentWord?.audioUrl ?? null)
@@ -123,7 +124,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     bgmRef.current = audio
 
     const startAudio = () => {
-      // Check if BGM is enabled in settings before playing
       const isBgmEnabled = localStorage.getItem('pamana_bgm') !== 'false'
       if (isBgmEnabled && audio.paused) {
         audio.play().catch(() => console.log("Autoplay blocked by browser"))
@@ -132,7 +132,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
 
     startAudio()
 
-    // Listen for changes from the Settings page
     const handleSettingsChange = () => {
       const isBgmEnabled = localStorage.getItem('pamana_bgm') !== 'false'
       if (!isBgmEnabled) {
@@ -166,20 +165,17 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     }, durationMs)
   }, [])
 
-  // Duck BGM when word changes or step changes
   useEffect(() => {
     if (currentWord) {
       duckBGM(4000)
     }
   }, [currentWord, currentWord?.wordId, currentStep, duckBGM])
 
-  // Stop BGM when module is complete
   useEffect(() => {
     if (moduleComplete && bgmRef.current) {
       bgmRef.current.pause()
     }
   }, [moduleComplete])
-  // --------------------------------
 
   const isModule2 = moduleNumber === 2
   const npc = isModule2 ? 'lola' : 'lolo'
@@ -236,6 +232,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       setOptionsError(null)
       setOptionsLoading(false)
       setFeedback(null)
+      setGamitinCorrectWord(null)
       void refreshAccuracy()
     } catch (err) {
       setNextWordError(err)
@@ -259,9 +256,14 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           const res = await api.get(`/vocabulary/gamitin/${word.wordId}`)
           if (optionsRequestRef.current !== requestId) return
           setGamitinSentence(res.data.sentenceTemplate)
+          setGamitinCorrectWord(res.data.correctWord)
+          
           const mappedOptions = res.data.options.map(
             (opt: string, i: number) => ({
-              id: opt === res.data.correctWord ? word.wordId : `opt${i}`,
+              // Trim and lowercase both sides so casing/spaces don't break the match
+              id: opt.trim().toLowerCase() === res.data.correctWord.trim().toLowerCase() 
+                ? 'correct-answer' 
+                : `opt${i}`,
               label: opt,
             })
           )
@@ -275,7 +277,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             (o: { wordId: string; word: string; imageUrl: string }) => ({
               id: o.wordId,
               label: o.word,
-              imageUrl: o.imageUrl,
+              // ✅ Dynamically pick module2 or module3
+              imageUrl: `/images/module${moduleNumber}/${o.word.toLowerCase()}.png`,
             })
           )
           setMatchOptions(mappedOptions)
@@ -290,7 +293,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         }
       }
     },
-    []
+    [moduleNumber] // ✅ Add moduleNumber to dependency array
   )
 
   useEffect(() => {
@@ -303,9 +306,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     async (optionId: string) => {
       if (!currentWord || selectedId || isSubmitting) return
       
-      duckBGM(2000) // Duck BGM when answering
+      duckBGM(2000)
 
-      const isCorrect = optionId === currentWord.wordId
+      const isCorrect = 
+        (currentStep === 'gamitin' && optionId === 'correct-answer') || 
+        (currentStep !== 'gamitin' && optionId === currentWord.wordId)
+
       setSelectedId(optionId)
       setFeedback(isCorrect ? 'correct' : 'incorrect')
 
@@ -327,7 +333,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
 
       const newAttempts = attempts + 1
       setAttempts(newAttempts)
-      setCorrectId(isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS ? currentWord.wordId : null)
+      setCorrectId(
+        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS 
+          ? (currentStep === 'gamitin' ? 'correct-answer' : currentWord.wordId) 
+          : null
+      )
 
       setIsSubmitting(true)
       try {
@@ -503,6 +513,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           : "url('/images/module-bg/m-Kitchen.jpg')" 
       }}
     >
+      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
+
       {/* Top Bar — Identical to Module 1 */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
         <button
@@ -513,7 +525,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           Pamana Trail
         </button>
 
-        {/* CENTER: Spiral loop title (absolute, z-10) */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-6 md:pt-8">
           <img
             src={isModule2 ? "/images/moduletitles/C_m2.png" : "/images/moduletitles/C_m3.png"}
@@ -542,7 +553,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         </div>
       </div>
 
-      {/* Sub-level Steps — Margins matched to Module 1 */}
       <div className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-8 md:mt-12 px-4">
         {SPIRAL_STEPS.map((step, idx) => {
           const isCurrent = currentStep === step
@@ -567,10 +577,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         })}
       </div>
 
-      {/* Main Game Content — Matches Module 1 spacing precisely */}
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-8 z-10 gap-4 md:gap-6">
         
-        {/* NPC Dialogue */}
         <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-4 md:mb-6">
           <NPCDialogue
             npc={npc as 'lolo' | 'lola'}
@@ -583,19 +591,17 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           />
         </div>
 
-        {/* Wooden Board */}
         <div
           className="relative w-full max-w-2xl bg-cover bg-center bg-no-repeat rounded-3xl p-6 shadow-2xl flex flex-col items-center min-h-[160px] justify-center border-b-[8px] border-[#C2410C]"
           style={{ backgroundImage: isModule2 ? "url('/images/module-bg/m2_w.png')" : "url('/images/module-bg/m3_w.png')" }}
         >
           <div className="relative z-10 w-full flex items-center justify-center">
             
-            {/* Step: Pakinggan */}
             {currentStep === 'pakinggan' && (
               <div className="flex flex-wrap flex-row items-center justify-center gap-4 sm:gap-8 w-full">
                 <div className="flex flex-col items-center gap-2">
                   <p 
-                    className="font-black text-4xl md:text-5xl uppercase tracking-wider drop-shadow-[0_0_15px_white]"
+                    className="font-black text-4xl md:text-5xl uppercase tracking-wider"
                     style={{ color: 'white', WebkitTextStroke: '2px black', paintOrder: 'stroke fill' }}
                   >
                     {formatWordAsSyllables(currentWord.word)}
@@ -610,9 +616,15 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                     />
                   </div>
                 </div>
-                <div className="flex flex-col items-center justify-center bg-white p-2 rounded-2xl shadow-xl border-4 border-white">
+                  <div className="flex flex-col items-center justify-center bg-white p-1 rounded-xl shadow-xl border-2 border-white">
                   {!wordImageFailed ? (
-                    <img src={currentWord.imageUrl} alt={currentWord.word} onError={() => setWordImageFailed(true)} className="h-24 w-24 md:h-28 md:w-28 object-cover rounded-xl" />
+                    <img 
+                      // ✅ Dynamically pick module2 or module3
+                      src={`/images/module${moduleNumber}/${currentWord.word.toLowerCase()}.png`} 
+                      alt={currentWord.word} 
+                      onError={() => setWordImageFailed(true)} 
+                      className="h-24 w-24 md:h-28 md:w-28 object-cover rounded-xl" 
+                    />
                   ) : (
                     <div className="flex h-24 w-24 md:h-28 md:w-28 items-center justify-center rounded-xl bg-gray-100 font-heading text-xl font-bold text-gray-500">
                       {currentWord.word}
@@ -622,7 +634,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
               </div>
             )}
 
-            {/* Step: Kilalanin / Basahin */}
             {(currentStep === 'kilalanin' || currentStep === 'basahin') && (
               <div className="flex flex-col items-center gap-4">
                 <div onClickCapture={() => duckBGM(2000)}>
@@ -639,21 +650,31 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
               </div>
             )}
 
-            {/* Step: Gamitin */}
             {currentStep === 'gamitin' && (
-              <div className="text-xl md:text-2xl font-black text-white text-center drop-shadow-md flex flex-wrap items-center justify-center gap-2">
-                {gamitinSentence.split('_____')[0]}
-                <span className="inline-block mx-2 px-6 py-2 bg-black/30 rounded-xl border-b-4 border-white/20 text-amber-300 min-w-[100px] text-center">
-                  {selectedId ? matchOptions.find(o => o.id === selectedId)?.label : '_____'}
-                </span>
-                {gamitinSentence.split('_____')[1]}
+              <div className="text-xl md:text-2xl font-black text-white text-center drop-shadow-md flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pt-4">
+                {(() => {
+                  const parts = gamitinSentence.split(/_{3,}/)
+                  const selectedWord = selectedId ? matchOptions.find(o => o.id === selectedId)?.label : null
+                  
+                  return (
+                    <>
+                      <span>{parts[0]}</span>
+                      <span className={cn(
+                        "inline-block transition-all duration-300 text-amber-300",
+                        selectedWord ? "scale-110" : "tracking-widest"
+                      )}>
+                        {selectedWord || '_____'}
+                      </span>
+                      <span>{parts[1]}</span>
+                    </>
+                  )
+                })()}
               </div>
             )}
 
           </div>
         </div>
 
-        {/* Susunod button (pakinggan → kilalanin) */}
         {currentStep === 'pakinggan' && (
           <div className="w-full flex justify-center mt-2 z-20">
             <button
@@ -665,14 +686,13 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           </div>
         )}
 
-        {/* Options / Choices */}
         <div className="w-full max-w-2xl px-4 md:px-0 mt-2">
           {optionsLoading ? (
             <div className="text-white font-bold text-center animate-pulse">Inihahanda ang mga opsyon...</div>
           ) : optionsError ? (
              <div className="text-red-400 font-bold text-center bg-black/50 p-4 rounded-xl">Hindi ma-load ang mga opsyon.</div>
           ) : currentStep !== 'pakinggan' && (
-            <div className="grid grid-cols-4 gap-3 md:gap-6 w-full">
+                                   <div className="grid grid-cols-4 gap-3 md:gap-6 w-full">
               {matchOptions.map((opt) => {
                 const isSelected = selectedId === opt.id
                 const isCorrect = correctId === opt.id
@@ -687,20 +707,31 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                     key={opt.id}
                     onClick={() => void handleStepSelect(opt.id)}
                     disabled={isSubmitting || (!!selectedId && !isWrong)}
-                    className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:opacity-80 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
+                    className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
                     style={{ backgroundImage: `url(${bgImg})` }}
                   >
                     {opt.imageUrl && currentStep === 'kilalanin' ? (
-                      <div className="w-[85%] h-[85%] flex items-center justify-center">
+                      <div className="w-full h-full flex items-center justify-center p-2 md:p-3">
                         <img
                           src={opt.imageUrl}
                           alt={opt.label || 'Option'}
-                          className="w-full h-full object-contain rounded-xl"
+                          className="w-full h-full object-cover rounded-[15%] drop-shadow-md"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) fallback.style.display = 'block';
+                          }}
                         />
+                        <span
+                          className="hidden absolute text-2xl md:text-4xl font-black text-white drop-shadow-[0_4px_2px_rgba(0,0,0,0.4)] text-center leading-tight px-2"
+                          style={{ WebkitTextStroke: '2px #2A1B10', paintOrder: 'stroke fill' }}
+                        >
+                          {opt.label}
+                        </span>
                       </div>
                     ) : (
                       <span
-                        className="text-3xl md:text-5xl font-black text-white mt-1 md:mt-2 drop-shadow-[0_4px_2px_rgba(0,0,0,0.4)] text-center leading-tight"
+                        className="text-2xl md:text-4xl font-black text-white mt-1 md:mt-2 drop-shadow-[0_4px_2px_rgba(0,0,0,0.4)] text-center leading-tight px-2"
                         style={{ WebkitTextStroke: '2px #2A1B10', paintOrder: 'stroke fill' }}
                       >
                         {opt.label}
@@ -713,7 +744,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           )}
         </div>
 
-        {/* Feedback Area */}
         <div className="h-12 w-full flex items-center justify-center mt-2">
           {feedback && (
             <div
