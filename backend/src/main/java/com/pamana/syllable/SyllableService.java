@@ -67,7 +67,7 @@ public class SyllableService extends BaseGameService {
         double moduleAccuracy = computeModuleAccuracy(userId);
 
         boolean isModule1Completed = false;
-        if (hasAttemptedAllSubLevels(userId) && moduleAccuracy >= 80.0) {
+        if (hasAttemptedAllSubLevels(userId) && Math.round(moduleAccuracy) >= 80) {
             // Evaluates and potentially unlocks Module 2!
             moduleLockService.evaluateAndUnlock(userId, 1, moduleAccuracy);
             isModule1Completed = true;
@@ -92,11 +92,11 @@ public class SyllableService extends BaseGameService {
         double rhymingAcc = getSubLevelAverageAccuracy(userId, "rhyming");
 
         double overallAcc = computeModuleAccuracy(userId);
-        if (overallAcc >= 80.0 && hasAttemptedAllSubLevels(userId)) {
+        if (Math.round(overallAcc) >= 80 && hasAttemptedAllSubLevels(userId)) {
             moduleLockService.evaluateAndUnlock(userId, 1, overallAcc);
         }
         boolean module2Unlocked = moduleLockService.isModuleUnlocked(userId, 2);
-        boolean isComplete = overallAcc >= 80.0 && hasAttemptedAllSubLevels(userId);
+        boolean isComplete = Math.round(overallAcc) >= 80 && hasAttemptedAllSubLevels(userId);
 
         return new SyllableStatusResponse(
                 pagsamaAcc,
