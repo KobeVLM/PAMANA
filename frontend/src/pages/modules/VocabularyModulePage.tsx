@@ -92,7 +92,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [correctId, setCorrectId] = useState<string | null>(null)
   const [attempts, setAttempts] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const [moduleAccuracy, setModuleAccuracy] = useState<number | null>(null)
+  const [, setModuleAccuracy] = useState<number | null>(null)
   const [nextWordError, setNextWordError] = useState<unknown>(null)
   const [optionsLoading, setOptionsLoading] = useState(false)
   const [optionsError, setOptionsError] = useState<unknown>(null)
@@ -101,6 +101,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [wordComplete, setWordComplete] = useState(false)
   const [moduleComplete, setModuleComplete] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
+  const totalWords = moduleNumber === 2 ? 10 : 15
+  const [wordsCompleted, setWordsCompleted] = useState(0)
   const [celebrate, setCelebrate] = useState(0)
   const [gamitinSentence, setGamitinSentence] = useState<string>(
     'Ang aking _____ ay malaki at maliwanag.'
@@ -110,6 +112,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
 
   const { replay: replayWord } = useAudioElement(currentWord?.audioUrl ?? null)
   const optionsRequestRef = useRef(0)
+  const isFirstLoad = useRef(true)
 
   // --- BGM Volume Ducking Logic ---
   const bgmRef = useRef<HTMLAudioElement | null>(null)
@@ -224,6 +227,10 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         return
       }
       setCurrentWord(res.data)
+      if (!isFirstLoad.current) {
+        setWordsCompleted((prev) => Math.min(prev + 1, totalWords))
+      }
+      isFirstLoad.current = false
       setCurrentStep('pakinggan')
       setSelectedId(null)
       setCorrectId(null)
@@ -239,7 +246,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     } finally {
       setIsLoading(false)
     }
-  }, [user?.id, moduleNumber, refreshAccuracy])
+  }, [user?.id, moduleNumber, refreshAccuracy, totalWords])
 
   useEffect(() => {
     if (user?.id) void fetchNextWord()
@@ -403,6 +410,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     try {
       await api.delete(`/modules/reset/${user?.id}/${moduleNumber}`)
       setModuleComplete(false)
+      setWordsCompleted(0)
+      isFirstLoad.current = true
       await fetchNextWord()
       if (bgmRef.current) {
         bgmRef.current.play().catch(() => {})
@@ -543,11 +552,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             <div className="flex-1 h-6 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
               <div
                 className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{ width: `${Math.round(moduleAccuracy ?? 0)}%` }}
+                style={{ width: `${moduleComplete ? 100 : Math.round((wordsCompleted / totalWords) * 100)}%` }}
               />
             </div>
             <span className="ml-3 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3.5ch] text-right tracking-wide">
-              {Math.round(moduleAccuracy ?? 0)}%
+              {moduleComplete ? 100 : Math.round((wordsCompleted / totalWords) * 100)}%
             </span>
           </div>
         </div>
