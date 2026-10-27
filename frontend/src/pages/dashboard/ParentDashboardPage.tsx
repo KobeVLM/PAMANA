@@ -224,7 +224,7 @@ export const ParentDashboardPage: React.FC = () => {
     setLinkSuccess('')
     try {
       const res = await api.post('/parent/link-learner', { identifier: learnerIdentifier.trim() })
-      setLinkSuccess(res.data?.message || 'Matagumpay na nai-link ang mag-aaral!')
+      setLinkSuccess(res.data?.message || 'Learner linked successfully!')
       const newLearnerId = res.data?.learnerId
       setLearnerIdentifier('')
       setTimeout(() => {
@@ -234,7 +234,7 @@ export const ParentDashboardPage: React.FC = () => {
       await loadDashboard(newLearnerId)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
-      setLinkError(axiosErr.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
+      setLinkError(axiosErr.response?.data?.error || 'Could not link learner. Please check the Student ID and try again.')
     } finally {
       setIsLinking(false)
     }
@@ -295,7 +295,7 @@ export const ParentDashboardPage: React.FC = () => {
                   {activeLearner?.name}
                 </div>
                 <div className="text-xs text-[#3f7d52]/60 font-mono">
-                  {activeLearner?.email}
+                  ID: {activeLearner?.id?.slice(0, 8)}...
                 </div>
               </div>
             </div>
@@ -315,7 +315,7 @@ export const ParentDashboardPage: React.FC = () => {
                   >
                     {learners.map((l) => (
                       <option key={l.id} value={l.id} className="bg-white text-[#2b5c3b] py-1">
-                        {l.name} ({l.email})
+                        {l.name}
                       </option>
                     ))}
                   </select>
@@ -353,7 +353,7 @@ export const ParentDashboardPage: React.FC = () => {
             <form onSubmit={handleLinkLearner} className="space-y-4">
               <input
                 type="text"
-                placeholder="Email o Student Code ng anak..."
+                placeholder="Enter Student ID..."
                 value={learnerIdentifier}
                 onChange={(e) => setLearnerIdentifier(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#f4f9f0] border-2 border-[#d5e5d0] text-[#2b5c3b] placeholder-[#7a9a83] text-sm outline-none focus:border-[#4CAF50]"
