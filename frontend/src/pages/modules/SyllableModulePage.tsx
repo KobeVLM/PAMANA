@@ -440,6 +440,8 @@ export const SyllableModulePage: React.FC = () => {
       className="relative h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
       style={{ backgroundImage: "url('/images/module-bg/m-Farm.jpg')" }}
     >
+      <div className="absolute inset-0 bg-black/15 z-0 pointer-events-none" />
+
       {/* Top Bar */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
         {/* Left: Back Button */}
@@ -612,7 +614,8 @@ export const SyllableModulePage: React.FC = () => {
                   key={opt.id}
                   onClick={() => handleSelect(opt.id)}
                   disabled={isSubmitting || (!!selectedId && !isWrong)}
-                  className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:opacity-80 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
+                  // ✅ REMOVED disabled:opacity-80 so it stays 100% bright
+                  className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
                   style={{ backgroundImage: `url(${bgImg})` }}
                 >
                   <span 
