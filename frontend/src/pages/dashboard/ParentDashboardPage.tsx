@@ -84,7 +84,7 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      setError('Hindi na-generate ang report. Subukan ulit.')
+      setError('Could not generate report. Please try again.')
     } finally {
       setIsDownloading(false)
     }
@@ -95,7 +95,7 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
       <button
         onClick={handleDownload}
         disabled={!isComplete || isDownloading}
-        aria-label={`I-download ang report para sa Module ${moduleNumber}`}
+        aria-label={`Download report for Module ${moduleNumber}`}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
           isComplete
