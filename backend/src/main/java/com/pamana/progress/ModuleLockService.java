@@ -108,9 +108,10 @@ public class ModuleLockService {
 
         // 2. Unlock the next module (Module 1 requires >= 80%, Modules 2 & 3 require >= 75%)
         boolean shouldUnlockNext = false;
-        if (completedModule == 1 && finalAccuracy >= 80.0) {
+        long roundedAccuracy = Math.round(finalAccuracy);
+        if (completedModule == 1 && roundedAccuracy >= 80) {
             shouldUnlockNext = true;
-        } else if ((completedModule == 2 || completedModule == 3) && finalAccuracy >= 75.0) {
+        } else if ((completedModule == 2 || completedModule == 3) && roundedAccuracy >= 75) {
             shouldUnlockNext = true;
         }
 
@@ -122,9 +123,13 @@ public class ModuleLockService {
                 nextProgress.setIsUnlocked(true);
                 moduleProgressRepository.save(nextProgress);
                 log.info("Unlocked Module {} for user: {}", nextModule, userId);
+            } else {
+                ModuleProgress nextProgress = new ModuleProgress(userId, nextModule, true, false);
+                moduleProgressRepository.save(nextProgress);
+                log.info("Created and unlocked Module {} for user: {}", nextModule, userId);
             }
         } else if (completedModule < 4) {
-            log.info("Did NOT unlock next module for user: {} because accuracy {} did not meet the threshold (80% for Mod1, 75% for Mod2/3)", userId, finalAccuracy);
+            log.info("Did NOT unlock next module for user: {} because accuracy {} (rounded {}) did not meet the threshold (80% for Mod1, 75% for Mod2/3)", userId, finalAccuracy, roundedAccuracy);
         }
     }
 

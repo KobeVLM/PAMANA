@@ -179,9 +179,9 @@ export const SyllableModulePage: React.FC = () => {
     const data = res.data
 
     let currentSubLevel: SubLevel = 'pagsama'
-    if (data.pagsamaAccuracy >= 80) currentSubLevel = 'pakinggan'
-    if (data.pakingganAccuracy >= 80) currentSubLevel = 'kilalanin'
-    if (data.kilalaninAccuracy >= 80) currentSubLevel = 'rhyming'
+    if (Math.round(data.pagsamaAccuracy) >= 80) currentSubLevel = 'pakinggan'
+    if (Math.round(data.pakingganAccuracy) >= 80) currentSubLevel = 'kilalanin'
+    if (Math.round(data.kilalaninAccuracy) >= 80) currentSubLevel = 'rhyming'
 
     return {
       currentSubLevel,
@@ -198,7 +198,7 @@ export const SyllableModulePage: React.FC = () => {
         (data.overallAccuracy !== undefined
           ? data.overallAccuracy
           : data.module1Accuracy) ?? 0,
-      isComplete: Boolean(data.isComplete),
+      isComplete: Boolean(data.isComplete ?? data.complete),
     }
   }, [])
 
@@ -389,12 +389,12 @@ export const SyllableModulePage: React.FC = () => {
   }
 
   if (moduleComplete) {
+    const accuracy = Math.round(status?.overallAccuracy ?? 0)
     const hasPassed = Boolean(
       status?.module2Unlocked ||
-        (status?.overallAccuracy ?? 0) >= 80 ||
+        accuracy >= 80 ||
         status?.isComplete
     )
-    const accuracy = Math.round(status?.overallAccuracy ?? 0)
 
     return (
       <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center p-4">
@@ -484,7 +484,7 @@ export const SyllableModulePage: React.FC = () => {
           const acc = status.subLevelAccuracies[sl] ?? 0
           const label = SUB_LEVEL_LABELS[sl].fil.split('. ')[1]
           const isCurrent = status.currentSubLevel === sl
-          const isDone = acc >= 80
+          const isDone = Math.round(acc) >= 80
 
           return (
             <div
