@@ -78,12 +78,15 @@ const tileNames = () =>
     .getAllByRole("button", { name: /^(BA|KA|LA|MA)$/ })
     .map((tile) => tile.getAttribute("aria-label"))
 
+const buttonBg = (name: string) =>
+  screen.getByRole("button", { name }).style.backgroundImage
+
 const waitForReset = (name: string) =>
   waitFor(
     () =>
       expect(
-        screen.getByRole("button", { name }).className
-      ).not.toContain("border-red-400/70"),
+        screen.getByRole("button", { name }).style.backgroundImage
+      ).not.toContain("R_button.png"),
     { timeout: 4000 }
   )
 
@@ -107,22 +110,19 @@ describe("SyllableModulePage", () => {
     expect(tileNames()).toEqual(["BA", "KA", "LA", "MA"])
 
     await user.click(screen.getByRole("button", { name: "KA" }))
-    expect(
-      screen.getByRole("button", { name: "KA" }).className
-    ).toContain("border-red-400/70")
-    expect(screen.queryByText(/gintong kahon/)).not.toBeInTheDocument()
+    expect(buttonBg("KA")).toContain("R_button.png")
+    expect(screen.queryByText(/color Green/i)).not.toBeInTheDocument()
     expect(tileNames()).toEqual(["BA", "KA", "LA", "MA"])
 
     await waitForReset("KA")
     await user.click(screen.getByRole("button", { name: "KA" }))
-    expect(screen.queryByText(/gintong kahon/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/color Green/i)).not.toBeInTheDocument()
 
     await waitForReset("KA")
     await user.click(screen.getByRole("button", { name: "KA" }))
-    expect(screen.getByText(/gintong kahon/)).toBeInTheDocument()
-    expect(
-      screen.getByRole("button", { name: "BA" }).className
-    ).toContain("border-pamana-gold")
+    expect(buttonBg("BA")).toContain("G_button.png")
+    await waitForReset("KA")
+    expect(screen.getByText(/color Green/i)).toBeInTheDocument()
   }, 20000)
 
   it("reveals the correct answer immediately and advances to the next set", async () => {
@@ -133,7 +133,7 @@ describe("SyllableModulePage", () => {
     await user.click(screen.getByRole("button", { name: "BA" }))
 
     const correct = screen.getByRole("button", { name: "BA" })
-    expect(correct.className).toContain("border-green-400")
+    expect(correct.style.backgroundImage).toContain("G_button.png")
     expect(correct).toBeDisabled()
 
     await waitFor(

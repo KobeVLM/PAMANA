@@ -111,7 +111,7 @@ export const SyllableModulePage: React.FC = () => {
       // Check if BGM is enabled in settings before playing
       const isBgmEnabled = localStorage.getItem('pamana_bgm') !== 'false'
       if (isBgmEnabled && audio.paused) {
-        audio.play().catch(() => console.log("Autoplay blocked by browser"))
+        audio.play()?.catch(() => console.log("Autoplay blocked by browser"))
       }
     }
 
@@ -123,7 +123,7 @@ export const SyllableModulePage: React.FC = () => {
       if (!isBgmEnabled) {
         audio.pause()
       } else {
-        audio.play().catch(() => {})
+        audio.play()?.catch(() => {})
       }
     }
 
@@ -360,7 +360,7 @@ export const SyllableModulePage: React.FC = () => {
       setAttempts(0)
       await init()
       if (bgmRef.current) {
-        bgmRef.current.play().catch(() => {})
+        bgmRef.current.play()?.catch(() => {})
       }
     } catch {
       toast.error('Hindi na-reset ang module')
@@ -612,6 +612,7 @@ export const SyllableModulePage: React.FC = () => {
               return (
                 <button
                   key={opt.id}
+                  aria-label={opt.label}
                   onClick={() => handleSelect(opt.id)}
                   disabled={isSubmitting || (!!selectedId && !isWrong)}
                   // ✅ REMOVED disabled:opacity-80 so it stays 100% bright

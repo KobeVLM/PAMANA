@@ -129,7 +129,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     const startAudio = () => {
       const isBgmEnabled = localStorage.getItem('pamana_bgm') !== 'false'
       if (isBgmEnabled && audio.paused) {
-        audio.play().catch(() => console.log("Autoplay blocked by browser"))
+        audio.play()?.catch(() => console.log("Autoplay blocked by browser"))
       }
     }
 
@@ -140,7 +140,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       if (!isBgmEnabled) {
         audio.pause()
       } else {
-        audio.play().catch(() => {})
+        audio.play()?.catch(() => {})
       }
     }
 
@@ -414,7 +414,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       isFirstLoad.current = true
       await fetchNextWord()
       if (bgmRef.current) {
-        bgmRef.current.play().catch(() => {})
+        bgmRef.current.play()?.catch(() => {})
       }
     } catch {
       toast.error('Hindi na-reset ang module')
