@@ -101,7 +101,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [wordComplete, setWordComplete] = useState(false)
   const [moduleComplete, setModuleComplete] = useState(false)
   const [isResetting, setIsResetting] = useState(false)
-  const totalWords = moduleNumber === 2 ? 10 : 15
+  const totalWords = moduleNumber === 2 ? 10 : 9
   const [wordsCompleted, setWordsCompleted] = useState(0)
   const [celebrate, setCelebrate] = useState(0)
   const [gamitinSentence, setGamitinSentence] = useState<string>(
