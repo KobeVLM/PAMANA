@@ -74,6 +74,10 @@ const layer: CSSProperties = {
   inset: 0,
   backgroundSize: '300% 300%',
   backgroundRepeat: 'no-repeat',
+  // --- ADDED TRANSFORM HERE ---
+  // Zooms the image by 10% and pushes it down by 6% to hide the gap
+  transform: 'scale(1.1) translateY(0%)', 
+  transformOrigin: 'top center',
 }
 
 export type MascotProps = {
@@ -95,6 +99,8 @@ export type MascotProps = {
    * the happy face never bleeds into the next question.
    */
   resetKey?: unknown
+  /** The module number to determine the background image. */
+  moduleNumber?: number
 }
 
 /**
@@ -104,7 +110,16 @@ export type MascotProps = {
  * laptops and some hybrid devices; here touch pointers are ignored instead.
  */
 export function Mascot(props: MascotProps) {
-  const { directions, reactions, size = 140, className, label = 'mascot', celebrate = 0, resetKey } = props
+  const { 
+    directions, 
+    reactions, 
+    size = 140, 
+    className, 
+    label = 'mascot', 
+    celebrate = 0, 
+    resetKey,
+    moduleNumber // 👈 Destructure the new prop
+  } = props
 
   const buttonRef = useRef<HTMLButtonElement>(null)
   const squashRef = useRef<HTMLSpanElement>(null)
@@ -115,6 +130,17 @@ export function Mascot(props: MascotProps) {
   const celebrateRef = useRef(celebrate)
   const [direction, setDirection] = useState<Direction>('center')
   const [reaction, setReaction] = useState<Reaction | null>(null)
+
+  // 👇 Helper to pick the background based on module
+  const getBackgroundImage = () => {
+    switch (moduleNumber) {
+      case 1: return '/images/module-bg/m1_w.png'
+      case 2: return '/images/module-bg/m2_w.png'
+      case 3: return '/images/module-bg/m3_w.png'
+      case 4: return '/images/module-bg/m4_w.png'
+      default: return '/images/O_wood.png' // Fallback
+    }
+  }
 
   useEffect(() => {
     let sector = -1
@@ -241,8 +267,17 @@ export function Mascot(props: MascotProps) {
         width: size,
         height: size,
         padding: 0,
-        border: 0,
-        background: 'transparent',
+        
+        // --- DYNAMIC BACKGROUND STYLES ---
+        border: '4px solid #4A2F1D', 
+        borderRadius: '50%',         
+        overflow: 'hidden',          
+        backgroundImage: `url("${getBackgroundImage()}")`, // 👈 Used here
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundColor: '#8B5A2B', 
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)', 
+        
         appearance: 'none',
         cursor: 'pointer',
         userSelect: 'none',

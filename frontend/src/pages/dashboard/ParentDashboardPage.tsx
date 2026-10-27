@@ -51,10 +51,10 @@ const STATUS_COLORS = {
 }
 
 const STATUS_LABELS = {
-  green: 'Natuto na',
-  yellow: 'Nag-aaral pa',
-  red: 'Kailangan ng tulong',
-  grey: 'Hindi pa nagsisimula',
+  green: 'Mastered',
+  yellow: 'In Progress',
+  red: 'Needs Help',
+  grey: 'Not Started',
 }
 
 const MODULE_NAMES = ['Module 1', 'Module 2', 'Module 3', 'Module 4']
@@ -84,7 +84,7 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      setError('Hindi na-generate ang report. Subukan ulit.')
+      setError('Could not generate report. Please try again.')
     } finally {
       setIsDownloading(false)
     }
@@ -95,7 +95,7 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
       <button
         onClick={handleDownload}
         disabled={!isComplete || isDownloading}
-        aria-label={`I-download ang report para sa Module ${moduleNumber}`}
+        aria-label={`Download report for Module ${moduleNumber}`}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
           isComplete
@@ -224,7 +224,7 @@ export const ParentDashboardPage: React.FC = () => {
     setLinkSuccess('')
     try {
       const res = await api.post('/parent/link-learner', { identifier: learnerIdentifier.trim() })
-      setLinkSuccess(res.data?.message || 'Matagumpay na nai-link ang mag-aaral!')
+      setLinkSuccess(res.data?.message || 'Learner linked successfully!')
       const newLearnerId = res.data?.learnerId
       setLearnerIdentifier('')
       setTimeout(() => {
@@ -234,7 +234,7 @@ export const ParentDashboardPage: React.FC = () => {
       await loadDashboard(newLearnerId)
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: string } } }
-      setLinkError(axiosErr.response?.data?.error || 'Hindi ma-link ang mag-aaral. Siguraduhing tama ang email o Student Code.')
+      setLinkError(axiosErr.response?.data?.error || 'Could not link learner. Please check the Student ID and try again.')
     } finally {
       setIsLinking(false)
     }
@@ -245,8 +245,8 @@ export const ParentDashboardPage: React.FC = () => {
   const atRiskWords = metrics?.wordMasteryList.filter((w) => w.status === 'red') ?? []
   const pieData = metrics
     ? [
-        { name: 'Natuto na', value: metrics.masteredCount, color: '#22c55e' },
-        { name: 'Kailangan ng Tulong', value: metrics.needsReviewCount, color: '#ef4444' },
+        { name: 'Mastered', value: metrics.masteredCount, color: '#22c55e' },
+        { name: 'Needs Help', value: metrics.needsReviewCount, color: '#ef4444' },
       ]
     : []
 
@@ -256,7 +256,7 @@ export const ParentDashboardPage: React.FC = () => {
         <div className="min-h-full flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-10 h-10 text-[#D4A017] animate-spin" />
-            <p className="text-[#3f7d52]">Naglo-load ng datos...</p>
+            <p className="text-[#3f7d52]">Loading data...</p>
           </div>
         </div>
       </AppShell>
@@ -269,12 +269,12 @@ export const ParentDashboardPage: React.FC = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-heading font-bold text-[#2b5c3b] mb-1">
-            Dashboard ng Magulang 📊
+            Parent Dashboard 📊
           </h1>
           <p className="text-[#3f7d52]">
             {linkedLearnerName 
-              ? `Subaybayan ang pag-unlad ni ${linkedLearnerName} sa PAMANA.`
-              : 'Subaybayan ang pag-unlad ng iyong anak sa PAMANA.'}
+              ? `Tracking ${linkedLearnerName}'s progress in PAMANA.`
+              : "Track your child's progress in PAMANA."}
           </p>
         </div>
 
@@ -288,14 +288,14 @@ export const ParentDashboardPage: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[#3f7d52]/80 font-bold uppercase tracking-wider">Kasalukuyang Mag-aaral</span>
+                  <span className="text-xs text-[#3f7d52]/80 font-bold uppercase tracking-wider">Current Learner</span>
                   {isSwitchingLearner && <Loader2 className="w-3.5 h-3.5 text-[#D4A017] animate-spin" />}
                 </div>
                 <div className="text-xl font-heading font-bold text-[#2b5c3b] leading-tight">
                   {activeLearner?.name}
                 </div>
                 <div className="text-xs text-[#3f7d52]/60 font-mono">
-                  {activeLearner?.email}
+                  ID: {activeLearner?.id?.slice(0, 8)}...
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ export const ParentDashboardPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-3">
               {/* Learner Selector Dropdown */}
               <div className="flex items-center gap-2">
-                <label htmlFor="learner-select" className="text-xs text-[#5a7a63] font-medium hidden sm:inline">Pumili ng Mag-aaral:</label>
+                <label htmlFor="learner-select" className="text-xs text-[#5a7a63] font-medium hidden sm:inline">Select Learner:</label>
                 <div className="relative">
                   <select
                     id="learner-select"
@@ -315,7 +315,7 @@ export const ParentDashboardPage: React.FC = () => {
                   >
                     {learners.map((l) => (
                       <option key={l.id} value={l.id} className="bg-white text-[#2b5c3b] py-1">
-                        {l.name} ({l.email})
+                        {l.name}
                       </option>
                     ))}
                   </select>
@@ -335,7 +335,7 @@ export const ParentDashboardPage: React.FC = () => {
                 className="px-4 py-2.5 rounded-xl bg-[#e7f6e7] hover:bg-[#d6efd6] border-2 border-[#4CAF50] text-[#1B5E20] font-semibold text-xs sm:text-sm flex items-center gap-2 transition-all hover:scale-102 active:scale-98 cursor-pointer"
               >
                 <UserPlus className="w-4 h-4" />
-                <span>+ Mag-link ng Ibang Mag-aaral</span>
+                <span>+ Link Another Learner</span>
               </button>
             </div>
           </div>
@@ -346,14 +346,14 @@ export const ParentDashboardPage: React.FC = () => {
             <div className="w-12 h-12 rounded-2xl bg-[#e7f6e7] border-2 border-[#4CAF50] flex items-center justify-center text-[#2E7D32] mx-auto mb-3">
               <UserPlus className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-bold text-[#2b5c3b] mb-2">I-link ang iyong anak</h2>
+            <h2 className="text-xl font-bold text-[#2b5c3b] mb-2">Link Your Child</h2>
             <p className="text-sm text-[#3f7d52] mb-6">
-              Pakilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak (Learner) upang masubaybayan ang kanilang progreso.
+              Enter your child's <strong>Student ID</strong> to view their progress.
             </p>
             <form onSubmit={handleLinkLearner} className="space-y-4">
               <input
                 type="text"
-                placeholder="Email o Student Code ng anak..."
+                placeholder="Enter Student ID..."
                 value={learnerIdentifier}
                 onChange={(e) => setLearnerIdentifier(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-[#f4f9f0] border-2 border-[#d5e5d0] text-[#2b5c3b] placeholder-[#7a9a83] text-sm outline-none focus:border-[#4CAF50]"
@@ -364,7 +364,7 @@ export const ParentDashboardPage: React.FC = () => {
                 disabled={isLinking}
                 className="w-full py-3 rounded-xl bg-gradient-to-b from-pamana-green to-emerald-600 border-2 border-white text-white font-bold shadow-[0_6px_0_rgba(0,0,0,0.25)] hover:brightness-110 active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
-                {isLinking ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'I-link ang Account'}
+                {isLinking ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Link Account'}
               </button>
               {linkError && <p className="text-[#c62828] text-sm mt-2">{linkError}</p>}
               {linkSuccess && <p className="text-[#2E7D32] text-sm mt-2">{linkSuccess}</p>}
@@ -381,8 +381,8 @@ export const ParentDashboardPage: React.FC = () => {
               <Alert key={word.wordId} className="bg-[#fdeaea] border-2 border-[#EF5350]">
                 <AlertTriangle className="h-4 w-4 text-[#c62828]" />
                 <AlertDescription className="text-[#8f1d1d] text-sm">
-                  Ang iyong anak ay nahihirapan sa salitang <strong>"{word.word}"</strong>.
-                  Katumpakan: {word.overallAccuracy}%. Subukan ulit!
+                  Your child is struggling with <strong>"{word.word}"</strong>.
+                  Accuracy: {word.overallAccuracy}%. Keep practicing!
                 </AlertDescription>
               </Alert>
             ))}
@@ -412,17 +412,17 @@ export const ParentDashboardPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[#e3f2fd] flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-[#1565C0]" />
               </div>
-              <span className="text-[#3f7d52] font-medium text-sm">Mga Salitang Natuto</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Words Learned</span>
             </div>
             <div className="flex items-end gap-2">
               <div className="text-3xl font-bold text-[#2b5c3b]">{metrics?.masteredCount ?? 0}</div>
-              <div className="text-sm text-[#c62828] mb-1">/ {(metrics?.masteredCount ?? 0) + (metrics?.needsReviewCount ?? 0)} na natuklas</div>
+              <div className="text-sm text-[#c62828] mb-1">/ {(metrics?.masteredCount ?? 0) + (metrics?.needsReviewCount ?? 0)} discovered</div>
             </div>
             <div className="flex items-center gap-2 mt-2">
               <div className="w-2 h-2 rounded-full bg-[#4CAF50]" />
-              <span className="text-xs text-[#3f7d52]">Natuto: {metrics?.masteredCount}</span>
+              <span className="text-xs text-[#3f7d52]">Mastered: {metrics?.masteredCount}</span>
               <div className="w-2 h-2 rounded-full bg-[#EF5350] ml-2" />
-              <span className="text-xs text-[#c62828]">Kailangan: {metrics?.needsReviewCount}</span>
+              <span className="text-xs text-[#c62828]">Needs Help: {metrics?.needsReviewCount}</span>
             </div>
           </div>
 
@@ -432,10 +432,10 @@ export const ParentDashboardPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[#fff7db] flex items-center justify-center">
                 <Trophy className="w-5 h-5 text-[#D4A017]" />
               </div>
-              <span className="text-[#3f7d52] font-medium text-sm">Pagsasanay sa Mastery</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Mastery Practice</span>
             </div>
             <div className="text-3xl font-bold text-[#2b5c3b] mb-2">{metrics?.trailCompletion ?? 0}%</div>
-            <div className="text-xs text-[#2E7D32]">Pangkalahatang pagsulong</div>
+            <div className="text-xs text-[#2E7D32]">Overall progress</div>
           </div>
 
           {/* Avg Session Duration */}
@@ -447,7 +447,7 @@ export const ParentDashboardPage: React.FC = () => {
               <span className="text-[#3f7d52] font-medium text-sm">Avg Session</span>
             </div>
             <div className="text-3xl font-bold text-[#2b5c3b]">{metrics?.avgSessionDuration ?? 0}<span className="text-lg text-[#2E7D32] ml-1">min</span></div>
-            <div className="text-xs text-[#2E7D32] mt-1">bawat linggo</div>
+            <div className="text-xs text-[#2E7D32] mt-1">per week</div>
           </div>
 
           {/* Accuracy Trend Chart */}
@@ -456,7 +456,7 @@ export const ParentDashboardPage: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[#e0f7fa] flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-[#00838F]" />
               </div>
-              <span className="text-[#3f7d52] font-medium text-sm">Katumpakan sa bawat Module</span>
+              <span className="text-[#3f7d52] font-medium text-sm">Accuracy by Module</span>
             </div>
             <ResponsiveContainer width="100%" height={140}>
               <LineChart data={metrics?.accuracyTrend.map((t, i) => ({ name: MODULE_NAMES[i], accuracy: t.accuracy }))}>
@@ -482,7 +482,7 @@ export const ParentDashboardPage: React.FC = () => {
             </div>
             <div>
               <h3 className="text-[#2b5c3b] font-bold text-lg">Learning Curve</h3>
-              <p className="text-[#3f7d52] text-sm">Pag-unlad ng accuracy sa bawat attempt</p>
+              <p className="text-[#3f7d52] text-sm">Accuracy improvement per attempt</p>
             </div>
           </div>
           
@@ -505,7 +505,7 @@ export const ParentDashboardPage: React.FC = () => {
             </div>
           ) : (
             <div className="h-40 flex items-center justify-center text-[#3f7d52]/50">
-              Wala pang history ng retake.
+              No retry history yet.
             </div>
           )}
         </div>
@@ -514,7 +514,7 @@ export const ParentDashboardPage: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
           {/* Pie chart */}
           <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5 flex flex-col items-center justify-center">
-            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Katayuan ng mga Salita</h3>
+            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Word Status</h3>
             <PieChart width={160} height={160}>
               <Pie data={pieData} cx={75} cy={75} innerRadius={45} outerRadius={70} dataKey="value" stroke="none">
                 {pieData.map((entry, index) => (
@@ -534,10 +534,10 @@ export const ParentDashboardPage: React.FC = () => {
 
           {/* Word Mastery List */}
           <div className="lg:col-span-2 bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
-            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Listahan ng mga Salita</h3>
+            <h3 className="text-[#3f7d52] font-medium text-sm mb-3">Word List</h3>
             <ScrollArea className="h-52">
               {metrics?.wordMasteryList.length === 0 ? (
-                <p className="text-[#5a7a63] text-sm text-center py-8">Hindi pa nagsisimula ang pag-aaral ng salita.</p>
+                <p className="text-[#5a7a63] text-sm text-center py-8">Word learning hasn't started yet.</p>
               ) : (
                 <div className="space-y-2 pr-2">
                   {metrics?.wordMasteryList.map((word: WordMasteryStatus) => {
@@ -571,7 +571,7 @@ export const ParentDashboardPage: React.FC = () => {
 
         {/* PDF Download buttons */}
         <div className="bg-white border-2 border-white shadow-[0_6px_0_rgba(0,0,0,0.1)] rounded-2xl p-5">
-          <h3 className="text-[#3f7d52] font-medium text-sm mb-4">I-download ang mga Report</h3>
+          <h3 className="text-[#3f7d52] font-medium text-sm mb-4">Download Reports</h3>
           <div className="flex flex-wrap gap-3">
             {[1, 2, 3, 4].map((moduleNum) => (
               <PDFDownloadButton
@@ -583,7 +583,7 @@ export const ParentDashboardPage: React.FC = () => {
             ))}
           </div>
           <p className="text-[#5a7a63] text-xs mt-3">
-            * Ang PDF report ay available lamang pagkatapos makumpleto ang bawat module.
+            * PDF reports are available after completing each module.
           </p>
         </div>
         </>
@@ -596,21 +596,21 @@ export const ParentDashboardPage: React.FC = () => {
               <div className="w-14 h-14 rounded-2xl bg-[#e7f6e7] border-2 border-[#4CAF50] flex items-center justify-center text-[#2E7D32] mx-auto mb-3 shadow-inner">
                 <UserPlus className="w-7 h-7" aria-hidden="true" />
               </div>
-              <ModalTitle className="text-2xl">Mag-link ng Bagong Mag-aaral</ModalTitle>
+              <ModalTitle className="text-2xl">Link a New Learner</ModalTitle>
               <ModalDescription className="text-xs sm:text-sm mt-1">
-                Ilagay ang <strong>Email</strong> o ang <strong>Student Code</strong> ng iyong anak upang maidagdag sa iyong dashboard switcher.
+                Enter your child's <strong>Student ID</strong> to add them to your dashboard.
               </ModalDescription>
             </div>
 
             <form onSubmit={handleLinkLearner} className="space-y-4">
               <div className="space-y-1.5 text-left">
                 <label htmlFor="learner-identifier" className="text-xs font-semibold text-[#3f7d52] uppercase tracking-wider">
-                  Email o Student Code
+                  Student ID
                 </label>
                 <input
                   id="learner-identifier"
                   type="text"
-                  placeholder="Hal. maria@example.com o Student Code..."
+                  placeholder="Enter Student ID..."
                   value={learnerIdentifier}
                   onChange={(e) => setLearnerIdentifier(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-[#f4f9f0] border-2 border-[#d5e5d0] text-[#2b5c3b] placeholder-[#7a9a83] text-sm outline-none focus:border-[#4CAF50] transition-all"
@@ -636,14 +636,14 @@ export const ParentDashboardPage: React.FC = () => {
                   onClick={() => setShowLinkModal(false)}
                   className="w-1/2 py-2.5 rounded-xl border-2 border-[#d5e5d0] text-[#5a7a63] hover:bg-[#f4f9f0] text-sm font-semibold transition-all cursor-pointer"
                 >
-                  Kanselahin
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLinking}
                   className="w-1/2 py-2.5 rounded-xl bg-gradient-to-b from-pamana-green to-emerald-600 border-2 border-white text-white font-bold text-sm shadow-[0_6px_0_rgba(0,0,0,0.25)] hover:brightness-110 active:translate-y-[4px] active:shadow-none transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'I-link'}
+                  {isLinking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Link'}
                 </button>
               </div>
             </form>

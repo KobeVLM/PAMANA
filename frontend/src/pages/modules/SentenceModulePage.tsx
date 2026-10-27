@@ -3,28 +3,18 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
-import { PracticePageLayout } from '@/components/practice/PracticePageLayout'
-import {
-  PracticeHeader,
-  type PracticeStep,
-} from '@/components/practice/PracticeHeader'
 import { WordTiles, type WordTile } from '@/components/practice/WordTiles'
-import { PracticeStage } from '@/components/practice/PracticeStage'
-import { PromptStage } from '@/components/practice/PromptStage'
-import { FeedbackSlot } from '@/components/practice/FeedbackSlot'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
-import { FeedbackBanner } from '@/components/feedback/FeedbackBanner'
 import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
-import { Button } from '@/components/ui/button'
-import { BilingualText } from '@/components/common/BilingualText'
 import { useSfx } from '@/hooks/useGameAudio'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS } from '@/lib/i18n'
 import api from '@/lib/api'
-import { Home } from 'lucide-react'
+import { ArrowLeft, Home } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface SentenceTask {
   taskId: string
@@ -46,12 +36,6 @@ export const SentenceModulePage: React.FC = () => {
   const { playAudio, stopAudio } = useAudio()
   const { playWrong } = useSfx()
 
-  useEffect(() => {
-    return () => {
-      stopAudio()
-    }
-  }, [stopAudio])
-
   const [tier, setTier] = useState<1 | 2>(1)
   const [taskIndex, setTaskIndex] = useState(0)
   const [task, setTask] = useState<SentenceTask | null>(null)
@@ -66,6 +50,12 @@ export const SentenceModulePage: React.FC = () => {
   const [celebrate, setCelebrate] = useState(0)
 
   useScrollToTop(`${tier}-${taskIndex}`)
+
+  useEffect(() => {
+    return () => {
+      stopAudio()
+    }
+  }, [stopAudio])
 
   const fetchTask = useCallback(
     async (tierNum: 1 | 2) => {
@@ -153,7 +143,7 @@ export const SentenceModulePage: React.FC = () => {
       }
     } catch {
       toast.error('Hindi naitala ang sagot', {
-        description: 'Pakitingnan ang koneksyon at subukan muli. (Check your connection and try again.)',
+        description: 'Pakitingnan ang koneksyon at subukan muli.',
       })
       setFeedback(null)
       setAttempts((a) => Math.max(0, a - 1))
@@ -177,284 +167,214 @@ export const SentenceModulePage: React.FC = () => {
   // ── Tier 2 announcement screen ──────────────────────────────────────────
   if (showTierAnnouncement) {
     return (
-      <PracticePageLayout className="flex items-center justify-center">
-        <div className="card-story max-w-md space-y-6 p-6 text-center sm:p-8">
-          <div className="animate-bounce text-6xl" aria-hidden="true">
-            🌟
-          </div>
-          <div>
-            <div className="mb-4 flex items-center gap-3">
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFC107]/40 text-2xl"
-                aria-hidden="true"
-              >
-                👵
-              </div>
-              <span className="font-heading font-bold text-[#D4A017]">
-                Lola
-              </span>
-            </div>
-            <BilingualText
-              as="p"
-              fil='"Napakahusay mo, apo! Handa na tayo sa susunod na hamon!"'
-              en='"Great job, my grandchild! We are ready for the next challenge!"'
-              filClassName="font-heading text-lg font-bold leading-relaxed text-[#2b5c3b]"
-              enClassName="text-sm leading-relaxed text-[#5a7a63]"
-            />
-          </div>
-          <div className="rounded-2xl border-2 border-[#d5e5d0] bg-[#f4f9f0] p-4 text-left">
-            <BilingualText
-              as="p"
-              fil="✅ Tier 1: Paturol — Natapos na!"
-              en="✅ Tier 1: Statements — Finished!"
-              className="mb-1"
-              filClassName="text-sm font-semibold text-[#3f7d52]"
-              enClassName="text-xs text-[#5a7a63]"
-            />
-            <BilingualText
-              as="p"
-              fil="Susunod: Tier 2 — Patanong (Tanong)"
-              en="Next: Tier 2 — Questions"
-              filClassName="text-sm text-[#5a7a63]"
-              enClassName="text-xs text-[#5a7a63]"
-            />
-            <BilingualText
-              as="p"
-              fil="Gawing tanong ang mga pangungusap!"
-              en="Turn the sentences into questions!"
-              className="mt-1"
-              filClassName="text-xs text-[#5a7a63]"
-              enClassName="text-[10px] text-[#5a7a63]"
-            />
-          </div>
-          <Button
-            variant="gold"
-            size="lg"
+      <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-sm text-center shadow-2xl border-b-8 border-gray-200">
+          <div className="animate-bounce text-6xl mb-4" aria-hidden="true">🌟</div>
+          <h2 className="mb-2 font-heading text-2xl font-bold text-[#2b5c3b]">Tier 1 Complete!</h2>
+          <p className="text-[#3f7d52] mb-6">Napakahusay mo, apo! Handa na tayo sa susunod na hamon!</p>
+          <button
             onClick={handleStartTier2}
-            className="w-full text-stone-900 [&_svg]:text-stone-900"
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-4 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
           >
-            <BilingualText
-              as="span"
-              fil="Simulan ang Tier 2!"
-              en="Start Tier 2!"
-              filClassName="text-base font-bold"
-              enClassName="text-sm font-normal opacity-80"
-            />
-          </Button>
+            Simulan ang Tier 2!
+          </button>
         </div>
-      </PracticePageLayout>
+      </div>
     )
   }
 
   // ── Reunion ending screen ────────────────────────────────────────────────
   if (showReunionEnding) {
     return (
-      <PracticePageLayout className="flex items-center justify-center">
-        <div className="card-story max-w-md animate-bounce-in p-6 text-center sm:p-8">
-          <div className="mb-4 text-6xl" aria-hidden="true">
-            🎊
-          </div>
-          <h2 className="mb-3 font-heading text-3xl font-bold text-[#2b5c3b]">
-            Tagpuan!
-          </h2>
-          <div className="mb-4 text-5xl" aria-hidden="true">
-            👨‍👩‍👧
-          </div>
-          <BilingualText
-            as="p"
-            fil="Nagawa mo! Nakausap mo na ang iyong mga magulang sa Filipino. Ipinagmamalaki ka ng iyong pamilya!"
-            en="You did it! You spoke with your parents in Filipino. Your family is proud of you!"
-            className="mb-6"
-            filClassName="text-base leading-relaxed text-[#3f7d52]"
-            enClassName="text-sm leading-relaxed text-[#5a7a63]"
-          />
-          <div className="mb-6 rounded-2xl border-2 border-[#FFC107] bg-[#fff7db] p-4">
-            <BilingualText
-              as="p"
-              fil='"Anak, ipinagmamalaki kita. Natuto ka ng wikang Filipino at naihanda ka ng pamana ng aming wika."'
-              en='"Child, we are proud of you. You learned the Filipino language and prepared for the heritage of our tongue."'
-              filClassName="italic text-[#7a5200]"
-              enClassName="text-sm italic text-[#7a5200]/80"
-            />
-            <p className="mt-2 text-sm text-[#5a7a63]">
-              — Lolo at Lola{' '}
-              <span className="text-xs text-[#5a7a63]">(Grandpa and Grandma)</span>
-            </p>
-          </div>
-          <Button
-            variant="gold"
-            size="lg"
+      <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-sm text-center shadow-2xl border-b-8 border-gray-200">
+          <div className="mb-4 text-6xl" aria-hidden="true">🎊</div>
+          <h2 className="mb-3 font-heading text-3xl font-bold text-[#2b5c3b]">Tagpuan!</h2>
+          <div className="mb-4 text-5xl" aria-hidden="true">👨‍👩‍👧</div>
+          <p className="text-[#3f7d52] mb-6 text-sm">
+            Nagawa mo! Nakausap mo na ang iyong mga magulang sa Filipino. Ipinagmamalaki ka ng iyong pamilya!
+          </p>
+          <button
             onClick={() => navigate('/trail')}
-            className="w-full text-stone-900 [&_svg]:text-stone-900"
+            className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-6 py-4 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
           >
-            <Home aria-hidden="true" />
-            <BilingualText
-              as="span"
-              fil="Bumalik sa Pamana Trail"
-              en="Back to the Pamana Trail"
-              filClassName="text-base font-bold"
-              enClassName="text-sm font-normal opacity-80"
-            />
-          </Button>
+            <Home className="w-5 h-5" />
+            Bumalik sa Pamana Trail
+          </button>
         </div>
-      </PracticePageLayout>
+      </div>
     )
   }
 
-  const steps: PracticeStep[] = [
-    { label: 'Tier 1: Paturol', state: tier === 1 ? 'current' : 'done' },
-    { label: 'Tier 2: Patanong', state: tier === 2 ? 'current' : 'pending' },
-  ]
-  const clampedTaskNumber = Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center">
+        <LoadingState message="Inihahanda ang gawain..." />
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center">
+        <ErrorState description="Hindi ma-load ang gawain." onRetry={() => void fetchTask(tier)} />
+      </div>
+    )
+  }
+
+  if (!task) return null
 
   return (
-    <PracticePageLayout maxWidth="5xl">
-      <PracticeHeader
-        title="Module 4: Bumuo ng Pangungusap"
-        subtitle={`Sala ng Tagpuan · ${
-          tier === 1 ? 'Paturol (Pahayag)' : 'Patanong (Tanong)'
-        }`}
-        backLabel="Pamana Trail"
-        onBack={() => navigate('/trail')}
-        sticky
-        steps={steps}
-        progressLabel={`Gawain ${clampedTaskNumber} ng ${TOTAL_TASKS_PER_TIER}`}
-        progressLabelEn={`Task ${clampedTaskNumber} of ${TOTAL_TASKS_PER_TIER}`}
-        progressValue={(clampedTaskNumber / TOTAL_TASKS_PER_TIER) * 100}
-      />
+    <div
+      className="relative h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
+      style={{ backgroundImage: "url('/images/module-bg/m-House.jpg')" }}
+    >
+      <div className="absolute inset-0 bg-black/20 z-0 pointer-events-none" />
 
-      {isLoading ? (
-        <LoadingState message="Inihahanda ang gawain..." />
-      ) : loadError ? (
-        <ErrorState onRetry={() => void fetchTask(tier)} />
-      ) : task ? (
-        <PracticeStage
-          split={false}
-          stage={
-            <>
-              <NPCDialogue
-                npc="lolo"
-                line={
-                  tier === 1
-                    ? 'Ayusin ang mga salita para bumuo ng pangungusap! I-drag ang mga salita sa tamang pagkakasunod.'
-                    : 'Gawing tanong ang pangungusap! Paano mo itatanong ito kay Lolo?'
-                }
-                lineEn={
-                  tier === 1
-                    ? 'Arrange the words to build a sentence! Drag the words into the correct order.'
-                    : 'Turn the sentence into a question! How would you ask this to Lolo?'
-                }
-                audioUrl={`/static/assets/audio/npc/lolo_mod4_intro_tier${tier}.mp3`}
-                celebrate={celebrate}
-                resetKey={`${tier}-${taskIndex}`}
+      {/* Top Bar */}
+      <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
+        <button
+          onClick={() => navigate('/trail')}
+          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
+        >
+          <ArrowLeft className="w-5 h-5 stroke-[3]" />
+          Pamana Trail
+        </button>
+
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-6 md:pt-8">
+          <img
+            src="/images/moduletitles/C_m4.png"
+            alt="Module 4"
+            className="w-[300px] md:w-[400px] lg:w-[500px] object-contain drop-shadow-2xl"
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
+          />
+        </div>
+
+        <div className="flex items-center z-30">
+          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-64 md:w-[22rem] lg:w-[26rem]">
+            <div className="flex-1 h-6 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
+              <div
+                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
+                style={{ width: `${(Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER) / TOTAL_TASKS_PER_TIER) * 100}%` }}
               />
+            </div>
+            <span className="ml-3 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3.5ch] text-right tracking-wide">
+              {Math.round((Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER) / TOTAL_TASKS_PER_TIER) * 100)}%
+            </span>
+          </div>
+        </div>
+      </div>
 
-              {task.audioUrl && (
-                <PromptStage
-                  variant="audio"
-                  ariaLabel="Pakinggan ang tamang pagkakasunod (Listen to the correct order)"
-                >
-                  <AudioPlayer
-                    audioUrl={task.audioUrl}
-                    fallbackText={task.correctOrder.join(' ')}
-                    size="lg"
-                    label={STRINGS.listenSentence.fil}
-                    labelEn={STRINGS.listenSentence.en}
-                  />
-                  <BilingualText
-                    as="p"
-                    fil="Pakinggan ang tamang pagkakasunod"
-                    en="Listen to the correct order"
-                    className="text-center"
-                    filClassName="text-sm text-[#3f7d52]"
-                    enClassName="text-xs text-[#5a7a63]"
-                  />
-                </PromptStage>
-              )}
+            {/* Main Game Content */}
+      <div className="flex-1 relative flex flex-col items-center justify-start w-full max-w-4xl mx-auto px-4 pb-6 mt-4 z-10 gap-3 md:gap-4">
+        
+        {/* NPC Dialogue */}
+        <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-2 md:mb-4">
+          <NPCDialogue
+            npc="lolo"
+            moduleNumber={4}
+            line={
+              tier === 1
+                ? 'Ayusin ang mga salita para bumuo ng pangungusap! I-drag ang mga salita sa tamang pagkakasunod.'
+                : 'Gawing tanong ang pangungusap! Paano mo itatanong ito kay Lolo?'
+            }
+            lineEn={
+              tier === 1
+                ? 'Arrange the words to build a sentence! Drag the words into the correct order.'
+                : 'Turn the sentence into a question! How would you ask this to Lolo?'
+            }
+            audioUrl={`/static/assets/audio/npc/lolo_mod4_intro_tier${tier}.mp3`}
+            celebrate={celebrate}
+            resetKey={`${tier}-${taskIndex}`}
+          />
+        </div>
 
-              <PromptStage
-                variant="canvas"
-                ariaLabel="Iyong pangungusap (Your sentence)"
-              >
-                <BilingualText
-                  as="p"
-                  fil="Iyong pangungusap:"
-                  en="Your sentence:"
-                  filClassName="text-xs font-medium text-[#3f7d52] sm:text-sm"
-                  enClassName="text-[10px] text-[#5a7a63]"
-                />
-                <p className="font-heading text-lg font-bold leading-relaxed text-[#2b5c3b] sm:text-xl">
-                  {tiles.map((t) => t.word).join(' ')}
-                </p>
-              </PromptStage>
-
-              <FeedbackSlot>
-                {feedback && (
-                  <FeedbackBanner
-                    variant={feedback}
-                    assertive={feedback === 'incorrect'}
-                  >
-                    <BilingualText
-                      fil={feedback === 'correct' ? STRINGS.correct.fil : 'Hindi pa tama — subukan ulit!'}
-                      en={feedback === 'correct' ? STRINGS.correct.en : 'Not quite — try again!'}
-                    />
-                    {feedback === 'incorrect' && attempts >= HINT_AFTER_ATTEMPTS && (
-                      <div className="mt-1">
-                        <BilingualText
-                          as="p"
-                          fil="Tamang sagot:"
-                          en="Correct answer:"
-                          filClassName="text-xs text-[#8f1d1d]"
-                          enClassName="text-[10px] text-[#8f1d1d]/80"
-                        />
-                        <strong className="text-[#8f1d1d]">
-                          {task.correctOrder.join(' ')}
-                        </strong>
-                      </div>
-                    )}
-                  </FeedbackBanner>
-                )}
-              </FeedbackSlot>
-            </>
-          }
-          tray={
-            <div className="space-y-4">
-              <div className="card-story space-y-3 p-5">
-                <BilingualText
-                  as="p"
-                  fil="I-drag ang mga salita sa tamang pagkakasunod:"
-                  en="Drag the words into the correct order:"
-                  filClassName="text-xs font-medium text-[#3f7d52] sm:text-sm"
-                  enClassName="text-[10px] text-[#5a7a63]"
-                />
-                <WordTiles
-                  items={tiles}
-                  onReorder={setTiles}
-                  disabled={isSubmitting || feedback === 'correct'}
-                  ariaLabel="Mga salita ng pangungusap (Sentence words)"
+        {/* Wooden Board */}
+        <div
+          className="relative w-full max-w-2xl bg-cover bg-center bg-no-repeat rounded-3xl p-6 shadow-2xl flex flex-col items-center min-h-[160px] justify-center border-b-[8px] border-[#C2410C]"
+          style={{ backgroundImage: "url('/images/module-bg/m4_w.png')" }}
+        >
+          <div className="relative z-10 w-full flex flex-col items-center justify-center gap-4">
+            {task.audioUrl && (
+              <div>
+                <AudioPlayer
+                  audioUrl={task.audioUrl}
+                  fallbackText={task.correctOrder.join(' ')}
+                  size="lg"
+                  label=""
+                  labelEn=""
                 />
               </div>
+            )}
 
-              <Button
-                variant="pamana"
-                onClick={handleSubmit}
-                loading={isSubmitting}
-                disabled={feedback === 'correct'}
-                className="w-full"
-              >
-                <BilingualText
-                  as="span"
-                  fil={isSubmitting ? 'Sinusuri...' : 'Isumite ang Pangungusap'}
-                  en={isSubmitting ? 'Checking...' : 'Submit Sentence'}
-                  filClassName="text-sm font-semibold"
-                  enClassName="text-xs font-normal opacity-80"
-                />
-              </Button>
+            <div className="text-center">
+              <p className="text-sm font-bold text-white drop-shadow-md mb-1">
+                Your sentence so far:
+              </p>
+              <p className="text-xl md:text-2xl font-black text-yellow-400 drop-shadow-[0_2px_2px_rgba(0,0,0,0.6)] flex flex-wrap items-center justify-center gap-x-2 gap-y-1 pt-2">
+                {tiles.map((t) => t.word).join(' ')}
+              </p>
             </div>
-          }
-        />
-      ) : null}
-    </PracticePageLayout>
+          </div>
+        </div>
+
+        {/* Feedback Area */}
+        <div className="w-full min-h-[4rem] flex flex-col items-center justify-start z-20 mt-1">
+          {feedback && (
+            <div className="flex flex-row items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              
+              {/* Red/Green Feedback Banner */}
+              <div
+                className={cn(
+                  'px-6 py-2 rounded-full font-black text-white shadow-lg text-base md:text-lg',
+                  feedback === 'correct' ? 'bg-green-500 animate-bounce' : 'bg-red-500'
+                )}
+              >
+                {feedback === 'correct' ? STRINGS.correct.fil : 'Not quite ... try again!'}
+              </div>
+              
+              {/* Solid Green Hint Box (Now with a gentle bounce) */}
+              {feedback === 'incorrect' && attempts >= HINT_AFTER_ATTEMPTS && (
+                <div className="bg-green-500 px-5 py-2 rounded-xl border-b-4 border-green-700 shadow-md flex items-center gap-2 animate-[bounce_1s_infinite]">
+                  <span className="text-sm md:text-base text-white font-black">Hint :</span>
+                  <strong className="text-white text-base md:text-lg font-black drop-shadow-sm">{task.correctOrder.join(' ')}</strong>
+                </div>
+              )}
+
+            </div>
+          )}
+        </div>
+
+        {/* Word Tiles Tray */}
+        <div className="w-full max-w-2xl bg-[#F0DFC8] p-4 rounded-3xl shadow-[0_8px_16px_rgba(0,0,0,0.15),inset_0_-4px_6px_rgba(0,0,0,0.1)] border-2 border-[#D1B894]">
+          
+          <p className="text-sm font-black text-[#8A6D4D] mb-2 text-center drop-shadow-sm">
+            Drag the words to form the correct sentence:
+          </p>
+          
+          <div className="bg-[#E8D5B5] p-2 rounded-xl shadow-[inset_0_3px_6px_rgba(0,0,0,0.15)]">
+            <WordTiles
+              items={tiles}
+              onReorder={setTiles}
+              disabled={isSubmitting || feedback === 'correct'}
+              ariaLabel="Mga salita ng pangungusap (Sentence words)"
+            />
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <div className="w-full max-w-2xl flex justify-center mt-2 z-20">
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || feedback === 'correct'}
+            className="flex items-center gap-3 bg-[#43A047] hover:bg-[#2E7D32] disabled:opacity-50 text-white font-black px-10 py-3 rounded-full border-b-[6px] border-[#1B5E20] active:border-b-0 active:translate-y-1 transition-all shadow-xl text-lg"
+          >
+            {isSubmitting ? 'Checking...' : 'Submit Answer'}
+          </button>
+        </div>
+
+      </div>
+    </div>
   )
 }
 

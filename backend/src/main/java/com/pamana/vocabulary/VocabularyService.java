@@ -267,7 +267,7 @@ public class VocabularyService extends BaseGameService {
                 log.info("All 10 Self & Body words are green! Unlocking Module 3. Avg accuracy: {}%", averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 2, averageAccuracy);
             } else if ("family_home".equalsIgnoreCase(domain)) {
-                log.info("All 15 Family & Home words are green! Unlocking Module 4. Avg accuracy: {}%",
+                log.info("All Family & Home words are green! Unlocking Module 4. Avg accuracy: {}%",
                         averageAccuracy);
                 moduleLockService.evaluateAndUnlock(userId, 3, averageAccuracy);
             }

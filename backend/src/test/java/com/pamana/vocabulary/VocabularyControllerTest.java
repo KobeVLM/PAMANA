@@ -65,7 +65,7 @@ public class VocabularyControllerTest {
                 // and seeds the 25 standard items. Just assert that seeding took place
                 // successfully.
                 long itemsCount = vocabularyItemRepository.count();
-                assertEquals(25, itemsCount, "Standard vocabulary items should be pre-seeded by DbSeeder.");
+                assertEquals(19, itemsCount, "Standard vocabulary items should be pre-seeded by DbSeeder.");
 
                 // Register Learner
                 RegisterRequest registerReq = new RegisterRequest(

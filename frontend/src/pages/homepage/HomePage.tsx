@@ -35,8 +35,8 @@ const HomePage = () => {
       title: 'Syllable Matching', 
       moduleNum: 1, 
       route: '/mastery/1', 
-      icon: '🐃', 
-      bgImage: '/images/m-Farm.jpg', 
+      icon: '🧩', 
+      bgImage: '/images/module-bg/m-Farm.jpg', 
       shadow: 'shadow-[0_8px_0_#0077b6]' 
     },
     { 
@@ -44,8 +44,8 @@ const HomePage = () => {
       title: 'Word Matching', 
       moduleNum: 2, 
       route: '/mastery/2', 
-      icon: '🍪', 
-      bgImage: '/images/m-Garden.jpg', 
+      icon: '💬', 
+      bgImage: '/images/module-bg/m-Garden.jpg', 
       shadow: 'shadow-[0_8px_0_#a66310]' 
     },
     { 
@@ -54,7 +54,7 @@ const HomePage = () => {
       moduleNum: 3, 
       route: '/mastery/3', 
       icon: '🖼️', 
-      bgImage: '/images/m-Kitchen.jpg', 
+      bgImage: '/images/module-bg/m-Kitchen.jpg', 
       shadow: 'shadow-[0_8px_0_#6c3483]' 
     },
     { 
@@ -62,8 +62,8 @@ const HomePage = () => {
       title: 'Sentence Creation', 
       moduleNum: 4, 
       route: '/mastery/4', 
-      icon: '💬', 
-      bgImage: '/images/m-House.jpg', 
+      icon: '📖', 
+      bgImage: '/images/module-bg/m-House.jpg', 
       shadow: 'shadow-[0_8px_0_#b03a2e]' 
     },
   ]

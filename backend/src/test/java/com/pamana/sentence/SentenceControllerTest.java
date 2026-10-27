@@ -149,7 +149,7 @@ public class SentenceControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.masteredCount", is(0)))
                                 .andExpect(jsonPath("$.trailCompletion", is(0.0)))
-                                .andExpect(jsonPath("$.wordMasteryList", hasSize(25)));
+                                .andExpect(jsonPath("$.wordMasteryList", hasSize(19)));
 
                 // 2. Explicitly complete Module 1 for the user and check PDF Report Download
                 // API
