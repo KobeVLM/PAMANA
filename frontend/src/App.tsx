@@ -33,6 +33,7 @@ const SettingsPage = React.lazy(() =>
   import('@/pages/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 )
 import { Toaster } from '@/components/ui/sonner'
+import { Analytics } from '@vercel/analytics/react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 // Lazy-loaded module pages
@@ -196,6 +197,7 @@ function App() {
           </React.Suspense>
           </TooltipProvider>
           <Toaster />
+          <Analytics />
         </AudioProvider>
       </AuthProvider>
       </LanguageProvider>
