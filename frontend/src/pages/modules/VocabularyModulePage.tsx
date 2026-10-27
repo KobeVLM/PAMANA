@@ -593,7 +593,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             npc={npc as 'lolo' | 'lola'}
             line={npcLines[currentStep].fil}
             lineEn={npcLines[currentStep].en}
-            audioUrl={`/static/assets/audio/npc/${npc}_mod3_${currentStep}.mp3`}
+            audioUrl={`/static/assets/audio/npc/${npc}_mod${moduleNumber}_${currentStep}.mp3`}
             celebrate={celebrate}
             resetKey={`${currentWord.wordId}-${currentStep}`}
             moduleNumber={moduleNumber}
