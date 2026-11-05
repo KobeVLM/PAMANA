@@ -319,8 +319,17 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         (currentStep === 'gamitin' && optionId === 'correct-answer') || 
         (currentStep !== 'gamitin' && optionId === currentWord.wordId)
 
+      const targetId = currentStep === 'gamitin' ? 'correct-answer' : currentWord.wordId
+      const newAttempts = attempts + 1
+      setAttempts(newAttempts)
+
       setSelectedId(optionId)
       setFeedback(isCorrect ? 'correct' : 'incorrect')
+      setCorrectId(
+        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS 
+          ? targetId 
+          : null
+      )
 
       if (isCorrect) {
         setCelebrate((count) => count + 1)
@@ -337,14 +346,6 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       } else {
         playWrong()
       }
-
-      const newAttempts = attempts + 1
-      setAttempts(newAttempts)
-      setCorrectId(
-        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS 
-          ? (currentStep === 'gamitin' ? 'correct-answer' : currentWord.wordId) 
-          : null
-      )
 
       setIsSubmitting(true)
       try {
