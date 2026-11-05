@@ -139,4 +139,69 @@ public class ModuleLockService {
                 .map(ModuleProgress::getIsUnlocked)
                 .orElse(false);
     }
+
+    @Transactional
+    public List<ModuleProgress> unlockModule(UUID userId, int targetModule) {
+        if (targetModule < 1 || targetModule > 4) {
+            throw new IllegalArgumentException("Target module must be between 1 and 4");
+        }
+        log.info("Cheat command: Unlocking module {} for user: {}", targetModule, userId);
+
+        // Previous modules up to targetModule - 1 are completed so trail progression is intact
+        for (int m = 1; m < targetModule; m++) {
+            Optional<ModuleProgress> prevOpt = moduleProgressRepository.findByUserIdAndModuleNumber(userId, m);
+            if (prevOpt.isPresent()) {
+                ModuleProgress p = prevOpt.get();
+                p.setIsUnlocked(true);
+                p.setIsComplete(true);
+                if (p.getAccuracy() == null) {
+                    p.setAccuracy(BigDecimal.valueOf(100.0));
+                }
+                moduleProgressRepository.save(p);
+            } else {
+                ModuleProgress p = new ModuleProgress(userId, m, true, true);
+                p.setAccuracy(BigDecimal.valueOf(100.0));
+                moduleProgressRepository.save(p);
+            }
+        }
+
+        // The target module itself is unlocked and ready to play
+        Optional<ModuleProgress> targetOpt = moduleProgressRepository.findByUserIdAndModuleNumber(userId, targetModule);
+        if (targetOpt.isPresent()) {
+            ModuleProgress p = targetOpt.get();
+            p.setIsUnlocked(true);
+            moduleProgressRepository.save(p);
+        } else {
+            ModuleProgress p = new ModuleProgress(userId, targetModule, true, false);
+            moduleProgressRepository.save(p);
+        }
+
+        return moduleProgressRepository.findByUserId(userId);
+    }
+
+    @Transactional
+    public List<ModuleProgress> unlockAllModules(UUID userId, boolean markComplete) {
+        log.info("Cheat command: Unlocking ALL modules for user: {}, markComplete={}", userId, markComplete);
+        for (int m = 1; m <= 4; m++) {
+            Optional<ModuleProgress> opt = moduleProgressRepository.findByUserIdAndModuleNumber(userId, m);
+            if (opt.isPresent()) {
+                ModuleProgress p = opt.get();
+                p.setIsUnlocked(true);
+                if (markComplete) {
+                    p.setIsComplete(true);
+                    if (p.getAccuracy() == null) {
+                        p.setAccuracy(BigDecimal.valueOf(100.0));
+                    }
+                }
+                moduleProgressRepository.save(p);
+            } else {
+                ModuleProgress p = new ModuleProgress(userId, m, true, markComplete);
+                if (markComplete) {
+                    p.setAccuracy(BigDecimal.valueOf(100.0));
+                }
+                moduleProgressRepository.save(p);
+            }
+        }
+        return moduleProgressRepository.findByUserId(userId);
+    }
 }
