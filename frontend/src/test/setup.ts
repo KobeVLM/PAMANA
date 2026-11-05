@@ -31,3 +31,10 @@ if (!window.ResizeObserver) {
     disconnect() {}
   }
 }
+
+// Mock HTMLMediaElement methods in jsdom
+if (typeof window !== 'undefined' && window.HTMLMediaElement) {
+  window.HTMLMediaElement.prototype.play = vi.fn().mockImplementation(() => Promise.resolve())
+  window.HTMLMediaElement.prototype.pause = vi.fn()
+  window.HTMLMediaElement.prototype.load = vi.fn()
+}

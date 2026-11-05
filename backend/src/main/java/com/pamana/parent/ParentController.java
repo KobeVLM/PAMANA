@@ -37,30 +37,28 @@ public class ParentController {
         log.info("REST API Request: Link learner identifier '{}' to parent {}", identifier, parentId);
 
         if (identifier == null || identifier.isBlank()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Email o Student Code ay kinakailangan."));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Student ID is required."));
         }
 
         User learner = null;
         try {
             UUID studentId = UUID.fromString(identifier);
             learner = userRepository.findById(studentId).orElse(null);
-        } catch (IllegalArgumentException ignored) {
-            // Not a UUID format, lookup by email
-        }
-
-        if (learner == null) {
-            learner = userRepository.findByEmail(identifier).orElse(null);
+        } catch (IllegalArgumentException e) {
+            log.warn("Link learner failed - identifier is not a valid UUID: '{}'", identifier);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Invalid Student ID format. Please enter a valid Student ID."));
         }
 
         if (learner == null || learner.getRole() != Role.LEARNER) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Hindi nahanap ang mag-aaral. Pakitiyak na tama ang email o Student Code."));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Learner not found. Please check the Student ID and try again."));
         }
 
         learner.setParentId(parentId);
         userRepository.save(learner);
 
         return ResponseEntity.ok(Map.of(
-                "message", "Matagumpay na nai-link ang mag-aaral!",
+                "message", "Learner linked successfully!",
                 "learnerId", learner.getId(),
                 "learnerName", learner.getName(),
                 "learnerEmail", learner.getEmail()

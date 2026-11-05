@@ -14,5 +14,5 @@ WORKDIR /app
 COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 # Expose the port (Render sets the PORT environment variable)
 EXPOSE 8080
-# Run the application
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Run the application with container-aware memory allocation (optimizes for Render 512MB RAM free tier)
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=70.0", "-Xss256k", "-XX:+UseG1GC", "-jar", "app.jar"]

@@ -20,7 +20,7 @@ function reactionLayer() {
   const layers = Array.from(
     screen.getByRole("button", { name: "Boop the Lolo" }).querySelectorAll("span")
   ) as HTMLElement[]
-  return layers.find((el) => el.style.backgroundImage.includes("grandpa-reactions.webp"))
+  return layers.find((el) => el.style.backgroundImage.includes("Lolo_expressions.png"))
 }
 
 describe("NPCDialogue", () => {
@@ -30,8 +30,8 @@ describe("NPCDialogue", () => {
     expect(screen.getByText("Lolo")).toBeInTheDocument()
 
     const urls = sheetUrls(screen.getByRole("button", { name: "Boop the Lolo" }))
-    expect(urls.some((url) => url.includes("grandpa-directions.webp"))).toBe(true)
-    expect(urls.some((url) => url.includes("grandpa-reactions.webp"))).toBe(true)
+    expect(urls.some((url) => url.includes("Lolo_directions.png"))).toBe(true)
+    expect(urls.some((url) => url.includes("Lolo_expressions.png"))).toBe(true)
   })
 
   it("shows the granny mascot for lola", () => {
@@ -40,8 +40,8 @@ describe("NPCDialogue", () => {
     expect(screen.getByText("Lola")).toBeInTheDocument()
 
     const urls = sheetUrls(screen.getByRole("button", { name: "Boop the Lola" }))
-    expect(urls.some((url) => url.includes("granny-directions.webp"))).toBe(true)
-    expect(urls.some((url) => url.includes("granny-reactions.webp"))).toBe(true)
+    expect(urls.some((url) => url.includes("Lola_directions.png"))).toBe(true)
+    expect(urls.some((url) => url.includes("Lola_expressions.png"))).toBe(true)
   })
 
   it("cheers with the next happy expression when celebrate is bumped", () => {

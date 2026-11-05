@@ -129,4 +129,120 @@ public class SyllableControllerTest {
                                 .andExpect(jsonPath("$.complete", is(true)))
                                 .andExpect(jsonPath("$.module2Unlocked", is(true)));
         }
+
+        @Test
+        public void testModuleCompletionUnlocksModule2WhenScoreRoundsUpTo80() throws Exception {
+                // 1. pagsama: sets 1-2 (1 wrong, 1 right -> 50%), sets 3-5 (100%) -> avg = 80.0%
+                for (int i = 1; i <= 2; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pagsama", i, "WRONG", false))))
+                                        .andExpect(status().isCreated());
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pagsama", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+                for (int i = 3; i <= 5; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pagsama", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+
+                // 2. pakinggan: sets 1-2 (50%), sets 3-5 (100%) -> avg = 80.0%
+                for (int i = 1; i <= 2; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pakinggan", i, "WRONG", false))))
+                                        .andExpect(status().isCreated());
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pakinggan", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+                for (int i = 3; i <= 5; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("pakinggan", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+
+                // 3. kilalanin: set 1 (4 wrong, 1 right -> 20%), sets 2-5 (100%) -> avg = 84.0%
+                for (int w = 0; w < 4; w++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("kilalanin", 1, "WRONG", false))))
+                                        .andExpect(status().isCreated());
+                }
+                mockMvc.perform(post("/api/syllables/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new SyllableProgressRequest("kilalanin", 1, "A", true))))
+                                .andExpect(status().isCreated());
+                for (int i = 2; i <= 5; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("kilalanin", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+
+                // 4. rhyming: set 1 (3 wrong, 1 right -> 25%), set 2 (1 wrong, 1 right -> 50%), sets 3-5 (100%) -> avg = 75.0%
+                for (int w = 0; w < 3; w++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", 1, "WRONG", false))))
+                                        .andExpect(status().isCreated());
+                }
+                mockMvc.perform(post("/api/syllables/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", 1, "A", true))))
+                                .andExpect(status().isCreated());
+
+                mockMvc.perform(post("/api/syllables/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", 2, "WRONG", false))))
+                                .andExpect(status().isCreated());
+                mockMvc.perform(post("/api/syllables/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", 2, "A", true))))
+                                .andExpect(status().isCreated());
+
+                for (int i = 3; i <= 4; i++) {
+                        mockMvc.perform(post("/api/syllables/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", i, "A", true))))
+                                        .andExpect(status().isCreated());
+                }
+
+                // The final question completes rhyming set 5: overall = (80 + 80 + 84 + 75)/4 = 79.75%
+                mockMvc.perform(post("/api/syllables/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(new SyllableProgressRequest("rhyming", 5, "A", true))))
+                                .andExpect(status().isCreated())
+                                .andExpect(jsonPath("$.moduleAccuracy", is(79.75)))
+                                .andExpect(jsonPath("$.module2Unlocked", is(true)));
+
+                // Status should show 79.75% accuracy, complete=true, and module2Unlocked=true
+                mockMvc.perform(get("/api/syllables/status")
+                                .header("Authorization", "Bearer " + token))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.module1Accuracy", is(79.75)))
+                                .andExpect(jsonPath("$.complete", is(true)))
+                                .andExpect(jsonPath("$.module2Unlocked", is(true)));
+        }
 }

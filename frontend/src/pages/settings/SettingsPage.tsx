@@ -116,11 +116,14 @@ export const SettingsPage: React.FC = () => {
                     <div className="w-full">
                       <div className="text-sm text-[#8B5A2B] font-black uppercase tracking-wider mb-2 flex items-center gap-2">
                         <Star className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" /> 
-                        Student Code (ID para sa Magulang)
+                        Student ID (For Parent Linking)
                       </div>
                       <div className="font-mono text-sm md:text-base text-[#5D4037] bg-white px-4 py-3 rounded-xl border-2 border-[#FFC107] select-all inline-block break-all font-black shadow-sm w-full">
                         {user?.id}
                       </div>
+                      <p className="text-xs md:text-sm text-[#795548] font-bold mt-2">
+                        Share this ID with your parent so they can link your account to their dashboard.
+                      </p>
                     </div>
                     
                     <button
