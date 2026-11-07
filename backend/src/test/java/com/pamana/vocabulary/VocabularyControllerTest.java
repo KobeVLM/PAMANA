@@ -168,4 +168,52 @@ public class VocabularyControllerTest {
                                 .andExpect(jsonPath("$.overallAccuracy", is(100.0)))
                                 .andExpect(jsonPath("$.status", is("green")));
         }
+
+        @Test
+        public void testDeterministicMatchOptionsAndGamitinDialogue() throws Exception {
+                // 1. Fetch next word (mata)
+                MvcResult nextWordResult = mockMvc.perform(get("/api/vocabulary/next")
+                                .header("Authorization", "Bearer " + token))
+                                .andExpect(status().isOk())
+                                .andReturn();
+
+                String wordResponseStr = nextWordResult.getResponse().getContentAsString();
+                String wordIdStr = objectMapper.readTree(wordResponseStr).get("wordId").asText();
+
+                // 2. Verify repeated calls to getMatchOptions return the exact same options in identical order
+                MvcResult matchInitialResult = mockMvc.perform(get("/api/vocabulary/match/" + wordIdStr)
+                                .header("Authorization", "Bearer " + token)
+                                .param("step", "kilalanin"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.options", hasSize(4)))
+                                .andReturn();
+                String initialMatchJson = matchInitialResult.getResponse().getContentAsString();
+
+                for (int i = 0; i < 5; i++) {
+                        MvcResult repeatMatchResult = mockMvc.perform(get("/api/vocabulary/match/" + wordIdStr)
+                                        .header("Authorization", "Bearer " + token)
+                                        .param("step", "kilalanin"))
+                                        .andExpect(status().isOk())
+                                        .andReturn();
+                        assertEquals(initialMatchJson, repeatMatchResult.getResponse().getContentAsString(),
+                                        "Match options output must be deterministic across repeated calls");
+                }
+
+                // 3. Verify repeated calls to getGamitinDialogue return the exact same options in identical order
+                MvcResult gamitinInitialResult = mockMvc.perform(get("/api/vocabulary/gamitin/" + wordIdStr)
+                                .header("Authorization", "Bearer " + token))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.options", hasSize(3)))
+                                .andReturn();
+                String initialGamitinJson = gamitinInitialResult.getResponse().getContentAsString();
+
+                for (int i = 0; i < 5; i++) {
+                        MvcResult repeatGamitinResult = mockMvc.perform(get("/api/vocabulary/gamitin/" + wordIdStr)
+                                        .header("Authorization", "Bearer " + token))
+                                        .andExpect(status().isOk())
+                                        .andReturn();
+                        assertEquals(initialGamitinJson, repeatGamitinResult.getResponse().getContentAsString(),
+                                        "Gamitin dialogue options output must be deterministic across repeated calls");
+                }
+        }
 }
