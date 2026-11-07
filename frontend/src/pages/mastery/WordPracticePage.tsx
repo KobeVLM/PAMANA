@@ -63,8 +63,8 @@ const DOMAIN_LABELS: Record<string, string> = {
 }
 
 const pickRoundWords = (words: VocabWord[]): VocabWord[] => {
-  const shuffled = [...words].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, ROUND_TOTAL)
+  const sorted = [...words].sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+  return sorted.slice(0, ROUND_TOTAL)
 }
 
 export const WordPracticePage: React.FC = () => {
