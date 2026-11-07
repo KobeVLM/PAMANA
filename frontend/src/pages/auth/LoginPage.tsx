@@ -8,9 +8,15 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   
-  const state = location.state as { registeredEmail?: string; registeredPassword?: string } | null
+  const state = location.state as {
+    registeredUsername?: string
+    registeredEmail?: string
+    registeredPassword?: string
+  } | null
 
-  const [email, setEmail] = useState(state?.registeredEmail || '')
+  const [username, setUsername] = useState(
+    state?.registeredUsername || state?.registeredEmail || ''
+  )
   const [password, setPassword] = useState(state?.registeredPassword || '')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -26,18 +32,18 @@ export const LoginPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!email || !password) {
+    if (!username.trim() || !password) {
       setError('Please fill in all fields.')
       return
     }
     setIsLoading(true)
     setError('')
     try {
-      await login(email, password)
+      await login(username.trim(), password)
       // AuthContext will update user, useEffect above will redirect
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
-      setError(axiosErr?.response?.data?.message ?? 'Invalid email or password. Please try again.')
+      setError(axiosErr?.response?.data?.message ?? 'Invalid username or password. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -76,19 +82,19 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email */}
+              {/* Username */}
               <div className="space-y-1.5">
-                <label htmlFor="email" className="text-sm text-slate-600 font-black uppercase tracking-wider ml-2">
-                  Email
+                <label htmlFor="username" className="text-sm text-slate-600 font-black uppercase tracking-wider ml-2">
+                  Username
                 </label>
                 <input
-                  id="email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="e.g. adventurer_juan"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full p-4 bg-slate-100 rounded-2xl text-slate-800 font-bold focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
-                  autoComplete="email"
+                  autoComplete="username"
                   disabled={isLoading}
                 />
               </div>

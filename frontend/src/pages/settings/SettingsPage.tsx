@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { AppShell } from '@/components/layout/AppShell'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Bell, Paintbrush, Check, Music, Copy, Star, Volume2 } from 'lucide-react'
+import { User, Bell, Paintbrush, Check, Music, Copy, Star, Volume2, Mail } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const SettingsPage: React.FC = () => {
-  const { user } = useAuth()
+  const { user, updateProfile } = useAuth()
   const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
   const [musicEnabled, setMusicEnabled] = useState(true)
   const [sfxEnabled, setSfxEnabled] = useState(true)
@@ -23,6 +23,8 @@ export const SettingsPage: React.FC = () => {
     const savedChar = localStorage.getItem('pamana_character')
     if (savedChar === 'Lalaki' || savedChar === 'Babae') {
       setCharacter(savedChar as 'Lalaki' | 'Babae')
+    } else if (user?.gender) {
+      setCharacter(user.gender)
     }
 
     const savedBgm = localStorage.getItem('pamana_bgm')
@@ -34,12 +36,15 @@ export const SettingsPage: React.FC = () => {
     if (savedSfx === 'false') {
       setSfxEnabled(false)
     }
-  }, [])
+  }, [user?.gender])
 
   const handleCharacterChange = (char: 'Lalaki' | 'Babae') => {
     setCharacter(char)
     localStorage.setItem('pamana_character', char)
     window.dispatchEvent(new Event('pamana_settings_changed'))
+    if (user?.name) {
+      updateProfile(user.name, char).catch(console.error)
+    }
   }
 
   const toggleMusic = () => {
@@ -90,7 +95,7 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                   <div className="space-y-2">
                     <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg shadow-inner">
@@ -98,9 +103,9 @@ export const SettingsPage: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Email</span>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Username</span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-bold text-lg shadow-inner truncate">
-                      {user?.email || 'Loading...'}
+                      {user?.username || 'Loading...'}
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -109,6 +114,35 @@ export const SettingsPage: React.FC = () => {
                       {user?.role?.toLowerCase() || 'Loading...'}
                     </div>
                   </div>
+                </div>
+
+                {/* Email Placeholder (Optional / Coming Soon) */}
+                <div className="mb-6 p-5 md:p-6 rounded-[1.5rem] bg-[#f4f9f0] border-4 border-[#388E3C] shadow-inner flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-[#2E7D32]" />
+                      <span className="text-sm text-[#1B5E20] font-black uppercase tracking-wider">Email Address</span>
+                      <span className="text-xs bg-[#C8E6C9] text-[#1B5E20] px-2.5 py-0.5 rounded-full font-black border border-[#81C784]">
+                        Optional
+                      </span>
+                    </div>
+                    <div className="text-base md:text-lg text-[#1B5E20] font-black">
+                      {user?.email || 'No email linked yet'}
+                    </div>
+                    <p className="text-xs md:text-sm text-[#2E7D32] font-bold italic">
+                      Optional — Account recovery via email is coming soon in a future update.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="px-5 py-2.5 rounded-2xl font-black text-base bg-white/60 text-gray-400 border-2 border-gray-300 cursor-not-allowed opacity-80 shrink-0 self-start md:self-center shadow-none select-none"
+                    title="Account recovery via email is coming soon"
+                  >
+                    + Add Email
+                  </button>
                 </div>
 
                 {user?.role === 'LEARNER' && (
@@ -170,7 +204,9 @@ export const SettingsPage: React.FC = () => {
                       <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Choose your character</span>
                       <div className="grid grid-cols-2 gap-4">
                         <button
+                          type="button"
                           onClick={() => handleCharacterChange('Lalaki')}
+                          aria-label="Boy (Lalaki)"
                           className={cn(
                             "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
                             character === 'Lalaki'
@@ -179,11 +215,13 @@ export const SettingsPage: React.FC = () => {
                           )}
                         >
                           <span className="text-4xl mb-1">👦</span>
-                          Male 
+                          Boy (Lalaki) 
                           {character === 'Lalaki' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleCharacterChange('Babae')}
+                          aria-label="Girl (Babae)"
                           className={cn(
                             "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
                             character === 'Babae'
@@ -192,7 +230,7 @@ export const SettingsPage: React.FC = () => {
                           )}
                         >
                           <span className="text-4xl mb-1">👧</span>
-                          Female 
+                          Girl (Babae) 
                           {character === 'Babae' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
                         </button>
                       </div>
@@ -211,6 +249,7 @@ export const SettingsPage: React.FC = () => {
                           <span className="font-black text-lg drop-shadow-sm">Background Music</span>
                         </div>
                         <button
+                          type="button"
                           onClick={toggleMusic}
                           className={cn(
                             "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",
@@ -237,6 +276,7 @@ export const SettingsPage: React.FC = () => {
                           <span className="font-black text-lg drop-shadow-sm">Sound Effects</span>
                         </div>
                         <button
+                          type="button"
                           onClick={toggleSfx}
                           className={cn(
                             "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",

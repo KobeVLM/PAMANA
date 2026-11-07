@@ -2,55 +2,89 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
+import { AdventurerOnboardingModal } from '@/components/auth/AdventurerOnboardingModal'
 
 export const RegisterPage: React.FC = () => {
   const { register, user } = useAuth()
   const navigate = useNavigate()
 
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState<'LEARNER' | 'PARENT'>('LEARNER')
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   React.useEffect(() => {
     if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : '/trail'
+      const dest = user.role === 'PARENT' ? '/dashboard' : '/home'
       navigate(dest, { replace: true })
     }
   }, [user, navigate])
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!name.trim()) newErrors.name = 'Name is required.'
-    if (!email.trim()) newErrors.email = 'Email is required.'
-    else if (!/\S+@\S+\.\S+/.test(email)) newErrors.email = 'Invalid email address.'
-    if (!password) newErrors.password = 'Password is required.'
-    else if (password.length < 6) newErrors.password = 'Password must be at least 6 characters.'
-    if (password !== confirmPassword) newErrors.confirmPassword = 'Passwords do not match.'
+    const trimmedUsername = username.trim()
+    if (!trimmedUsername) {
+      newErrors.username = 'Username is required.'
+    } else if (!/^[a-zA-Z0-9_]{3,30}$/.test(trimmedUsername)) {
+      if (trimmedUsername.length < 3) {
+        newErrors.username = 'Username must be at least 3 characters.'
+      } else if (trimmedUsername.length > 30) {
+        newErrors.username = 'Username cannot exceed 30 characters.'
+      } else {
+        newErrors.username = 'Username can only contain letters, numbers, and underscores.'
+      }
+    }
+
+    if (!password) {
+      newErrors.password = 'Password is required.'
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters.'
+    }
+
+    if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match.'
+    }
+
     return newErrors
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const validationErrors = validate()
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors)
       return
     }
+    setErrors({})
+    setIsOnboardingOpen(true)
+  }
+
+  const handleCompleteRegistration = async (data: { name: string; gender: 'Lalaki' | 'Babae' }) => {
     setIsLoading(true)
     setErrors({})
     try {
       localStorage.setItem('show_intro_story', 'true')
-      await register(name.trim(), email.trim(), password, role)
-      navigate('/login', { state: { registeredEmail: email.trim(), registeredPassword: password } })
+      await register(username.trim(), password, role, data.name.trim(), data.gender)
+      setIsOnboardingOpen(false)
+      navigate('/login', {
+        state: {
+          registeredUsername: username.trim(),
+          registeredPassword: password,
+        },
+      })
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { message?: string } } }
-      const msg = axiosErr?.response?.data?.message ?? 'An error occurred. Please try again.'
-      setErrors({ general: msg })
+      setIsOnboardingOpen(false)
+      const axiosErr = err as { response?: { status?: number; data?: { message?: string } } }
+      if (axiosErr?.response?.status === 409 || axiosErr?.response?.data?.message?.toLowerCase().includes('username')) {
+        setErrors({ general: 'That username is already registered. Please choose another.' })
+      } else {
+        const msg = axiosErr?.response?.data?.message ?? 'An error occurred. Please try again.'
+        setErrors({ general: msg })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -89,86 +123,8 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              
-              {/* Name */}
-              <div className="space-y-1">
-                <label htmlFor="name" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
-                  Name
-                </label>
-                <input
-                  id="name"
-                  type="text"
-                  placeholder="Juan dela Cruz"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
-                  disabled={isLoading}
-                />
-                {errors.name && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.name}</p>}
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1">
-                <label htmlFor="reg-email" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
-                  Email
-                </label>
-                <input
-                  id="reg-email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
-                  disabled={isLoading}
-                />
-                {errors.email && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.email}</p>}
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1">
-                <label htmlFor="reg-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="reg-password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="At least 6 characters"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] pr-10"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {errors.password && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.password}</p>}
-              </div>
-
-              {/* Confirm Password */}
-              <div className="space-y-1">
-                <label htmlFor="confirm-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirm-password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Repeat your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
-                  disabled={isLoading}
-                />
-                {errors.confirmPassword && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.confirmPassword}</p>}
-              </div>
-
               {/* Role Selection */}
-              <div className="space-y-1 pt-1">
+              <div className="space-y-1">
                 <span className="block text-xs text-slate-600 font-black uppercase tracking-wider ml-1">Role</span>
                 <div className="grid grid-cols-2 gap-2">
                   {(['LEARNER', 'PARENT'] as const).map((r) => (
@@ -188,6 +144,79 @@ export const RegisterPage: React.FC = () => {
                 </div>
               </div>
 
+              {/* Username */}
+              <div className="space-y-1">
+                <label htmlFor="reg-username" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Username
+                </label>
+                <input
+                  id="reg-username"
+                  type="text"
+                  placeholder="e.g. adventurer_juan"
+                  value={username}
+                  onChange={(e) => {
+                    setUsername(e.target.value)
+                    if (errors.username) setErrors((prev) => ({ ...prev, username: '' }))
+                  }}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                  autoComplete="username"
+                />
+                {errors.username && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.username}</p>}
+              </div>
+
+              {/* Password */}
+              <div className="space-y-1">
+                <label htmlFor="reg-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="reg-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="At least 6 characters"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value)
+                      if (errors.password) setErrors((prev) => ({ ...prev, password: '' }))
+                    }}
+                    className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50] pr-10"
+                    disabled={isLoading}
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.password}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div className="space-y-1">
+                <label htmlFor="confirm-password" className="text-xs text-slate-600 font-black uppercase tracking-wider ml-1">
+                  Confirm Password
+                </label>
+                <input
+                  id="confirm-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Repeat your password"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value)
+                    if (errors.confirmPassword) setErrors((prev) => ({ ...prev, confirmPassword: '' }))
+                  }}
+                  className="w-full py-2.5 px-3 bg-slate-100 rounded-xl text-slate-800 font-bold text-sm focus:outline-none focus:ring-4 focus:ring-[#4CAF50]/30 transition-all border-2 border-transparent focus:border-[#4CAF50]"
+                  disabled={isLoading}
+                  autoComplete="new-password"
+                />
+                {errors.confirmPassword && <p className="text-red-500 font-bold text-[10px] ml-1">{errors.confirmPassword}</p>}
+              </div>
+
               {/* General error */}
               {errors.general && (
                 <div className="p-2 bg-red-100 border-2 border-red-300 rounded-xl">
@@ -204,10 +233,10 @@ export const RegisterPage: React.FC = () => {
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    REGISTERING...
+                    CONTINUE...
                   </span>
                 ) : (
-                  'REGISTER'
+                  'CONTINUE'
                 )}
               </button>
             </form>
@@ -222,6 +251,12 @@ export const RegisterPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <AdventurerOnboardingModal
+        open={isOnboardingOpen}
+        onComplete={handleCompleteRegistration}
+        isLoading={isLoading}
+      />
     </div>
   )
 }

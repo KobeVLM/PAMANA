@@ -1,11 +1,9 @@
 package com.pamana.auth;
 
-import com.pamana.auth.AuthService;
-import com.pamana.auth.UserRepository;
-import com.pamana.auth.User;
 import com.pamana.auth.dto.AuthResponse;
 import com.pamana.auth.dto.LoginRequest;
 import com.pamana.auth.dto.RegisterRequest;
+import com.pamana.auth.dto.UpdateProfileRequest;
 import com.pamana.auth.dto.UserResponse;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleProgress;
@@ -17,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
@@ -44,22 +43,48 @@ public class AuthService {
 
     @Transactional
     public UserResponse createAccount(RegisterRequest request) {
-        log.info("Attempting to create account for email: {}", request.getEmail());
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("Account registration failed - email already exists: {}", request.getEmail());
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ang email na ito ay may rehistradong account na.");
+        String username = request.getUsername();
+        if (!StringUtils.hasText(username)) {
+            if (StringUtils.hasText(request.getEmail()) && request.getEmail().contains("@")) {
+                username = request.getEmail().split("@")[0].replaceAll("[^a-zA-Z0-9_]", "_");
+            } else if (StringUtils.hasText(request.getName())) {
+                username = request.getName().toLowerCase().replaceAll("[^a-zA-Z0-9_]", "_");
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Kailangan ang username.");
+            }
         }
+        username = username.trim();
+
+        log.info("Attempting to create account for username: {}", username);
+
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            log.warn("Account registration failed - username already exists: {}", username);
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ang username na ito ay may rehistradong account na.");
+        }
+
+        String email = null;
+        if (StringUtils.hasText(request.getEmail())) {
+            email = request.getEmail().trim();
+            if (userRepository.existsByEmail(email)) {
+                log.warn("Account registration failed - email already exists: {}", email);
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ang email na ito ay may rehistradong account na.");
+            }
+        }
+
+        String name = StringUtils.hasText(request.getName()) ? request.getName().trim() : "Adventurer";
+        String gender = StringUtils.hasText(request.getGender()) ? request.getGender().trim() : "Lalaki";
 
         // 1. Hash the password
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         // 2. Create User entity
         User user = new User(
-                request.getName(),
-                request.getEmail(),
+                name,
+                username,
+                email,
                 hashedPassword,
-                request.getRole()
+                request.getRole(),
+                gender
         );
 
         // 3. Save User to DB
@@ -74,28 +99,50 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public AuthResponse authenticate(LoginRequest request) {
-        log.info("Attempting login verification for email: {}", request.getEmail());
+        String loginIdentifier = request.getUsername() != null ? request.getUsername().trim() : "";
+        log.info("Attempting login verification for identifier: {}", loginIdentifier);
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByUsernameIgnoreCase(loginIdentifier)
+                .or(() -> userRepository.findByEmail(loginIdentifier))
                 .orElseThrow(() -> {
-                    log.warn("Login failed - email not found: {}", request.getEmail());
-                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Maling email o password.");
+                    log.warn("Login failed - identifier not found: {}", loginIdentifier);
+                    return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Maling username o password.");
                 });
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            log.warn("Login failed - password mismatch for email: {}", request.getEmail());
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Maling email o password.");
+            log.warn("Login failed - password mismatch for identifier: {}", loginIdentifier);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Maling username o password.");
         }
 
         // Generate custom state-less authentication token
         String jwt = jwtTokenProvider.generateToken(
                 user.getId(),
+                user.getUsername(),
                 user.getEmail(),
                 user.getRole().name()
         );
 
         log.info("Login successful for user ID: {}, generating bearer token", user.getId());
         return new AuthResponse(jwt, mapToUserResponse(user));
+    }
+
+    @Transactional
+    public UserResponse updateProfile(UUID userId, UpdateProfileRequest request) {
+        log.info("Attempting to update profile for user ID: {}", userId);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (StringUtils.hasText(request.getName())) {
+            user.setName(request.getName().trim());
+        }
+        if (StringUtils.hasText(request.getGender())) {
+            user.setGender(request.getGender().trim());
+        }
+
+        User savedUser = userRepository.save(user);
+        log.info("Successfully updated profile for user ID: {}", savedUser.getId());
+        return mapToUserResponse(savedUser);
     }
 
     private void initializeModuleProgress(UUID userId) {
@@ -117,8 +164,10 @@ public class AuthService {
         return new UserResponse(
                 user.getId(),
                 user.getName(),
+                user.getUsername(),
                 user.getEmail(),
                 user.getRole(),
+                user.getGender(),
                 user.getCreatedAt()
         );
     }
