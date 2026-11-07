@@ -1,7 +1,9 @@
 export interface User {
   id: string
   name: string
-  email: string
+  username: string
+  gender?: 'Lalaki' | 'Babae'
+  email?: string | null
   role: 'LEARNER' | 'PARENT'
 }
 
@@ -9,8 +11,23 @@ export interface AuthContextType {
   user: User | null
   token: string | null
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string, role: 'LEARNER' | 'PARENT') => Promise<void>
+  login: (username: string, password: string) => Promise<void>
+  register: {
+    (
+      username: string,
+      password: string,
+      role: 'LEARNER' | 'PARENT',
+      name?: string,
+      gender?: 'Lalaki' | 'Babae'
+    ): Promise<void>
+    (
+      name: string,
+      email: string,
+      password: string,
+      role: 'LEARNER' | 'PARENT'
+    ): Promise<void>
+  }
+  updateProfile: (name: string, gender?: 'Lalaki' | 'Babae') => Promise<User>
   logout: () => void
 }
 
