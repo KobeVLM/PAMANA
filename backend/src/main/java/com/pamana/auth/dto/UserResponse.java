@@ -1,7 +1,6 @@
 package com.pamana.auth.dto;
 
 import com.pamana.auth.Role;
-import com.pamana.auth.dto.UserResponse;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,19 +9,36 @@ public class UserResponse {
 
     private UUID id;
     private String name;
+    private String username;
     private String email;
     private Role role;
+    private String gender;
     private LocalDateTime createdAt;
 
     public UserResponse() {
     }
 
-    public UserResponse(UUID id, String name, String email, Role role, LocalDateTime createdAt) {
+    public UserResponse(UUID id, String name, String username, String email, Role role, String gender, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
+        this.username = username;
         this.email = email;
         this.role = role;
+        this.gender = gender != null ? gender : "Lalaki";
         this.createdAt = createdAt;
+    }
+
+    // Backwards-compatible constructor for existing callers
+    public UserResponse(UUID id, String name, String email, Role role, LocalDateTime createdAt) {
+        this(
+                id,
+                name,
+                (email != null && !email.isBlank()) ? email.split("@")[0] : (name != null ? name.toLowerCase().replaceAll("\\s+", "") : "user"),
+                email,
+                role,
+                "Lalaki",
+                createdAt
+        );
     }
 
     // Getters and Setters
@@ -42,6 +58,14 @@ public class UserResponse {
         this.name = name;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public String getEmail() {
         return email;
     }
@@ -56,6 +80,14 @@ public class UserResponse {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public LocalDateTime getCreatedAt() {
