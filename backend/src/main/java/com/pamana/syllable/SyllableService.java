@@ -197,7 +197,7 @@ public class SyllableService extends BaseGameService {
                     options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
                 }
             }
-            java.util.Collections.shuffle(options);
+            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
         } else if ("kilalanin".equals(subLevel)) {
             String[] words = {"mata", "bahay", "tatay", "nanay", "bibig"};
             String[] targetSylls = {"ma", "ba", "ta", "na", "bi"};
@@ -220,7 +220,7 @@ public class SyllableService extends BaseGameService {
                     added++;
                 }
             }
-            java.util.Collections.shuffle(options);
+            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
         } else if ("rhyming".equals(subLevel)) {
             String[] words = {"mata", "lola", "lolo", "tenga", "kuya"};
             String[] targetSylls = {"ta", "la", "lo", "nga", "ya"};
@@ -242,7 +242,7 @@ public class SyllableService extends BaseGameService {
                     added++;
                 }
             }
-            java.util.Collections.shuffle(options);
+            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
         }
 
         response.setOptions(options);

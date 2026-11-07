@@ -245,4 +245,38 @@ public class SyllableControllerTest {
                                 .andExpect(jsonPath("$.complete", is(true)))
                                 .andExpect(jsonPath("$.module2Unlocked", is(true)));
         }
+
+        @Test
+        public void testDeterministicSyllableOptionsOrdering() throws Exception {
+                String[] subLevels = { "pagsama", "pakinggan", "kilalanin", "rhyming" };
+
+                for (String subLevel : subLevels) {
+                        MvcResult firstResult = mockMvc.perform(get("/api/syllables/set")
+                                        .param("subLevel", subLevel)
+                                        .param("setId", "1")
+                                        .header("Authorization", "Bearer " + token))
+                                        .andExpect(status().isOk())
+                                        .andReturn();
+
+                        String firstJson = firstResult.getResponse().getContentAsString();
+                        com.fasterxml.jackson.databind.JsonNode firstOptions = objectMapper.readTree(firstJson).get("options");
+                        org.junit.jupiter.api.Assertions.assertNotNull(firstOptions);
+                        org.junit.jupiter.api.Assertions.assertFalse(firstOptions.isEmpty());
+
+                        for (int i = 0; i < 5; i++) {
+                                MvcResult repeatResult = mockMvc.perform(get("/api/syllables/set")
+                                                .param("subLevel", subLevel)
+                                                .param("setId", "1")
+                                                .header("Authorization", "Bearer " + token))
+                                                .andExpect(status().isOk())
+                                                .andReturn();
+
+                                String repeatJson = repeatResult.getResponse().getContentAsString();
+                                com.fasterxml.jackson.databind.JsonNode repeatOptions = objectMapper.readTree(repeatJson).get("options");
+
+                                org.junit.jupiter.api.Assertions.assertEquals(firstOptions.toString(), repeatOptions.toString(),
+                                                "Options order should be deterministic across calls for sublevel: " + subLevel);
+                        }
+                }
+        }
 }
