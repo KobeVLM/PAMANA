@@ -59,8 +59,8 @@ const NPC_AUDIO = '/static/assets/audio/npc/lolo_mod3_kilalanin.mp3'
 const ROUND_TOTAL = 5
 
 const pickRoundWords = (words: VocabWord[]): VocabWord[] => {
-  const shuffled = [...words].sort(() => Math.random() - 0.5)
-  return shuffled.slice(0, ROUND_TOTAL)
+  const sorted = [...words].sort((a, b) => (a.ordinal ?? 0) - (b.ordinal ?? 0))
+  return sorted.slice(0, ROUND_TOTAL)
 }
 
 export const ImagePracticePage: React.FC = () => {

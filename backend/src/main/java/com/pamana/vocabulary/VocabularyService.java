@@ -134,10 +134,12 @@ public class VocabularyService extends BaseGameService {
         List<VocabularyItem> sameDomainItems = vocabularyItemRepository.findByDomain(target.getDomain());
         List<VocabularyItem> distractors = sameDomainItems.stream()
                 .filter(item -> !item.getId().equals(wordId))
+                .sorted(Comparator.comparing(VocabularyItem::getOrdinal))
                 .collect(Collectors.toList());
 
         // Shuffle and take 3 distractors
-        Collections.shuffle(distractors);
+        long seed = (long) wordId.hashCode() + (step != null ? step.hashCode() : 0);
+        Collections.shuffle(distractors, new Random(seed));
         List<VocabularyItem> selectedDistractors = distractors.subList(0, Math.min(3, distractors.size()));
 
         // Compile total choices (target + distractors)
@@ -148,7 +150,7 @@ public class VocabularyService extends BaseGameService {
         }
 
         // Shuffle choices for frontend OptionGrid
-        Collections.shuffle(options);
+        Collections.shuffle(options, new Random(seed));
 
         return new MatchOptionsResponse(
                 target.getId(),
@@ -172,16 +174,18 @@ public class VocabularyService extends BaseGameService {
         List<VocabularyItem> sameDomainItems = vocabularyItemRepository.findByDomain(target.getDomain());
         List<String> distractors = sameDomainItems.stream()
                 .filter(item -> !item.getId().equals(wordId))
+                .sorted(Comparator.comparing(VocabularyItem::getOrdinal))
                 .map(VocabularyItem::getWord)
                 .collect(Collectors.toList());
 
-        Collections.shuffle(distractors);
+        long seed = (long) wordId.hashCode() + "gamitin".hashCode();
+        Collections.shuffle(distractors, new Random(seed));
         List<String> options = new ArrayList<>();
         options.add(target.getWord());
         options.addAll(distractors.subList(0, Math.min(2, distractors.size()))); // 3 options total (target + 2
                                                                                  // distractors)
 
-        Collections.shuffle(options);
+        Collections.shuffle(options, new Random(seed));
 
         return new DialogueResponse(
                 target.getId(),

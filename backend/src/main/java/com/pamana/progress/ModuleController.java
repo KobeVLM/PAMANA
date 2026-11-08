@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.pamana.security.LearnerAccessService;
 
@@ -69,5 +71,51 @@ public class ModuleController {
         log.info("REST API: Reset module progress for user ID: {}, module: {}", userId, moduleNumber);
         moduleLockService.resetModuleGameData(userId, moduleNumber);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/unlock/{userId}/{moduleNumber}")
+    @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
+    public ResponseEntity<List<ModuleProgress>> unlockModuleForUser(
+            @PathVariable UUID userId,
+            @PathVariable int moduleNumber,
+            Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
+        log.info("REST API: Cheat unlock module {} for user ID: {}", moduleNumber, userId);
+        List<ModuleProgress> progress = moduleLockService.unlockModule(userId, moduleNumber);
+        return ResponseEntity.ok(progress);
+    }
+
+    @PostMapping("/unlock/{moduleNumber}")
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<List<ModuleProgress>> unlockModule(
+            @PathVariable int moduleNumber,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        log.info("REST API: Cheat unlock module {} for current user: {}", moduleNumber, userId);
+        List<ModuleProgress> progress = moduleLockService.unlockModule(userId, moduleNumber);
+        return ResponseEntity.ok(progress);
+    }
+
+    @PostMapping("/unlock-all/{userId}")
+    @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
+    public ResponseEntity<List<ModuleProgress>> unlockAllModulesForUser(
+            @PathVariable UUID userId,
+            @RequestParam(required = false, defaultValue = "false") boolean markComplete,
+            Authentication authentication) {
+        learnerAccessService.assertCanAccess(authentication, userId);
+        log.info("REST API: Cheat unlock ALL modules for user ID: {}, markComplete={}", userId, markComplete);
+        List<ModuleProgress> progress = moduleLockService.unlockAllModules(userId, markComplete);
+        return ResponseEntity.ok(progress);
+    }
+
+    @PostMapping("/unlock-all")
+    @PreAuthorize("hasRole('LEARNER')")
+    public ResponseEntity<List<ModuleProgress>> unlockAllModules(
+            @RequestParam(required = false, defaultValue = "false") boolean markComplete,
+            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        log.info("REST API: Cheat unlock ALL modules for current user: {}, markComplete={}", userId, markComplete);
+        List<ModuleProgress> progress = moduleLockService.unlockAllModules(userId, markComplete);
+        return ResponseEntity.ok(progress);
     }
 }

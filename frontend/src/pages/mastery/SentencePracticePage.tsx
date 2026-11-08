@@ -42,15 +42,13 @@ const MAX_ROUNDS = 3
 const toTiles = (words: string[]): WordTile[] =>
   words.map((word, index) => ({ id: `word-${index}-${word}`, word }))
 
-/** Ensure the tiles are genuinely scrambled relative to the correct order. */
+/** Ensure the tiles are scrambled relative to the correct order deterministically. */
 const prepareScrambled = (words: string[], correctOrder: string[]): string[] => {
   const scrambled = [...words]
   if (scrambled.length <= 1) return scrambled
 
-  let attempts = 0
-  while (scrambled.join(' ') === correctOrder.join(' ') && attempts < 10) {
-    scrambled.sort(() => Math.random() - 0.5)
-    attempts++
+  if (scrambled.join(' ') === correctOrder.join(' ')) {
+    return [...scrambled].reverse()
   }
   return scrambled
 }
