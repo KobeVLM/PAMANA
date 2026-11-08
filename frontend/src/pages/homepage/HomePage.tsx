@@ -36,8 +36,8 @@ const HomePage = () => {
       moduleNum: 1, 
       route: '/mastery/1', 
       icon: '🧩', 
-      bgImage: '/images/module-bg/m-Farm.jpg', 
-      shadow: 'shadow-[0_8px_0_#0077b6]' 
+      bgGradient: 'bg-gradient-to-b from-[#00B4D8] to-[#0077B6]', 
+      shadow: 'shadow-[0_8px_0_#023E8A]' 
     },
     { 
       id: 2, 
@@ -45,8 +45,8 @@ const HomePage = () => {
       moduleNum: 2, 
       route: '/mastery/2', 
       icon: '💬', 
-      bgImage: '/images/module-bg/m-Garden.jpg', 
-      shadow: 'shadow-[0_8px_0_#a66310]' 
+      bgGradient: 'bg-gradient-to-b from-[#E67E22] to-[#D35400]', 
+      shadow: 'shadow-[0_8px_0_#873600]' 
     },
     { 
       id: 3, 
@@ -54,8 +54,8 @@ const HomePage = () => {
       moduleNum: 3, 
       route: '/mastery/3', 
       icon: '🖼️', 
-      bgImage: '/images/module-bg/m-Kitchen.jpg', 
-      shadow: 'shadow-[0_8px_0_#6c3483]' 
+      bgGradient: 'bg-gradient-to-b from-[#9B59B6] to-[#8E44AD]', 
+      shadow: 'shadow-[0_8px_0_#4A235A]' 
     },
     { 
       id: 4, 
@@ -63,8 +63,8 @@ const HomePage = () => {
       moduleNum: 4, 
       route: '/mastery/4', 
       icon: '📖', 
-      bgImage: '/images/module-bg/m-House.jpg', 
-      shadow: 'shadow-[0_8px_0_#b03a2e]' 
+      bgGradient: 'bg-gradient-to-b from-[#E74C3C] to-[#C0392B]', 
+      shadow: 'shadow-[0_8px_0_#641E16]' 
     },
   ]
 
@@ -77,15 +77,13 @@ const HomePage = () => {
     }
   }
 
-  // Balanced text size
   const headerStyle = "text-2xl md:text-3xl font-black text-white tracking-widest mb-3 uppercase [-webkit-text-stroke:1.5px_#1a2e05] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#1a2e05]";
 
   return (
     <div 
       className="min-h-screen p-6 md:p-10 bg-cover bg-center bg-no-repeat relative overflow-y-auto"
-      style={{ backgroundImage: "url('/images/HomeB.png')" }}
+      style={{ backgroundImage: "url('/images/module-bg/modulebg2.png')" }}
     >
-      {/* Balanced top padding and max-width */}
       <div className="max-w-5xl mx-auto relative z-10 pt-6 md:pt-10 pb-8">
         
         {/* CHALLENGES IMAGE */}
@@ -97,7 +95,6 @@ const HomePage = () => {
           />
         </div>
 
-        {/* Main 2-Column Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-10">
           
           {/* LEFT: Beginner - TRAIL MAP */}
@@ -106,12 +103,13 @@ const HomePage = () => {
               Beginner
             </h2>
             
-            {/* Changed to flex-1 and min-h to stretch and match the Mastery height */}
             <div className="relative w-full flex-1 min-h-[310px] md:min-h-[330px] rounded-[2rem] border-[6px] border-white shadow-[0_8px_0_rgba(0,0,0,0.15)] overflow-hidden group transition-all duration-200 hover:-translate-y-1 hover:brightness-105 hover:shadow-[0_12px_0_rgba(0,0,0,0.15)] active:translate-y-1 active:shadow-none cursor-pointer">
               
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/images/TrailMap1.jpg')" }} />
-              
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+
+              {/* Shiny Highlight for Trail Map */}
+              <div className="absolute top-3 left-4 w-24 h-6 bg-white/40 rounded-full blur-[2px] -rotate-12 pointer-events-none" />
 
               <div className="absolute top-4 left-0 w-full text-center z-10">
                 <h3 className="text-3xl font-black text-white tracking-wider [-webkit-text-stroke:1.5px_#1a2e05] [paint-order:stroke_fill] drop-shadow-[0_3px_0_#1a2e05]">
@@ -125,9 +123,11 @@ const HomePage = () => {
                     e.stopPropagation(); 
                     navigate('/trail');
                   }}
-                  className="flex items-center gap-2 bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white px-8 py-2.5 rounded-full border-4 border-white shadow-[0_6px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none transition-all font-black text-xl tracking-wider"
+                  className="relative flex items-center gap-2 bg-gradient-to-b from-[#66BB6A] to-[#4CAF50] text-white px-8 py-2.5 rounded-full border-4 border-white shadow-[0_6px_0_#2E7D32] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none transition-all font-black text-xl tracking-wider overflow-hidden"
                 >
-                  PLAY <Play className="w-5 h-5 fill-white" />
+                  {/* Shiny Highlight for Play Button */}
+                  <div className="absolute top-1 left-3 w-12 h-2 bg-white/40 rounded-full blur-[1px] -rotate-12 pointer-events-none" />
+                  <span className="relative z-10 flex items-center gap-2">PLAY <Play className="w-5 h-5 fill-white" /></span>
                 </button>
               </div>
             </div>
@@ -149,23 +149,23 @@ const HomePage = () => {
                     onClick={() => handleMasteryClick(item)}
                     className={cn(
                       "relative w-full h-[165px] md:h-[175px] rounded-[1.5rem] border-[5px] border-white flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-200 group",
+                      item.bgGradient, 
                       item.shadow,
                       unlocked 
-                        ? "hover:-translate-y-1 hover:brightness-105 active:translate-y-1 active:shadow-none" 
+                        ? "hover:-translate-y-1 hover:brightness-110 active:translate-y-1 active:shadow-none" 
                         : "brightness-[0.6] grayscale-[0.2] active:translate-y-1"
                     )}
                   >
-                    {/* Background Image */}
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${item.bgImage}')` }} />
+                    {/* 👇 THE SHINY HIGHLIGHT (Top Left) */}
+                    <div className="absolute top-2.5 left-3 w-14 h-5 bg-white/40 rounded-full blur-[1.5px] -rotate-12 pointer-events-none" />
 
-                    {/* Dark Overlay so text is readable */}
                     <div className={cn(
                       "absolute inset-0 transition-colors duration-300",
-                      unlocked ? "bg-black/20" : "bg-black/50"
+                      unlocked ? "bg-black/10" : "bg-black/50"
                     )} />
 
-                    {/* Smooth Glossy Shine */}
-                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
+                    {/* Smooth Glossy Shine Overall */}
+                    <div className="absolute top-0 inset-x-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent pointer-events-none rounded-t-[1.1rem]" />
 
                     <div className="absolute top-2 right-2 z-20">
                       {unlocked ? (
@@ -197,7 +197,6 @@ const HomePage = () => {
                         </div>
                       )}
 
-                      {/* GLOWING REMOVED, JUST SCALES UP */}
                       {!unlocked && (
                         <div className="absolute inset-0 flex items-center justify-center">
                           <img 
@@ -235,6 +234,9 @@ const HomePage = () => {
             onClick={() => console.log('Open Story')}
             className="relative w-full bg-gradient-to-b from-[#00D2FF] via-[#00A8E8] to-[#0080C0] hover:brightness-110 border-[5px] border-white rounded-[2rem] p-2 md:p-3 flex items-center justify-between shadow-[0_10px_0_#005A9C] hover:-translate-y-1 hover:shadow-[0_12px_0_#005A9C] active:translate-y-1 active:shadow-[0_4px_0_#005A9C] transition-all duration-200 ease-out group overflow-hidden"
           >
+            {/* Shiny Highlight for Story Button */}
+            <div className="absolute top-3 left-6 w-32 h-6 bg-white/30 rounded-full blur-[2px] -rotate-6 pointer-events-none" />
+
             {/* Background Decorations */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
               <Star className="absolute top-2 left-[35%] w-5 h-5 md:w-6 md:h-6 text-yellow-400 fill-yellow-400 -rotate-12 opacity-80" />
@@ -244,7 +246,6 @@ const HomePage = () => {
             </div>
             
             <div className="flex items-center gap-3 z-10 pl-1 md:pl-2">
-              {/* Rotated Book Icon */}
               <img 
                 src="/images/BK.png" 
                 alt="Book Icon" 
