@@ -1,7 +1,6 @@
 package com.pamana.sentence;
 
-import com.pamana.sentence.SentenceController;
-import com.pamana.sentence.SentenceService;
+import com.pamana.progress.ModuleLockService;
 import com.pamana.sentence.dto.SentenceProgressRequest;
 import com.pamana.sentence.dto.SentenceResultResponse;
 import com.pamana.sentence.dto.SentenceTaskResponse;
@@ -24,9 +23,11 @@ public class SentenceController {
     private static final Logger log = LoggerFactory.getLogger(SentenceController.class);
 
     private final SentenceService sentenceService;
+    private final ModuleLockService moduleLockService;
 
-    public SentenceController(SentenceService sentenceService) {
+    public SentenceController(SentenceService sentenceService, ModuleLockService moduleLockService) {
         this.sentenceService = sentenceService;
+        this.moduleLockService = moduleLockService;
     }
 
     @GetMapping("/task")
@@ -36,6 +37,10 @@ public class SentenceController {
             Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
         log.info("REST API: Fetch active sentence task for user: {}, tier: {}", userId, tier);
+
+        if (!moduleLockService.isModuleUnlocked(userId, 4)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         SentenceTaskResponse response = sentenceService.getSentenceTask(userId, tier);
         if (response == null) {
@@ -51,6 +56,10 @@ public class SentenceController {
             Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
         log.info("REST API: Submit sentence arrangement attempt for user: {}, taskId: {}", userId, request.getTaskId());
+
+        if (!moduleLockService.isModuleUnlocked(userId, 4)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         SentenceResultResponse response = sentenceService.evaluateSentenceAnswer(
                 userId,

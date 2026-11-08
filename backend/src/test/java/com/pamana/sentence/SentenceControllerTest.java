@@ -142,6 +142,38 @@ public class SentenceControllerTest {
         }
 
         @Test
+        public void testGetSentenceTask_WhenModule4Locked_ReturnsForbidden() throws Exception {
+                // Lock Module 4 for user
+                ModuleProgress m4 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 4)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 4 not initialized"));
+                m4.setIsUnlocked(false);
+                moduleProgressRepository.save(m4);
+
+                mockMvc.perform(get("/api/sentences/task")
+                                .header("Authorization", "Bearer " + token)
+                                .param("tier", "1"))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void testRecordProgress_WhenModule4Locked_ReturnsForbidden() throws Exception {
+                // Lock Module 4 for user
+                ModuleProgress m4 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 4)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 4 not initialized"));
+                m4.setIsUnlocked(false);
+                moduleProgressRepository.save(m4);
+
+                SentenceProgressRequest req = new SentenceProgressRequest(UUID.randomUUID(),
+                                Arrays.asList("Ako", "si", "Lolo"));
+
+                mockMvc.perform(post("/api/sentences/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
         public void testDashboardAndPdfReport() throws Exception {
                 // 1. Fetch Parent Progress Dashboard metrics
                 mockMvc.perform(get("/api/progress/" + userId + "/dashboard")
