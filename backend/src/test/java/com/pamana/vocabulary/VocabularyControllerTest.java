@@ -216,4 +216,88 @@ public class VocabularyControllerTest {
                                         "Gamitin dialogue options output must be deterministic across repeated calls");
                 }
         }
+
+
+        @Test
+        public void testGetNextWord_WhenModule2Locked_ReturnsForbidden() throws Exception {
+                // Lock Module 2
+                ModuleProgress m2 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 2)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 2 not initialized"));
+                m2.setIsUnlocked(false);
+                moduleProgressRepository.save(m2);
+
+                // Both with explicit moduleNumber=2 and default (no param)
+                mockMvc.perform(get("/api/vocabulary/next")
+                                .header("Authorization", "Bearer " + token)
+                                .param("moduleNumber", "2"))
+                                .andExpect(status().isForbidden());
+
+                mockMvc.perform(get("/api/vocabulary/next")
+                                .header("Authorization", "Bearer " + token))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void testGetNextWord_WhenModule3Locked_ReturnsForbidden() throws Exception {
+                // Module 3 is locked by default
+                mockMvc.perform(get("/api/vocabulary/next")
+                                .header("Authorization", "Bearer " + token)
+                                .param("moduleNumber", "3"))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void testRecordProgress_WhenModule2Locked_ReturnsForbidden() throws Exception {
+                // Lock Module 2
+                ModuleProgress m2 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 2)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 2 not initialized"));
+                m2.setIsUnlocked(false);
+                moduleProgressRepository.save(m2);
+
+                VocabularyItem selfBodyWord = vocabularyItemRepository.findByDomain("self_body").get(0);
+                VocabularyProgressRequest req = new VocabularyProgressRequest(selfBodyWord.getId(), "kilalanin", true);
+
+                mockMvc.perform(post("/api/vocabulary/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void testRecordProgress_WhenModule3Locked_ReturnsForbidden() throws Exception {
+                // Module 3 is locked by default
+                VocabularyItem familyHomeWord = vocabularyItemRepository.findByDomain("family_home").get(0);
+                VocabularyProgressRequest req = new VocabularyProgressRequest(familyHomeWord.getId(), "kilalanin", true);
+
+                mockMvc.perform(post("/api/vocabulary/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
+                                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void testGetNextWordAndRecordProgress_WhenModule3Unlocked_Succeeds() throws Exception {
+                // Unlock Module 3
+                ModuleProgress m3 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 3)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 3 not initialized"));
+                m3.setIsUnlocked(true);
+                moduleProgressRepository.save(m3);
+
+                mockMvc.perform(get("/api/vocabulary/next")
+                                .header("Authorization", "Bearer " + token)
+                                .param("moduleNumber", "3"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.domain", is("family_home")));
+
+                VocabularyItem familyHomeWord = vocabularyItemRepository.findByDomain("family_home").get(0);
+                VocabularyProgressRequest req = new VocabularyProgressRequest(familyHomeWord.getId(), "kilalanin", true);
+
+                mockMvc.perform(post("/api/vocabulary/progress")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(req)))
+                                .andExpect(status().isCreated());
+        }
 }
