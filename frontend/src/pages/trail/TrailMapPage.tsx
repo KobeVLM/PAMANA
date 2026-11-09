@@ -101,8 +101,7 @@ export const TrailMapPage: React.FC = () => {
 
   const checkIsComplete = (moduleNumber: number) => {
     const p = getProgress(moduleNumber);
-    const nextP = getProgress(moduleNumber + 1);
-    return p?.isComplete || (p?.isUnlocked && nextP?.isUnlocked) || false;
+    return Boolean(p?.isComplete);
   };
 
   const completedCount = TRAIL_NODES.filter((node) =>
@@ -125,7 +124,13 @@ export const TrailMapPage: React.FC = () => {
 
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber);
-    if (!progress?.isUnlocked) return;
+    if (!progress?.isUnlocked) {
+      setToastMessage(
+        `Naka-lock pa ang Module ${node.moduleNumber}. Kumpletuhin muna ang naunang aralin!`,
+      );
+      setTimeout(() => setToastMessage(null), 4000);
+      return;
+    }
 
     const isModule4Complete = getProgress(4)?.isComplete ?? false;
 
@@ -176,7 +181,8 @@ export const TrailMapPage: React.FC = () => {
         >
           <button
             onClick={() => handleModuleClick(node)}
-            disabled={!isUnlocked}
+            aria-disabled={!isUnlocked}
+            aria-label={`Module ${node.moduleNumber}`}
             title={node.title}
             className={cn(
               "w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center transition-all duration-300",
@@ -237,7 +243,8 @@ export const TrailMapPage: React.FC = () => {
       >
         <button
           onClick={() => handleModuleClick(node)}
-          disabled={!isUnlocked}
+          aria-disabled={!isUnlocked}
+          aria-label={`Module ${node.moduleNumber}`}
           title={node.title}
           className={cn(
             "w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-300 ring-4",

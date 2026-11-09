@@ -8,6 +8,7 @@ import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
 import com.pamana.common.dto.DialogueResponse;
+import com.pamana.progress.ModuleLockService;
 
 
 import jakarta.validation.Valid;
@@ -30,11 +31,14 @@ public class VocabularyController {
 
     private final VocabularyService vocabularyService;
     private final VocabularyItemRepository vocabularyItemRepository;
+    private final ModuleLockService moduleLockService;
 
     public VocabularyController(VocabularyService vocabularyService,
-                                VocabularyItemRepository vocabularyItemRepository) {
+                                VocabularyItemRepository vocabularyItemRepository,
+                                ModuleLockService moduleLockService) {
         this.vocabularyService = vocabularyService;
         this.vocabularyItemRepository = vocabularyItemRepository;
+        this.moduleLockService = moduleLockService;
     }
 
     @GetMapping("/vocabulary/next")
@@ -44,6 +48,11 @@ public class VocabularyController {
             Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
         log.info("REST API: Fetch next vocabulary word for user: {}, module: {}", userId, moduleNumber);
+
+        int targetModule = (moduleNumber != null) ? moduleNumber : 2;
+        if (!moduleLockService.isModuleUnlocked(userId, targetModule)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         VocabularyWordResponse response = vocabularyService.getNextWord(userId, moduleNumber);
         if (response == null) {
@@ -97,6 +106,15 @@ public class VocabularyController {
             Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
         log.info("REST API: Submit vocabulary progress for user: {}, wordId: {}, step: {}", userId, request.getWordId(), request.getStep());
+
+        VocabularyItem item = vocabularyItemRepository.findById(request.getWordId())
+                .orElse(null);
+        if (item != null) {
+            int targetModule = "family_home".equalsIgnoreCase(item.getDomain()) ? 3 : 2;
+            if (!moduleLockService.isModuleUnlocked(userId, targetModule)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
 
         WordMasteryResponse response = vocabularyService.recordStepAccuracy(
                 userId,
