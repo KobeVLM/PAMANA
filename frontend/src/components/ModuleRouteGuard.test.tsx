@@ -22,6 +22,7 @@ vi.mock('sonner', () => ({
 
 const mockUser: User = {
   id: 'learner-123',
+  username: 'juan123',
   name: 'Juan',
   email: 'juan@test.com',
   role: 'LEARNER',

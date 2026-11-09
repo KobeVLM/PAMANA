@@ -1,7 +1,5 @@
 package com.pamana.security;
 
-import com.pamana.security.JwtTokenProvider;
-
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
@@ -29,18 +27,24 @@ public class JwtTokenProvider {
         this.jwtExpirationMs = expirationMs;
     }
 
-    public String generateToken(UUID userId, String email, String role) {
+    public String generateToken(UUID userId, String username, String email, String role) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
                 .subject(userId.toString())
-                .claim("email", email)
+                .claim("username", username)
+                .claim("email", email != null ? email : "")
                 .claim("role", role)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(jwtSecretKey)
                 .compact();
+    }
+
+    public String generateToken(UUID userId, String email, String role) {
+        String username = (email != null && email.contains("@")) ? email.split("@")[0] : (email != null ? email : "");
+        return generateToken(userId, username, email, role);
     }
 
     public UUID getUserIdFromToken(String token) {
@@ -51,6 +55,24 @@ public class JwtTokenProvider {
                 .getPayload();
 
         return UUID.fromString(claims.getSubject());
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(jwtSecretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        String username = claims.get("username", String.class);
+        if (username != null && !username.isBlank()) {
+            return username;
+        }
+        String email = claims.get("email", String.class);
+        if (email != null && !email.isBlank()) {
+            return email;
+        }
+        return claims.getSubject();
     }
 
     public String getEmailFromToken(String token) {

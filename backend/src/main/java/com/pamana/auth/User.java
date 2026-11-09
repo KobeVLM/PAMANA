@@ -1,8 +1,5 @@
 package com.pamana.auth;
 
-import com.pamana.auth.User;
-import com.pamana.auth.Role;
-
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,15 +17,22 @@ public class User {
     private UUID id;
 
     @NotBlank
+    @Size(max = 50)
+    @Column(nullable = false, unique = true, length = 50)
+    private String username;
+
     @Size(max = 100)
     @Column(nullable = false, length = 100)
-    private String name;
+    private String name = "Adventurer";
 
-    @NotBlank
     @Email
     @Size(max = 255)
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = true, unique = true, length = 255)
     private String email;
+
+    @Size(max = 20)
+    @Column(length = 20)
+    private String gender = "Lalaki";
 
     @NotBlank
     @Size(max = 255)
@@ -49,16 +53,38 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.gender == null || this.gender.isBlank()) {
+            this.gender = "Lalaki";
+        }
+        if (this.name == null || this.name.isBlank()) {
+            this.name = "Adventurer";
+        }
     }
 
     public User() {
     }
 
-    public User(String name, String email, String passwordHash, Role role) {
-        this.name = name;
+    public User(String name, String username, String email, String passwordHash, Role role, String gender) {
+        this.name = (name != null && !name.isBlank()) ? name : "Adventurer";
+        this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
         this.role = role;
+        this.gender = (gender != null && !gender.isBlank()) ? gender : "Lalaki";
+    }
+
+    public User(String name, String username, String email, String passwordHash, Role role) {
+        this(name, username, email, passwordHash, role, "Lalaki");
+    }
+
+    // Backwards-compatible constructor
+    public User(String name, String email, String passwordHash, Role role) {
+        this.name = (name != null && !name.isBlank()) ? name : "Adventurer";
+        this.email = email;
+        this.username = (email != null && !email.isBlank()) ? email.split("@")[0] : (name != null ? name.toLowerCase().replaceAll("\\s+", "") : "user");
+        this.passwordHash = passwordHash;
+        this.role = role;
+        this.gender = "Lalaki";
     }
 
     // Getters and Setters
@@ -68,6 +94,14 @@ public class User {
 
     public void setId(UUID id) {
         this.id = id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getName() {
@@ -84,6 +118,14 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public String getPasswordHash() {

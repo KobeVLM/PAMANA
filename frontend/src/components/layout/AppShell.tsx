@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAudio } from "@/contexts/AudioContext";
-import { cn } from "@/lib/utils";
-import { StoryModal } from "@/components/StoryModal";
-import { ParentSidebar } from "@/components/layout/ParentSidebar";
+import React, { useState, useEffect } from 'react'
+import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { useAudio } from '@/contexts/AudioContext'
+import { cn } from '@/lib/utils'
+import { StoryModal } from '@/components/StoryModal'
+import { ParentSidebar } from '@/components/layout/ParentSidebar'
+import { AdventurerOnboardingModal } from '@/components/auth/AdventurerOnboardingModal'
 import {
   BarChart2,
   LogOut,
@@ -65,15 +66,37 @@ interface AppShellProps {
 }
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
-  const { user, logout } = useAuth();
-  const { stopAudio } = useAudio();
-  const navigate = useNavigate();
-  const location = useLocation();
+const { user, logout, updateProfile } = useAuth()
+  const { stopAudio } = useAudio()
+  const navigate = useNavigate()
+  const location = useLocation()
+  
+  const [isSidebarHidden, setIsSidebarHidden] = useState(false)
 
-  const [isSidebarHidden, setIsSidebarHidden] = useState(false);
+  const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
+  const [imageError, setImageError] = useState(false)
+  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(false)
 
-  const [character, setCharacter] = useState<"Lalaki" | "Babae">("Lalaki");
-  const [imageError, setImageError] = useState(false);
+  const needsOnboarding = Boolean(
+    !isOnboardingCompleted &&
+    user &&
+    user.role === 'LEARNER' &&
+    (!user.name || user.name.trim() === '' || user.name === 'Adventurer') &&
+    localStorage.getItem(`pamana_onboarding_done_${user.id}`) !== 'true'
+  )
+
+  const handleOnboardingComplete = async (data: { name: string; gender: 'Lalaki' | 'Babae' }) => {
+    try {
+      await updateProfile(data.name, data.gender)
+      if (user?.id) {
+        localStorage.setItem(`pamana_onboarding_done_${user.id}`, 'true')
+      }
+      setIsOnboardingCompleted(true)
+    } catch (err) {
+      console.error('Failed to update profile during onboarding:', err)
+      throw err
+    }
+  }
 
   useEffect(() => {
     const updateCharacter = () => {
@@ -372,6 +395,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       )}
 
       <StoryModal />
+      <AdventurerOnboardingModal
+        open={needsOnboarding}
+        onComplete={handleOnboardingComplete}
+        initialGender={character}
+      />
     </div>
   );
 };
