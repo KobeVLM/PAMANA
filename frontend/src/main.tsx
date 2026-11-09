@@ -4,8 +4,10 @@ import './index.css'
 import App from './App.tsx'
 import { setupCheats } from './lib/cheats'
 
-// Register console cheat commands for stuck students / testing
-setupCheats()
+// Register console cheat commands for stuck students / testing (development only)
+if (import.meta.env.DEV) {
+  setupCheats()
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
