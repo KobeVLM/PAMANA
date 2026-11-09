@@ -79,7 +79,7 @@ export const AdventurerOnboardingModal: React.FC<AdventurerOnboardingModalProps>
         showClose={false}
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="max-w-md w-[calc(100vw-2rem)] p-6 sm:p-8 bg-white border-4 border-white rounded-[2rem] shadow-[0_12px_0_rgba(0,0,0,0.15)] text-center relative overflow-hidden"
+        className="max-w-md w-[calc(100vw-2rem)] p-6 sm:p-8 bg-white border-4 border-white rounded-[2rem] shadow-[0_12px_0_rgba(0,0,0,0.15)] text-center"
       >
         <ModalHeader className="flex flex-col items-center text-center pr-0 mb-4">
           {/* Header game badge */}
