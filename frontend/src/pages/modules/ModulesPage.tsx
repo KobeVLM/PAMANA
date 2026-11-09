@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import api from "@/lib/api";
 import { Lock, Volume2, Star, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { ModuleProgress } from "@/types";
 
 interface ReviewItem {
   id: string;
@@ -42,12 +43,12 @@ export const ModulesPage: React.FC = () => {
 
       try {
         const progressRes = await api.get(`/modules/progress/${user?.id}`);
-        const progress = progressRes.data;
+        const progress = (progressRes.data as ModuleProgress[]) || [];
         const unlockedModules = progress
-          .filter((p: any) => p.isUnlocked)
-          .map((p: any) => p.moduleNumber);
+          .filter((p) => p.isUnlocked)
+          .map((p) => p.moduleNumber);
 
-        let allItems: ReviewItem[] = [];
+        const allItems: ReviewItem[] = [];
 
         // --- PANTIG (Module 1 Syllables) ---
         if (unlockedModules.includes(1)) {

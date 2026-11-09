@@ -8,7 +8,6 @@ import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
-import { BilingualText } from '@/components/common/BilingualText'
 import { useSfx } from '@/hooks/useGameAudio'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi } from '@/lib/i18n'
@@ -146,7 +145,7 @@ export const SentencePracticePage: React.FC = () => {
 
   const playVictorySound = useCallback(() => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (!AudioCtx) return
       const ctx = new AudioCtx()
       const now = ctx.currentTime
@@ -166,7 +165,7 @@ export const SentencePracticePage: React.FC = () => {
 
       playTone(783.99, now, 0.2)
       playTone(1046.5, now + 0.1, 0.3)
-    } catch {}
+    } catch { /* ignored */ }
   }, [])
 
   const handleSelectWord = useCallback(

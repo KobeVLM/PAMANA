@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { setupCheats, unlockModule, unlockAllModules } from './cheats'
 import api from './api'
 
@@ -37,7 +37,7 @@ describe('cheats module', () => {
 
   it('calls api.post when unlocking individual module', async () => {
     sessionStorage.setItem('pamana_user', JSON.stringify({ id: 'test-user-id', name: 'Student 1' }))
-    ;(api.post as any).mockResolvedValueOnce({ data: [] })
+    ;(api.post as Mock).mockResolvedValueOnce({ data: [] })
 
     await unlockModule(2, { reload: false })
 
@@ -46,7 +46,7 @@ describe('cheats module', () => {
 
   it('calls api.post when unlocking all modules', async () => {
     sessionStorage.setItem('pamana_user', JSON.stringify({ id: 'test-user-id', name: 'Student 1' }))
-    ;(api.post as any).mockResolvedValueOnce({ data: [] })
+    ;(api.post as Mock).mockResolvedValueOnce({ data: [] })
 
     await unlockAllModules({ reload: false })
 

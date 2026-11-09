@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/api'
 import { LoadingState } from '@/components/common/LoadingState'
+import type { ModuleProgress } from '@/types'
 
 export interface ModuleRouteGuardProps {
   moduleNumber: number
@@ -37,13 +38,13 @@ export const ModuleRouteGuard: React.FC<ModuleRouteGuardProps> = ({
         const response = await api.get(`/modules/progress/${user.id}`)
         if (!isMounted) return
 
-        const progressList = Array.isArray(response.data) ? response.data : []
-        const mod = progressList.find((p: any) => p.moduleNumber === moduleNumber)
+        const progressList = Array.isArray(response.data) ? (response.data as ModuleProgress[]) : []
+        const mod = progressList.find((p) => p.moduleNumber === moduleNumber)
 
         const isUnlocked =
           moduleNumber === 1
-            ? (mod ? Boolean(mod.isUnlocked ?? mod.unlocked) : true)
-            : Boolean(mod?.isUnlocked ?? mod?.unlocked)
+            ? (mod ? Boolean(mod.isUnlocked) : true)
+            : Boolean(mod?.isUnlocked)
 
         if (isUnlocked) {
           setStatus('allowed')
@@ -51,7 +52,7 @@ export const ModuleRouteGuard: React.FC<ModuleRouteGuardProps> = ({
           toast.error(`Naka-lock pa ang Module ${moduleNumber}. Tapusin muna ang naunang aralin!`)
           setStatus('denied')
         }
-      } catch (error) {
+      } catch {
         if (!isMounted) return
 
         if (moduleNumber === 1) {
@@ -63,17 +64,19 @@ export const ModuleRouteGuard: React.FC<ModuleRouteGuardProps> = ({
       }
     }
 
-    checkProgress()
+    void checkProgress()
 
     return () => {
       isMounted = false
     }
   }, [user, isAuthLoading, moduleNumber])
 
-  if (isAuthLoading || !user || status === 'loading') {
+  if (isAuthLoading || status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-pamana-cream">
-        <LoadingState message="Naglo-load..." />
+      <div className="min-h-screen bg-pamana-cream flex items-center justify-center">
+        <LoadingState
+          message="Sinusuri ang estado ng module..."
+        />
       </div>
     )
   }

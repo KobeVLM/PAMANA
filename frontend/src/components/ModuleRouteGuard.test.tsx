@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { toast } from 'sonner'
 import api from '@/lib/api'
+import type { User } from '@/types'
 import { ModuleRouteGuard } from './ModuleRouteGuard'
 
 vi.mock('@/lib/api', () => ({
@@ -19,15 +20,15 @@ vi.mock('sonner', () => ({
   },
 }))
 
-const mockUser = {
+const mockUser: User = {
   id: 'learner-123',
   name: 'Juan',
   email: 'juan@test.com',
-  role: 'LEARNER' as const,
+  role: 'LEARNER',
 }
 
-let mockAuthContext = {
-  user: mockUser as any,
+let mockAuthContext: { user: User | null; isLoading: boolean } = {
+  user: mockUser,
   isLoading: false,
 }
 
@@ -99,7 +100,7 @@ describe('ModuleRouteGuard', () => {
     renderWithRouter(2)
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(screen.getByText('Naglo-load...')).toBeInTheDocument()
+    expect(screen.getByText('Sinusuri ang estado ng module...')).toBeInTheDocument()
     expect(screen.queryByText('Protected Module 2 Content')).not.toBeInTheDocument()
   })
 
@@ -144,7 +145,7 @@ describe('ModuleRouteGuard', () => {
     renderWithRouter(1)
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(screen.getByText('Naglo-load...')).toBeInTheDocument()
+    expect(screen.getByText('Sinusuri ang estado ng module...')).toBeInTheDocument()
     expect(screen.queryByText('Protected Module 1 Content')).not.toBeInTheDocument()
   })
 })

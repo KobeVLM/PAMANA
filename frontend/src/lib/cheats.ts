@@ -102,7 +102,7 @@ export async function unlockAllModules(options: UnlockOptions = { reload: true, 
     }
   } catch (err) {
     console.error(
-      '%c[PAMANA CHEAT]%c ❌ Error unlocking all modules:',
+      `%c[PAMANA CHEAT]%c ❌ Error unlocking all modules:`,
       'color: #ef4444; font-weight: bold;',
       'color: inherit;',
       err
@@ -188,7 +188,7 @@ declare global {
     unlockModule4: (options?: UnlockOptions) => Promise<void>
     unlockAllModules: (options?: UnlockOptions) => Promise<void>
     unlockAll: (options?: UnlockOptions) => Promise<void>
-    pamana: any
-    cheat: any
+    pamana: Record<string, unknown>
+    cheat: Record<string, unknown>
   }
 }

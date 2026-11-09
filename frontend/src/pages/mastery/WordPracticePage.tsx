@@ -71,7 +71,7 @@ const pickRoundWords = (words: VocabWord[]): VocabWord[] => {
 export const WordPracticePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { playAudio, stopAudio } = useAudio();
+  const { stopAudio } = useAudio();
   const { playWrong } = useSfx();
 
   const [roundWords, setRoundWords] = useState<VocabWord[]>([]);
@@ -230,7 +230,7 @@ export const WordPracticePage: React.FC = () => {
         })));
         setCorrectId(String(res.data?.targetWordId ?? currentWord.wordId));
       }
-    } catch (err) {
+    } catch {
       toast.error("Hindi ma-load ang mga opsyon.");
     }
   }, [currentWord]);
