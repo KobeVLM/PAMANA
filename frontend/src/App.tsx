@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ModuleRouteGuard } from "@/components/ModuleRouteGuard";
 import { AppShell } from "@/components/layout/AppShell"; // ✅ ADD THIS BACK
 
 import { AudioProvider } from "@/contexts/AudioContext";
@@ -142,7 +143,9 @@ function App() {
                     path="/modules/1"
                     element={
                       <ProtectedRoute allowedRoles={["LEARNER"]}>
-                        <SyllableModulePage />
+                        <ModuleRouteGuard moduleNumber={1}>
+                          <SyllableModulePage />
+                        </ModuleRouteGuard>
                       </ProtectedRoute>
                     }
                   />
@@ -150,10 +153,12 @@ function App() {
                     path="/modules/2"
                     element={
                       <ProtectedRoute allowedRoles={["LEARNER"]}>
-                        <VocabularyModulePage
-                          moduleNumber={2}
-                          domain="self_body"
-                        />
+                        <ModuleRouteGuard moduleNumber={2}>
+                          <VocabularyModulePage
+                            moduleNumber={2}
+                            domain="self_body"
+                          />
+                        </ModuleRouteGuard>
                       </ProtectedRoute>
                     }
                   />
@@ -161,10 +166,12 @@ function App() {
                     path="/modules/3"
                     element={
                       <ProtectedRoute allowedRoles={["LEARNER"]}>
-                        <VocabularyModulePage
-                          moduleNumber={3}
-                          domain="family_home"
-                        />
+                        <ModuleRouteGuard moduleNumber={3}>
+                          <VocabularyModulePage
+                            moduleNumber={3}
+                            domain="family_home"
+                          />
+                        </ModuleRouteGuard>
                       </ProtectedRoute>
                     }
                   />
@@ -172,7 +179,9 @@ function App() {
                     path="/modules/4"
                     element={
                       <ProtectedRoute allowedRoles={["LEARNER"]}>
-                        <SentenceModulePage />
+                        <ModuleRouteGuard moduleNumber={4}>
+                          <SentenceModulePage />
+                        </ModuleRouteGuard>
                       </ProtectedRoute>
                     }
                   />
