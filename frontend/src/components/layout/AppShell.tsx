@@ -3,7 +3,6 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { cn } from '@/lib/utils'
-import { StoryModal } from '@/components/StoryModal'
 import { ParentSidebar } from '@/components/layout/ParentSidebar'
 import { AdventurerOnboardingModal } from '@/components/auth/AdventurerOnboardingModal'
 import {
@@ -394,7 +393,6 @@ const { user, logout, updateProfile } = useAuth()
         </button>
       )}
 
-      <StoryModal />
       <AdventurerOnboardingModal
         open={needsOnboarding}
         onComplete={handleOnboardingComplete}

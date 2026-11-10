@@ -67,7 +67,6 @@ export const RegisterPage: React.FC = () => {
     setIsLoading(true)
     setErrors({})
     try {
-      localStorage.setItem('show_intro_story', 'true')
       await register(username.trim(), password, role, data.name.trim(), data.gender)
       setIsOnboardingOpen(false)
       navigate('/login', {

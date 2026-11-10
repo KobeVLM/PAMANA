@@ -125,7 +125,6 @@ describe('RegisterPage', () => {
       )
     })
 
-    expect(localStorage.getItem('show_intro_story')).toBe('true')
     expect(await screen.findByText('Login Page Target')).toBeInTheDocument()
   })
 

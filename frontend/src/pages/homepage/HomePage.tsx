@@ -224,63 +224,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* STORY Section */}
-        <div className="w-full">
-          <h2 className={headerStyle}>
-            Story
-          </h2>
-          
-          <button 
-            onClick={() => console.log('Open Story')}
-            className="relative w-full bg-gradient-to-b from-[#00D2FF] via-[#00A8E8] to-[#0080C0] hover:brightness-110 border-[5px] border-white rounded-[2rem] p-2 md:p-3 flex items-center justify-between shadow-[0_10px_0_#005A9C] hover:-translate-y-1 hover:shadow-[0_12px_0_#005A9C] active:translate-y-1 active:shadow-[0_4px_0_#005A9C] transition-all duration-200 ease-out group overflow-hidden"
-          >
-            {/* Shiny Highlight for Story Button */}
-            <div className="absolute top-3 left-6 w-32 h-6 bg-white/30 rounded-full blur-[2px] -rotate-6 pointer-events-none" />
-
-            {/* Background Decorations */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
-              <Star className="absolute top-2 left-[35%] w-5 h-5 md:w-6 md:h-6 text-yellow-400 fill-yellow-400 -rotate-12 opacity-80" />
-              <Star className="absolute bottom-2 left-[45%] w-4 h-4 text-pink-400 fill-pink-400 rotate-45 opacity-80" />
-              <Star className="absolute top-4 right-[35%] w-6 h-6 md:w-8 md:h-8 text-yellow-300 fill-yellow-300 rotate-12 opacity-90" />
-              <Star className="absolute bottom-3 right-[25%] w-4 h-4 text-green-400 fill-green-400 -rotate-12 opacity-80" />
-            </div>
-            
-            <div className="flex items-center gap-3 z-10 pl-1 md:pl-2">
-              <img 
-                src="/images/BK.png" 
-                alt="Book Icon" 
-                className="w-12 h-12 md:w-16 md:h-16 object-contain drop-shadow-[0_4px_6px_rgba(0,0,0,0.3)] -rotate-6 group-hover:scale-105 transition-transform" 
-              />
-              <span 
-                className="text-2xl md:text-4xl font-black tracking-wide mt-1"
-                style={{
-                  color: '#ffffff',
-                  WebkitTextStroke: '2px #005A9C',
-                  paintOrder: 'stroke fill',
-                  textShadow: '0 4px 0 #005A9C'
-                }}
-              >
-                Pamana Story
-              </span>
-            </div>
-
-            <div className="ml-auto z-10 flex items-center gap-1 md:gap-2 pr-2 md:pr-4">
-              <span 
-                className="text-2xl md:text-4xl font-black mt-1"
-                style={{
-                  color: '#ffffff',
-                  WebkitTextStroke: '2px #005A9C',
-                  paintOrder: 'stroke fill',
-                  textShadow: '0 4px 0 #005A9C'
-                }}
-              >
-                GO
-              </span>
-              <Play className="w-8 h-8 md:w-10 md:h-10 text-white fill-white drop-shadow-[0_3px_0_#005A9C]" />
-            </div>
-          </button>
-        </div>
-
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 border-2 border-amber-500/70 text-amber-200 px-6 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 animate-bounce-in text-sm font-bold backdrop-blur-md">
