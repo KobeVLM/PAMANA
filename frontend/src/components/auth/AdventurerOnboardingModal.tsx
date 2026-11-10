@@ -98,9 +98,9 @@ export const AdventurerOnboardingModal: React.FC<AdventurerOnboardingModalProps>
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Step 1: Character Gender Selection */}
           <div className="space-y-3 text-left">
-            <label className="block text-sm sm:text-base font-black text-[#2b5c3b] uppercase tracking-wide">
+            <span className="block text-sm sm:text-base font-black text-[#2b5c3b] uppercase tracking-wide">
               1. Choose your character
-            </label>
+            </span>
             <div className="grid grid-cols-2 gap-4">
               {/* Boy Option */}
               <button
