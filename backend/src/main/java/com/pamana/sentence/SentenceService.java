@@ -59,7 +59,7 @@ public class SentenceService extends BaseGameService {
         new SentenceTask("66666666-6666-6666-6666-666666666666", 2, Arrays.asList("si", "?", "Lola", "Saan"), Arrays.asList("Saan", "si", "Lola", "?"), "/static/assets/audio/npc/sentence_6.mp3"),
         new SentenceTask("77777777-7777-7777-7777-777777777777", 2, Arrays.asList("si", "Sino", "?", "Tatay"), Arrays.asList("Sino", "si", "Tatay", "?"), "/static/assets/audio/npc/sentence_7.mp3"),
         new SentenceTask("88888888-8888-8888-8888-888888888888", 2, Arrays.asList("baso", "ang", "?", "Nasaan"), Arrays.asList("Nasaan", "ang", "baso", "?"), "/static/assets/audio/npc/sentence_8.mp3"),
-        new SentenceTask("99999999-9999-9999-9999-999999999999", 2, Arrays.asList("tulog", "ka", "?", "Kailan"), Arrays.asList("Kailan", "ka", "tulog", "?"), "/static/assets/audio/npc/sentence_9.mp3"),
+        new SentenceTask("99999999-9999-9999-9999-999999999999", 2, Arrays.asList("matutulog", "ka", "?", "Kailan"), Arrays.asList("Kailan", "ka", "matutulog", "?"), "/static/assets/audio/npc/sentence_9.mp3"),
         new SentenceTask("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", 2, Arrays.asList("damit", "?", "ang", "Ano"), Arrays.asList("Ano", "ang", "damit", "?"), "/static/assets/audio/npc/sentence_10.mp3")
     );
 

@@ -112,7 +112,7 @@ export const ModulesPage: React.FC = () => {
             { id: "6", text: "Saan si Lola?" },
             { id: "7", text: "Sino si Tatay?" },
             { id: "8", text: "Nasaan ang baso?" },
-            { id: "9", text: "Kailan ka tulog?" },
+            { id: "9", text: "Kailan ka matutulog?" },
           ];
 
           sentences.forEach((s) => {

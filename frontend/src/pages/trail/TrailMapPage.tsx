@@ -51,7 +51,7 @@ export const TrailMapPage: React.FC = () => {
   const navigate = useNavigate();
   const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ fil: string; en: string } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     node: TrailNode | null;
@@ -125,9 +125,10 @@ export const TrailMapPage: React.FC = () => {
   const handleModuleClick = async (node: TrailNode) => {
     const progress = getProgress(node.moduleNumber);
     if (!progress?.isUnlocked) {
-      setToastMessage(
-        `Naka-lock pa ang Module ${node.moduleNumber}. Kumpletuhin muna ang naunang aralin!`,
-      );
+      setToastMessage({
+        fil: `Naka-lock pa ang Module ${node.moduleNumber}. Kumpletuhin muna ang naunang aralin!`,
+        en: `Module ${node.moduleNumber} is still locked. Complete the previous lesson first!`,
+      });
       setTimeout(() => setToastMessage(null), 4000);
       return;
     }
@@ -136,9 +137,10 @@ export const TrailMapPage: React.FC = () => {
 
     if (progress?.isComplete) {
       if (!isModule4Complete) {
-        setToastMessage(
-          "Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!",
-        );
+        setToastMessage({
+          fil: "Tatapusin muna ang buong Pamana Trail (Module 1 hanggang 4) bago ma-ulit ang aralin na ito para sa Mastery Mode!",
+          en: "Complete the entire Pamana Trail (Modules 1 to 4) first before replaying this lesson for Mastery Mode!",
+        });
         setTimeout(() => setToastMessage(null), 4000);
         return;
       }
@@ -157,9 +159,10 @@ export const TrailMapPage: React.FC = () => {
       navigate(`/modules/${confirmModal.node.moduleNumber}`);
     } catch (e) {
       console.error("Failed to reset module", e);
-      setToastMessage(
-        "Nagkaroon ng error sa pag-reset ng module. Subukan muli.",
-      );
+      setToastMessage({
+        fil: "Nagkaroon ng error sa pag-reset ng module. Subukan muli.",
+        en: "An error occurred while resetting the module. Please try again.",
+      });
       setTimeout(() => setToastMessage(null), 4000);
     } finally {
       setConfirmModal({ isOpen: false, node: null });
@@ -366,10 +369,15 @@ export const TrailMapPage: React.FC = () => {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300 max-w-[90vw] md:max-w-xl w-auto">
           <div className="bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-700">
             <Lock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
-            <p className="font-medium">{toastMessage}</p>
+            <div className="flex flex-col text-left">
+              <p className="font-medium text-sm md:text-base leading-tight">{toastMessage.fil}</p>
+              {toastMessage.en && (
+                <p className="text-xs md:text-sm text-slate-300 font-normal mt-1 leading-snug">{toastMessage.en}</p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -382,30 +390,41 @@ export const TrailMapPage: React.FC = () => {
               <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Star className="w-8 h-8 fill-current" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              <h2 className="text-2xl font-bold text-gray-800 mb-1">
                 Mastery Mode
               </h2>
-              <p className="text-gray-600">
-                Gusto mo bang ulitin ang{" "}
-                <strong className="text-gray-800">
-                  Module {confirmModal.node.moduleNumber}
-                </strong>
-                ? Ang iyong panibagong score ay marerekord.
-              </p>
+              <div className="space-y-1.5 mt-2">
+                <p className="text-gray-700 font-medium text-sm md:text-base">
+                  Gusto mo bang ulitin ang{" "}
+                  <strong className="text-gray-900">
+                    Module {confirmModal.node.moduleNumber}
+                  </strong>
+                  ? Ang iyong panibagong score ay marerekord.
+                </p>
+                <p className="text-xs md:text-sm text-gray-500 font-normal">
+                  Do you want to retake{" "}
+                  <strong className="font-semibold text-gray-600">
+                    Module {confirmModal.node.moduleNumber}
+                  </strong>
+                  ? Your new score will be recorded.
+                </p>
+              </div>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmModal({ isOpen: false, node: null })}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                className="flex-1 py-2.5 px-4 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors flex flex-col items-center justify-center leading-tight"
               >
-                Kanselahin
+                <span>Kanselahin</span>
+                <span className="text-xs font-normal text-gray-500">Cancel</span>
               </button>
               <button
                 onClick={handleConfirmRetake}
-                className="flex-1 py-3 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all active:scale-95"
+                className="flex-1 py-2.5 px-4 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition-all active:scale-95 flex flex-col items-center justify-center leading-tight"
               >
-                Oo, Ulitin
+                <span>Oo, Ulitin</span>
+                <span className="text-xs font-normal text-blue-100">Yes, Retake</span>
               </button>
             </div>
           </div>
