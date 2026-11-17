@@ -63,6 +63,7 @@ interface PDFDownloadButtonProps {
   userId: string
   moduleNumber: number
   isComplete: boolean
+  canDownload: boolean
 }
 
 // Explains why a report button is disabled, so parents are not left guessing.
@@ -73,10 +74,11 @@ const REPORT_LOCK_HINTS: Record<number, string> = {
   4: 'Tapusin ang dalawang tier ng pangungusap nang may 75% o higit pang kawastuhan para ma-unlock ang report.',
 }
 
-const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNumber, isComplete }) => {
+const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNumber, isComplete, canDownload }) => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState('')
   const lockHint = REPORT_LOCK_HINTS[moduleNumber]
+  const isPartial = canDownload && !isComplete
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -103,15 +105,17 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
     <div>
       <button
         onClick={handleDownload}
-        disabled={!isComplete || isDownloading}
-        title={!isComplete ? lockHint : undefined}
+        disabled={!canDownload || isDownloading}
+        title={!canDownload ? lockHint : undefined}
         aria-label={`Download report for Module ${moduleNumber}`}
-        aria-describedby={!isComplete ? `report-hint-${moduleNumber}` : undefined}
+        aria-describedby={!canDownload ? `report-hint-${moduleNumber}` : undefined}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
           isComplete
             ? 'bg-[#e7f6e7] border-2 border-[#4CAF50] text-[#1B5E20] hover:bg-[#d6efd6]'
-            : 'bg-white/60 border-2 border-[#e2eee0] text-[#5a7a63]/60 cursor-not-allowed'
+            : isPartial
+              ? 'bg-[#fff7e0] border-2 border-[#e0a800] text-[#8a6d1d] hover:bg-[#ffefc2]'
+              : 'bg-white/60 border-2 border-[#e2eee0] text-[#5a7a63]/60 cursor-not-allowed'
         )}
       >
         {isDownloading ? (
@@ -119,9 +123,14 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
         ) : (
           <Download className="w-3.5 h-3.5" />
         )}
-        Module {moduleNumber} Report
+        Module {moduleNumber} Report{isPartial ? ' (Partial)' : ''}
       </button>
-      {!isComplete && lockHint && (
+      {isPartial && (
+        <p className="text-[#8a6d1d] text-[11px] leading-snug mt-1 max-w-[220px]">
+          Partial report — ipinapakita ang progreso hanggang ngayon.
+        </p>
+      )}
+      {!canDownload && lockHint && (
         <p id={`report-hint-${moduleNumber}`} className="text-[#5a7a63] text-[11px] leading-snug mt-1 max-w-[220px]">
           {lockHint}
         </p>
@@ -137,6 +146,7 @@ export const ParentDashboardPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [targetUserId, setTargetUserId] = useState<string>('')
   const [moduleCompletion, setModuleCompletion] = useState<boolean[]>([false, false, false, false])
+  const [moduleStarted, setModuleStarted] = useState<boolean[]>([false, false, false, false])
   const [linkedLearnerName, setLinkedLearnerName] = useState<string | null>(null)
   const [learners, setLearners] = useState<LinkedLearner[]>([])
   const [selectedLearnerId, setSelectedLearnerId] = useState<string>('')
@@ -173,12 +183,15 @@ export const ParentDashboardPage: React.FC = () => {
       setMetrics(metricsRes.data)
       setModuleHistory(historyRes.data)
       const completions = [false, false, false, false]
-      ;(progressRes.data as { moduleNumber: number; isComplete: boolean }[]).forEach((p) => {
+      const started = [false, false, false, false]
+      ;(progressRes.data as { moduleNumber: number; isComplete: boolean; hasAttempts?: boolean }[]).forEach((p) => {
         if (p.moduleNumber >= 1 && p.moduleNumber <= 4) {
           completions[p.moduleNumber - 1] = p.isComplete
+          started[p.moduleNumber - 1] = Boolean(p.hasAttempts)
         }
       })
       setModuleCompletion(completions)
+      setModuleStarted(started)
     } catch (e) {
       console.error('Error fetching learner data', e)
     } finally {
@@ -595,11 +608,14 @@ export const ParentDashboardPage: React.FC = () => {
                 userId={targetUserId}
                 moduleNumber={moduleNum}
                 isComplete={moduleCompletion[moduleNum - 1] ?? false}
+                canDownload={
+                  (moduleCompletion[moduleNum - 1] ?? false) || (moduleStarted[moduleNum - 1] ?? false)
+                }
               />
             ))}
           </div>
           <p className="text-[#5a7a63] text-xs mt-3">
-            * PDF reports are available after completing each module.
+            * Kumpletong report pagkatapos ng module; partial report kapag may nasimulan nang pagtatangka.
           </p>
         </div>
         </>

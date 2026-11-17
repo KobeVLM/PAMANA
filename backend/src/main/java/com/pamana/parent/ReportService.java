@@ -11,6 +11,7 @@ import com.pamana.sentence.SentenceProgress;
 import com.pamana.progress.ProgressService;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleProgress;
+import com.pamana.progress.ModuleLockService;
 import com.pamana.parent.ReportService;
 import com.pamana.parent.ParentReportRepository;
 import com.pamana.parent.ParentReport;
@@ -52,6 +53,7 @@ public class ReportService {
     private final SentenceProgressRepository sentenceProgressRepository;
     private final ParentReportRepository parentReportRepository;
     private final ProgressService progressService;
+    private final ModuleLockService moduleLockService;
 
     public ReportService(UserRepository userRepository,
             ModuleProgressRepository moduleProgressRepository,
@@ -59,7 +61,8 @@ public class ReportService {
             WordMasteryRepository wordMasteryRepository,
             SentenceProgressRepository sentenceProgressRepository,
             ParentReportRepository parentReportRepository,
-            ProgressService progressService) {
+            ProgressService progressService,
+            ModuleLockService moduleLockService) {
         this.userRepository = userRepository;
         this.moduleProgressRepository = moduleProgressRepository;
         this.syllableProgressRepository = syllableProgressRepository;
@@ -67,6 +70,7 @@ public class ReportService {
         this.sentenceProgressRepository = sentenceProgressRepository;
         this.parentReportRepository = parentReportRepository;
         this.progressService = progressService;
+        this.moduleLockService = moduleLockService;
     }
 
     @Transactional
@@ -81,9 +85,11 @@ public class ReportService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Hindi nakita ang module progress record."));
 
-        if (!Boolean.TRUE.equals(progress.getIsComplete())) {
+        boolean isComplete = Boolean.TRUE.equals(progress.getIsComplete());
+        boolean hasAttempts = moduleLockService.hasAttemptData(userId, moduleNumber);
+        if (!isComplete && !hasAttempts) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Hindi pa tapos ang module na ito upang ma-download ang report.");
+                    "Walang naitalang pagtatangka sa module na ito upang makabuo ng report.");
         }
 
         // 2. Aggregate Module Details
@@ -175,13 +181,24 @@ public class ReportService {
                 stream.newLineAtOffset(50, yOffset);
                 stream.showText("Katayuan ng Module (Module Status): ");
                 stream.setFont(fontRegular, 11);
-                stream.showText("Kumpleto at Mastered na!");
+                stream.showText(isComplete ? "Kumpleto at Mastered na!" : "Kasalukuyang ginagawa (Partial Progress)");
                 stream.endText();
 
+                // Make it unambiguous that a partial report is not a certificate
+                // of completion.
+                if (!isComplete) {
+                    yOffset -= 20;
+                    stream.beginText();
+                    stream.setFont(fontRegular, 10);
+                    stream.newLineAtOffset(50, yOffset);
+                    stream.showText("Paalala: hindi pa kumpleto ang module na ito. Ipinapakita ang kasalukuyang progreso.");
+                    stream.endText();
+                }
+
                 // Segment content based on module
-                yOffset -= 40;
+                yOffset -= isComplete ? 40 : 20;
                 if (moduleNumber == 1) {
-                    yOffset = renderSyllableReportContent(stream, userId, fontBold, fontRegular, yOffset);
+                    yOffset = renderSyllableReportContent(stream, userId, progress, fontBold, fontRegular, yOffset);
                 } else if (moduleNumber == 2 || moduleNumber == 3) {
                     yOffset = renderVocabularyReportContent(stream, userId, moduleNumber, progress, fontBold, fontRegular,
                             yOffset);
@@ -212,8 +229,8 @@ public class ReportService {
         }
     }
 
-    private int renderSyllableReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold,
-            PDType1Font fontRegular, int yOffset) throws Exception {
+    private int renderSyllableReportContent(PDPageContentStream stream, UUID userId, ModuleProgress progress,
+            PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
         stream.beginText();
         stream.setFont(fontBold, 12);
         stream.newLineAtOffset(50, yOffset);
@@ -223,6 +240,17 @@ public class ReportService {
         List<SyllableProgress> progressList = syllableProgressRepository.findByUserId(userId);
 
         yOffset -= 20;
+        if (progressList.isEmpty()) {
+            stream.beginText();
+            stream.setFont(fontRegular, 11);
+            stream.newLineAtOffset(60, yOffset);
+            String saved = progress.getAccuracy() != null ? progress.getAccuracy() + "%" : "N/A";
+            stream.showText("Walang detalyadong datos ng pagtatangka (module was reset or unlocked). "
+                    + "Naka-save na marka: " + saved);
+            stream.endText();
+            return yOffset - 20;
+        }
+
         for (SyllableProgress p : progressList) {
             stream.beginText();
             stream.setFont(fontBold, 10);
@@ -252,12 +280,24 @@ public class ReportService {
 
         yOffset -= 30;
 
-        int masteredWords = metrics.getMasteredCount();
-        int reviewWords = metrics.getNeedsReviewCount();
+        // Counts must be scoped to this module's domain. The dashboard metrics
+        // aggregate both vocab modules, which would misreport a Module 2 or 3
+        // report (and any partial report).
+        String domain = moduleNumber == 2 ? "self_body" : "family_home";
+        List<com.pamana.vocabulary.dto.WordMasteryStatus> domainWords = wordMasteryList.stream()
+                .filter(w -> domain.equalsIgnoreCase(w.getDomain()))
+                .collect(java.util.stream.Collectors.toList());
+        int totalWords = domainWords.size();
+        long masteredWords = domainWords.stream()
+                .filter(w -> "green".equalsIgnoreCase(w.getStatus()))
+                .count();
+        long reviewWords = domainWords.stream()
+                .filter(w -> "red".equalsIgnoreCase(w.getStatus()))
+                .count();
 
         // Every vocabulary word gets a row, so "no attempts yet" looks like all
         // grey. Say so instead of praising an empty report.
-        boolean hasAttemptedWords = wordMasteryList.stream()
+        boolean hasAttemptedWords = domainWords.stream()
                 .anyMatch(w -> w.getStatus() != null && !"grey".equalsIgnoreCase(w.getStatus()));
         if (!hasAttemptedWords) {
             yOffset -= 20;
@@ -275,7 +315,7 @@ public class ReportService {
         stream.beginText();
         stream.setFont(fontRegular, 11);
         stream.newLineAtOffset(60, yOffset);
-        stream.showText("Kabuuang Salitang Mastered (Green): " + masteredWords);
+        stream.showText("Kabuuang Salitang Mastered (Green): " + masteredWords + " / " + totalWords);
         stream.endText();
 
         yOffset -= 15;
@@ -293,7 +333,7 @@ public class ReportService {
             stream.showText("Mga partikular na salitang pagtutuunan ng pansin:");
             stream.endText();
 
-            for (com.pamana.vocabulary.dto.WordMasteryStatus w : wordMasteryList) {
+            for (com.pamana.vocabulary.dto.WordMasteryStatus w : domainWords) {
                 if ("red".equalsIgnoreCase(w.getStatus())) {
                     yOffset -= 15;
                     stream.beginText();
@@ -316,10 +356,10 @@ public class ReportService {
         stream.beginText();
         stream.setFont(fontRegular, 10);
         stream.newLineAtOffset(70, yOffset);
-        if (reviewWords > 0) {
-            stream.showText("Sanayin ang bata sa mga pulang salita sa inyong pamamahay gamit ang actual na mga bagay.");
-        } else {
+        if (masteredWords >= totalWords) {
             stream.showText("Magaling! Ipagpatuloy ang mahusay na pagbabasa at paggamit ng Filipino.");
+        } else {
+            stream.showText("Sanayin ang bata sa natitirang salita sa inyong pamamahay gamit ang actual na mga bagay.");
         }
         stream.endText();
 

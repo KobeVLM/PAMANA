@@ -8,7 +8,10 @@ import com.pamana.auth.dto.RegisterRequest;
 import com.pamana.parent.dto.LinkLearnerRequest;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.progress.ModuleProgressRepository;
+import com.pamana.sentence.SentenceProgress;
 import com.pamana.sentence.SentenceProgressRepository;
+import com.pamana.syllable.SyllableProgress;
+import com.pamana.syllable.SyllableProgressRepository;
 import com.pamana.vocabulary.VocabularyItem;
 import com.pamana.vocabulary.VocabularyItemRepository;
 import com.pamana.vocabulary.WordMastery;
@@ -35,10 +38,12 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -67,6 +72,9 @@ public class ReportControllerTest {
     private SentenceProgressRepository sentenceProgressRepository;
 
     @Autowired
+    private SyllableProgressRepository syllableProgressRepository;
+
+    @Autowired
     private WordMasteryRepository wordMasteryRepository;
 
     @Autowired
@@ -80,6 +88,7 @@ public class ReportControllerTest {
         sessionLogRepository.deleteAll();
         parentReportRepository.deleteAll();
         sentenceProgressRepository.deleteAll();
+        syllableProgressRepository.deleteAll();
         wordMasteryRepository.deleteAll();
         moduleProgressRepository.deleteAll();
         userRepository.deleteAll();
@@ -182,7 +191,8 @@ public class ReportControllerTest {
 
         String text = reportText(learnerId, 2);
 
-        assertThat(text).contains("Kabuuang Salitang Mastered (Green): " + selfBodyWords.size());
+        assertThat(text).contains("Kabuuang Salitang Mastered (Green): " + selfBodyWords.size()
+                + " / " + selfBodyWords.size());
         assertThat(text).contains("Magaling!");
         assertThat(text).doesNotContain("Walang detalyadong datos");
     }
@@ -195,6 +205,90 @@ public class ReportControllerTest {
 
         assertThat(text).contains("Walang detalyadong datos ng pagtatangka");
         assertThat(text).doesNotContain("Magaling!");
+    }
+
+    @Test
+    public void partialVocabularyReportCanBeDownloaded() throws Exception {
+        startModule(learnerId, 3);
+        List<VocabularyItem> familyWords = vocabularyItemRepository.findByDomain("family_home");
+        assertThat(familyWords).isNotEmpty();
+        wordMasteryRepository.save(greenMastery(learnerId, familyWords.get(0).getId()));
+
+        String text = reportText(learnerId, 3);
+
+        assertThat(text).contains("Kasalukuyang ginagawa (Partial Progress)");
+        assertThat(text).contains("Paalala: hindi pa kumpleto ang module na ito");
+        assertThat(text).contains("Kabuuang Salitang Mastered (Green): 1 / " + familyWords.size());
+    }
+
+    @Test
+    public void startedVocabularyModuleWithoutAttemptsReturnsBadRequest() throws Exception {
+        startModule(learnerId, 2);
+
+        mockMvc.perform(get("/api/reports/generate/{userId}/{moduleNumber}", learnerId, 2)
+                .header("Authorization", "Bearer " + parentToken))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    public void partialSentenceReportUsesLiveTierRows() throws Exception {
+        startModule(learnerId, 4);
+        sentenceProgressRepository.save(sentenceAttempt(learnerId, 1, "85.00"));
+        sentenceProgressRepository.save(sentenceAttempt(learnerId, 2, "70.00"));
+
+        String text = reportText(learnerId, 4);
+
+        assertThat(text).contains("Kasalukuyang ginagawa (Partial Progress)");
+        assertThat(text).contains("85.00% Accuracy");
+        assertThat(text).contains("70.00% Accuracy");
+        assertThat(text).doesNotContain("Walang detalyadong datos");
+    }
+
+    @Test
+    public void partialSyllableReportCanBeDownloaded() throws Exception {
+        startModule(learnerId, 1);
+        SyllableProgress syllableProgress = new SyllableProgress(learnerId, "pagsama", 1);
+        syllableProgress.setAttempts(2);
+        syllableProgress.setCorrectCount(1);
+        syllableProgress.setAccuracy(new BigDecimal("50.00"));
+        syllableProgressRepository.save(syllableProgress);
+
+        String text = reportText(learnerId, 1);
+
+        assertThat(text).contains("Kasalukuyang ginagawa (Partial Progress)");
+        assertThat(text).contains("PAGSAMA");
+        assertThat(text).contains("Attempts: 2, Accuracy: 50.00%");
+    }
+
+    @Test
+    public void moduleProgressExposesHasAttemptsForPartialReports() throws Exception {
+        startModule(learnerId, 2);
+        VocabularyItem word = vocabularyItemRepository.findByDomain("self_body").get(0);
+        wordMasteryRepository.save(greenMastery(learnerId, word.getId()));
+
+        mockMvc.perform(get("/api/modules/progress/{userId}", learnerId)
+                .header("Authorization", "Bearer " + parentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.moduleNumber == 2)].isComplete", hasItem(false)))
+                .andExpect(jsonPath("$[?(@.moduleNumber == 2)].hasAttempts", hasItem(true)))
+                .andExpect(jsonPath("$[?(@.moduleNumber == 3)].hasAttempts", hasItem(false)));
+    }
+
+    private SentenceProgress sentenceAttempt(UUID userId, int tier, String accuracy) {
+        SentenceProgress progress = new SentenceProgress(userId, tier, UUID.randomUUID());
+        progress.setIsCorrect(true);
+        progress.setAttempts(1);
+        progress.setAccuracy(new BigDecimal(accuracy));
+        return progress;
+    }
+
+    private void startModule(UUID userId, int moduleNumber) {
+        ModuleProgress progress = moduleProgressRepository
+                .findByUserIdAndModuleNumber(userId, moduleNumber)
+                .orElseGet(() -> new ModuleProgress(userId, moduleNumber, true, false));
+        progress.setIsUnlocked(true);
+        progress.setIsComplete(false);
+        moduleProgressRepository.save(progress);
     }
 
     private byte[] downloadReport(UUID userId, int moduleNumber) throws Exception {
