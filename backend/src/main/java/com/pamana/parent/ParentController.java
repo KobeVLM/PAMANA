@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -57,12 +58,15 @@ public class ParentController {
         learner.setParentId(parentId);
         userRepository.save(learner);
 
-        return ResponseEntity.ok(Map.of(
-                "message", "Learner linked successfully!",
-                "learnerId", learner.getId(),
-                "learnerName", learner.getName(),
-                "learnerEmail", learner.getEmail()
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "Learner linked successfully!");
+        response.put("learnerId", learner.getId());
+        response.put("learnerName", learner.getName());
+        // HashMap (not Map.of) so a username-only learner serializes a null
+        // email instead of throwing a NullPointerException.
+        response.put("learnerEmail", learner.getEmail());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/linked-learner")
@@ -78,11 +82,7 @@ public class ParentController {
 
         List<Map<String, Object>> learnersList = linkedLearners.stream()
                 .filter(u -> u.getRole() == Role.LEARNER)
-                .map(u -> Map.<String, Object>of(
-                        "id", u.getId(),
-                        "name", u.getName(),
-                        "email", u.getEmail()
-                ))
+                .map(this::toLearnerSummary)
                 .toList();
 
         if (learnersList.isEmpty()) {
@@ -90,13 +90,13 @@ public class ParentController {
         }
 
         Map<String, Object> first = learnersList.get(0);
-        return ResponseEntity.ok(Map.of(
-                "hasLinkedLearner", true,
-                "learnerId", first.get("id"),
-                "learnerName", first.get("name"),
-                "learnerEmail", first.get("email"),
-                "learners", learnersList
-        ));
+        Map<String, Object> response = new HashMap<>();
+        response.put("hasLinkedLearner", true);
+        response.put("learnerId", first.get("id"));
+        response.put("learnerName", first.get("name"));
+        response.put("learnerEmail", first.get("email"));
+        response.put("learners", learnersList);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/linked-learners")
@@ -108,14 +108,23 @@ public class ParentController {
         List<User> linkedLearners = userRepository.findByParentId(parentId);
         List<Map<String, Object>> learnersList = linkedLearners.stream()
                 .filter(u -> u.getRole() == Role.LEARNER)
-                .map(u -> Map.<String, Object>of(
-                        "id", u.getId(),
-                        "name", u.getName(),
-                        "email", u.getEmail()
-                ))
+                .map(this::toLearnerSummary)
                 .toList();
 
         return ResponseEntity.ok(learnersList);
+    }
+
+    /**
+     * Builds a learner summary as a mutable map. HashMap is used instead of
+     * Map.of because email is optional: username-only accounts store null, and
+     * Map.of rejects null values with a NullPointerException (HTTP 500).
+     */
+    private Map<String, Object> toLearnerSummary(User user) {
+        Map<String, Object> learner = new HashMap<>();
+        learner.put("id", user.getId());
+        learner.put("name", user.getName());
+        learner.put("email", user.getEmail());
+        return learner;
     }
 
     @DeleteMapping("/unlink-learner/{learnerId}")

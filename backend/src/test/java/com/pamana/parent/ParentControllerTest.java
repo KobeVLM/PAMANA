@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.UUID;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -196,5 +197,44 @@ public class ParentControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(learnerId.toString())))
                 .andExpect(jsonPath("$[0].name", is("Juanito Santos")));
+    }
+
+    @Test
+    public void testLinkLearnerWithoutEmailSucceeds() throws Exception {
+        // Learners created through the app are registered with a username only,
+        // so their email is null. Linking must not fail on the null-safe response.
+        RegisterRequest learnerReg = new RegisterRequest(
+                "bianca_santos",
+                "Bianca Santos",
+                null,
+                "password123",
+                Role.LEARNER,
+                "Babae"
+        );
+        MvcResult learnerRegRes = mockMvc.perform(post("/api/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(learnerReg)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        UUID noEmailLearnerId = UUID.fromString(
+                objectMapper.readTree(learnerRegRes.getResponse().getContentAsString()).get("id").asText());
+
+        LinkLearnerRequest request = new LinkLearnerRequest(noEmailLearnerId.toString());
+        mockMvc.perform(post("/api/parent/link-learner")
+                .header("Authorization", "Bearer " + parentToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message", is("Learner linked successfully!")))
+                .andExpect(jsonPath("$.learnerId", is(noEmailLearnerId.toString())))
+                .andExpect(jsonPath("$.learnerName", is("Bianca Santos")));
+
+        // The parent dashboard's first call after linking must also succeed.
+        mockMvc.perform(get("/api/parent/linked-learner")
+                .header("Authorization", "Bearer " + parentToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasLinkedLearner", is(true)))
+                .andExpect(jsonPath("$.learnerId", is(noEmailLearnerId.toString())))
+                .andExpect(jsonPath("$.learners[*].id", hasItem(noEmailLearnerId.toString())));
     }
 }
