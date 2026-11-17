@@ -36,6 +36,7 @@ export interface ModuleProgress {
   isUnlocked: boolean
   isComplete: boolean
   accuracy: number | null
+  hasAttempts?: boolean
 }
 
 export interface VocabularyWord {

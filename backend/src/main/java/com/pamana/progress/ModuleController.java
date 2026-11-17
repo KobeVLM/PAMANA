@@ -6,6 +6,7 @@ import com.pamana.progress.ModuleAttemptHistoryRepository;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleAttemptHistory;
 import com.pamana.progress.ModuleProgress;
+import com.pamana.progress.dto.ModuleProgressView;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import com.pamana.security.LearnerAccessService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/modules")
@@ -48,10 +50,17 @@ public class ModuleController {
 
     @GetMapping("/progress/{userId}")
     @PreAuthorize("hasAnyRole('PARENT', 'LEARNER', 'TEACHER')")
-    public ResponseEntity<List<ModuleProgress>> getModuleProgress(@PathVariable UUID userId, Authentication authentication) {
+    public ResponseEntity<List<ModuleProgressView>> getModuleProgress(@PathVariable UUID userId, Authentication authentication) {
         learnerAccessService.assertCanAccess(authentication, userId);
         log.info("REST API: Fetch module progress for user ID: {}", userId);
-        List<ModuleProgress> progress = moduleProgressRepository.findByUserId(userId);
+        List<ModuleProgressView> progress = moduleProgressRepository.findByUserId(userId).stream()
+                .map(p -> new ModuleProgressView(
+                        p.getModuleNumber(),
+                        p.getIsUnlocked(),
+                        p.getIsComplete(),
+                        p.getAccuracy(),
+                        moduleLockService.hasAttemptData(userId, p.getModuleNumber())))
+                .collect(Collectors.toList());
         return ResponseEntity.ok(progress);
     }
 

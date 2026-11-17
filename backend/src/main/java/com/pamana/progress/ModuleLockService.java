@@ -20,7 +20,9 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -159,6 +161,38 @@ public class ModuleLockService {
         return moduleProgressRepository.findByUserIdAndModuleNumber(userId, moduleNumber)
                 .map(ModuleProgress::getIsUnlocked)
                 .orElse(false);
+    }
+
+    /**
+     * True when the learner has at least one recorded attempt for the module.
+     * Used to allow partial progress reports for modules that are unlocked but
+     * not complete yet.
+     */
+    @Transactional(readOnly = true)
+    public boolean hasAttemptData(UUID userId, int moduleNumber) {
+        switch (moduleNumber) {
+            case 1:
+                return !syllableProgressRepository.findByUserId(userId).isEmpty();
+            case 4:
+                return !sentenceProgressRepository.findByUserId(userId).isEmpty();
+            case 2:
+                return hasVocabularyAttemptData(userId, "self_body");
+            case 3:
+                return hasVocabularyAttemptData(userId, "family_home");
+            default:
+                return false;
+        }
+    }
+
+    private boolean hasVocabularyAttemptData(UUID userId, String domain) {
+        Set<UUID> domainItemIds = vocabularyItemRepository.findByDomain(domain).stream()
+                .map(VocabularyItem::getId)
+                .collect(Collectors.toSet());
+        if (domainItemIds.isEmpty()) {
+            return false;
+        }
+        return wordMasteryRepository.findByUserId(userId).stream()
+                .anyMatch(mastery -> domainItemIds.contains(mastery.getVocabItemId()));
     }
 
     @Transactional
