@@ -38,6 +38,15 @@ public class ModuleProgress {
     @Column(precision = 5, scale = 2)
     private BigDecimal accuracy;
 
+    // Snapshot of Module 4's per-tier sentence accuracy at completion time.
+    // Kept separate from the live sentence_progress rows because restarting a
+    // module deletes those rows while preserving the saved completion.
+    @Column(name = "tier1_accuracy", precision = 5, scale = 2)
+    private BigDecimal tier1Accuracy;
+
+    @Column(name = "tier2_accuracy", precision = 5, scale = 2)
+    private BigDecimal tier2Accuracy;
+
     public ModuleProgress() {
     }
 
@@ -95,5 +104,21 @@ public class ModuleProgress {
 
     public void setAccuracy(BigDecimal accuracy) {
         this.accuracy = accuracy;
+    }
+
+    public BigDecimal getTier1Accuracy() {
+        return tier1Accuracy;
+    }
+
+    public void setTier1Accuracy(BigDecimal tier1Accuracy) {
+        this.tier1Accuracy = tier1Accuracy;
+    }
+
+    public BigDecimal getTier2Accuracy() {
+        return tier2Accuracy;
+    }
+
+    public void setTier2Accuracy(BigDecimal tier2Accuracy) {
+        this.tier2Accuracy = tier2Accuracy;
     }
 }

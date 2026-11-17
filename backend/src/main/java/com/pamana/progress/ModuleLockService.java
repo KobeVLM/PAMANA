@@ -76,6 +76,18 @@ public class ModuleLockService {
 
     @Transactional
     public void evaluateAndUnlock(UUID userId, int completedModule, double finalAccuracy) {
+        evaluateAndUnlock(userId, completedModule, finalAccuracy, null, null);
+    }
+
+    /**
+     * Same as {@link #evaluateAndUnlock(UUID, int, double)}, but also snapshots
+     * the per-tier accuracy of a sentence module (Module 4) onto the saved
+     * progress record. The snapshot survives a later module restart, which
+     * deletes the {@code sentence_progress} detail rows.
+     */
+    @Transactional
+    public void evaluateAndUnlock(UUID userId, int completedModule, double finalAccuracy,
+                                  BigDecimal tier1Accuracy, BigDecimal tier2Accuracy) {
         log.info("Evaluating module lock status for user: {}, completedModule: {}, accuracy: {}%", 
                 userId, completedModule, finalAccuracy);
 
@@ -97,9 +109,18 @@ public class ModuleLockService {
             ModuleProgress progress = currentModuleOpt.get();
             BigDecimal incoming = BigDecimal.valueOf(finalAccuracy);
             BigDecimal saved = progress.getAccuracy();
+            boolean improved = saved == null || incoming.compareTo(saved) > 0;
             progress.setIsComplete(true);
-            if (saved == null || incoming.compareTo(saved) > 0) {
+            if (improved) {
                 progress.setAccuracy(incoming);
+            }
+            // Save the tier snapshot with the best score, and backfill it for
+            // records completed before the snapshot columns existed.
+            if (tier1Accuracy != null && (improved || progress.getTier1Accuracy() == null)) {
+                progress.setTier1Accuracy(tier1Accuracy);
+            }
+            if (tier2Accuracy != null && (improved || progress.getTier2Accuracy() == null)) {
+                progress.setTier2Accuracy(tier2Accuracy);
             }
             moduleProgressRepository.save(progress);
             log.info("Marked Module {} complete for user: {} (attempt {}%, saved {}%)",

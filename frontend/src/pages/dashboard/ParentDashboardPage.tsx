@@ -65,9 +65,18 @@ interface PDFDownloadButtonProps {
   isComplete: boolean
 }
 
+// Explains why a report button is disabled, so parents are not left guessing.
+const REPORT_LOCK_HINTS: Record<number, string> = {
+  1: 'Tapusin ang Module 1 nang may 80% o higit pang kawastuhan para ma-unlock ang report.',
+  2: 'Gawing green ang lahat ng salita sa Self & Body (kilalanin, basahin, gamitin) para ma-unlock ang report.',
+  3: 'Gawing green ang lahat ng salita sa Family & Home (kilalanin, basahin, gamitin) para ma-unlock ang report.',
+  4: 'Tapusin ang dalawang tier ng pangungusap nang may 75% o higit pang kawastuhan para ma-unlock ang report.',
+}
+
 const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNumber, isComplete }) => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState('')
+  const lockHint = REPORT_LOCK_HINTS[moduleNumber]
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -95,7 +104,9 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
       <button
         onClick={handleDownload}
         disabled={!isComplete || isDownloading}
+        title={!isComplete ? lockHint : undefined}
         aria-label={`Download report for Module ${moduleNumber}`}
+        aria-describedby={!isComplete ? `report-hint-${moduleNumber}` : undefined}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
           isComplete
@@ -110,6 +121,11 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
         )}
         Module {moduleNumber} Report
       </button>
+      {!isComplete && lockHint && (
+        <p id={`report-hint-${moduleNumber}`} className="text-[#5a7a63] text-[11px] leading-snug mt-1 max-w-[220px]">
+          {lockHint}
+        </p>
+      )}
       {error && <p className="text-[#c62828] text-xs mt-1">{error}</p>}
     </div>
   )

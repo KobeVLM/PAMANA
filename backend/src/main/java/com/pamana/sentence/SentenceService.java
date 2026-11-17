@@ -142,7 +142,13 @@ public class SentenceService extends BaseGameService {
             } else if (target.getTier() == 2) {
                 log.info("Tier 2 patanong completed with average accuracy {}%! Unlocking Module 4 Reunion Ending.", tierAccuracy);
                 moduleComplete = true;
-                moduleLockService.evaluateAndUnlock(userId, 4, tierAccuracy);
+                // Snapshot both tiers now so the parent report does not depend
+                // on sentence_progress rows, which a module restart deletes.
+                BigDecimal tier1Snapshot = BigDecimal.valueOf(computeTierAccuracy(userId, 1))
+                        .setScale(2, RoundingMode.HALF_UP);
+                BigDecimal tier2Snapshot = BigDecimal.valueOf(computeTierAccuracy(userId, 2))
+                        .setScale(2, RoundingMode.HALF_UP);
+                moduleLockService.evaluateAndUnlock(userId, 4, tierAccuracy, tier1Snapshot, tier2Snapshot);
             }
         }
 

@@ -183,10 +183,10 @@ public class ReportService {
                 if (moduleNumber == 1) {
                     yOffset = renderSyllableReportContent(stream, userId, fontBold, fontRegular, yOffset);
                 } else if (moduleNumber == 2 || moduleNumber == 3) {
-                    yOffset = renderVocabularyReportContent(stream, userId, moduleNumber, fontBold, fontRegular,
+                    yOffset = renderVocabularyReportContent(stream, userId, moduleNumber, progress, fontBold, fontRegular,
                             yOffset);
                 } else if (moduleNumber == 4) {
-                    yOffset = renderSentenceReportContent(stream, userId, fontBold, fontRegular, yOffset);
+                    yOffset = renderSentenceReportContent(stream, userId, progress, fontBold, fontRegular, yOffset);
                 }
 
                 // Footer section
@@ -239,7 +239,7 @@ public class ReportService {
     }
 
     private int renderVocabularyReportContent(PDPageContentStream stream, UUID userId, int moduleNumber,
-            PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
+            ModuleProgress progress, PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
         
         com.pamana.parent.dto.DashboardResponse metrics = progressService.getDashboardMetrics(userId);
         List<com.pamana.vocabulary.dto.WordMasteryStatus> wordMasteryList = metrics.getWordMasteryList();
@@ -254,6 +254,22 @@ public class ReportService {
 
         int masteredWords = metrics.getMasteredCount();
         int reviewWords = metrics.getNeedsReviewCount();
+
+        // Every vocabulary word gets a row, so "no attempts yet" looks like all
+        // grey. Say so instead of praising an empty report.
+        boolean hasAttemptedWords = wordMasteryList.stream()
+                .anyMatch(w -> w.getStatus() != null && !"grey".equalsIgnoreCase(w.getStatus()));
+        if (!hasAttemptedWords) {
+            yOffset -= 20;
+            stream.beginText();
+            stream.setFont(fontRegular, 11);
+            stream.newLineAtOffset(60, yOffset);
+            String saved = progress.getAccuracy() != null ? progress.getAccuracy() + "%" : "N/A";
+            stream.showText("Walang detalyadong datos ng pagtatangka (module was reset or unlocked). "
+                    + "Naka-save na marka: " + saved);
+            stream.endText();
+            return yOffset - 20;
+        }
 
         yOffset -= 20;
         stream.beginText();
@@ -310,8 +326,8 @@ public class ReportService {
         return yOffset - 20;
     }
 
-    private int renderSentenceReportContent(PDPageContentStream stream, UUID userId, PDType1Font fontBold,
-            PDType1Font fontRegular, int yOffset) throws Exception {
+    private int renderSentenceReportContent(PDPageContentStream stream, UUID userId, ModuleProgress progress,
+            PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
         stream.beginText();
         stream.setFont(fontBold, 12);
         stream.newLineAtOffset(50, yOffset);
@@ -320,30 +336,58 @@ public class ReportService {
 
         List<SentenceProgress> attempts = sentenceProgressRepository.findByUserId(userId);
 
-        double tier1Avg = attempts.stream().filter(a -> a.getTier() == 1)
-                .mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
-        double tier2Avg = attempts.stream().filter(a -> a.getTier() == 2)
-                .mapToDouble(a -> a.getAccuracy().doubleValue()).average().orElse(0.0);
+        // Prefer the snapshot saved at completion time; fall back to the live
+        // detail rows for completions that predate the snapshot columns.
+        BigDecimal tier1Avg = progress.getTier1Accuracy() != null
+                ? progress.getTier1Accuracy()
+                : liveTierAverage(attempts, 1);
+        BigDecimal tier2Avg = progress.getTier2Accuracy() != null
+                ? progress.getTier2Accuracy()
+                : liveTierAverage(attempts, 2);
 
         yOffset -= 20;
-        stream.beginText();
-        stream.setFont(fontBold, 11);
-        stream.newLineAtOffset(60, yOffset);
-        stream.showText("- Tier 1: Paturol (Declarative): ");
-        stream.setFont(fontRegular, 11);
-        stream.showText(BigDecimal.valueOf(tier1Avg).setScale(2, RoundingMode.HALF_UP) + "% Accuracy");
-        stream.endText();
+        if (tier1Avg == null && tier2Avg == null) {
+            // The module is complete but its detail rows are gone (restart or
+            // cheat unlock). Report that honestly instead of two fake 0.00%.
+            stream.beginText();
+            stream.setFont(fontRegular, 11);
+            stream.newLineAtOffset(60, yOffset);
+            String saved = progress.getAccuracy() != null ? progress.getAccuracy() + "%" : "N/A";
+            stream.showText("Walang detalyadong datos ng pagtatangka (module was reset or unlocked). "
+                    + "Naka-save na marka: " + saved);
+            stream.endText();
+            return yOffset - 20;
+        }
 
+        renderTierLine(stream, fontBold, fontRegular, yOffset, "- Tier 1: Paturol (Declarative): ", tier1Avg);
         yOffset -= 20;
-        stream.beginText();
-        stream.setFont(fontBold, 11);
-        stream.newLineAtOffset(60, yOffset);
-        stream.showText("- Tier 2: Patanong (Interrogative): ");
-        stream.setFont(fontRegular, 11);
-        stream.showText(BigDecimal.valueOf(tier2Avg).setScale(2, RoundingMode.HALF_UP) + "% Accuracy");
-        stream.endText();
+        renderTierLine(stream, fontBold, fontRegular, yOffset, "- Tier 2: Patanong (Interrogative): ", tier2Avg);
 
         return yOffset - 20;
+    }
+
+    private BigDecimal liveTierAverage(List<SentenceProgress> attempts, int tier) {
+        java.util.OptionalDouble average = attempts.stream()
+                .filter(a -> a.getTier() != null && a.getTier() == tier)
+                .filter(a -> a.getAccuracy() != null)
+                .mapToDouble(a -> a.getAccuracy().doubleValue())
+                .average();
+        return average.isPresent()
+                ? BigDecimal.valueOf(average.getAsDouble()).setScale(2, RoundingMode.HALF_UP)
+                : null;
+    }
+
+    private void renderTierLine(PDPageContentStream stream, PDType1Font fontBold, PDType1Font fontRegular,
+            int yOffset, String label, BigDecimal accuracy) throws Exception {
+        stream.beginText();
+        stream.setFont(fontBold, 11);
+        stream.newLineAtOffset(60, yOffset);
+        stream.showText(label);
+        stream.setFont(fontRegular, 11);
+        stream.showText(accuracy != null
+                ? accuracy.setScale(2, RoundingMode.HALF_UP) + "% Accuracy"
+                : "N/A");
+        stream.endText();
     }
 
     private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
