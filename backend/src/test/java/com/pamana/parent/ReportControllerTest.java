@@ -8,7 +8,15 @@ import com.pamana.auth.dto.RegisterRequest;
 import com.pamana.parent.dto.LinkLearnerRequest;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.progress.ModuleProgressRepository;
+import com.pamana.sentence.SentenceProgressRepository;
+import com.pamana.vocabulary.VocabularyItem;
+import com.pamana.vocabulary.VocabularyItemRepository;
+import com.pamana.vocabulary.WordMastery;
+import com.pamana.vocabulary.WordMasteryRepository;
 
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +27,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +63,15 @@ public class ReportControllerTest {
     @Autowired
     private SessionLogRepository sessionLogRepository;
 
+    @Autowired
+    private SentenceProgressRepository sentenceProgressRepository;
+
+    @Autowired
+    private WordMasteryRepository wordMasteryRepository;
+
+    @Autowired
+    private VocabularyItemRepository vocabularyItemRepository;
+
     private String parentToken;
     private UUID learnerId;
 
@@ -60,6 +79,8 @@ public class ReportControllerTest {
     public void setup() throws Exception {
         sessionLogRepository.deleteAll();
         parentReportRepository.deleteAll();
+        sentenceProgressRepository.deleteAll();
+        wordMasteryRepository.deleteAll();
         moduleProgressRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -126,6 +147,91 @@ public class ReportControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    public void sentenceReportUsesSavedTierSnapshotWhenDetailRowsAreMissing() throws Exception {
+        completeModule(learnerId, 4, new BigDecimal("88.50"), new BigDecimal("76.25"));
+
+        String text = reportText(learnerId, 4);
+
+        assertThat(text).contains("88.50% Accuracy");
+        assertThat(text).contains("76.25% Accuracy");
+        assertThat(text).doesNotContain("Walang detalyadong datos");
+    }
+
+    @Test
+    public void sentenceReportWithoutSnapshotOrDetailRowsRendersHonestFallback() throws Exception {
+        completeModule(learnerId, 4);
+
+        String text = reportText(learnerId, 4);
+
+        // The module is complete, but no per-tier data exists (reset/unlocked),
+        // so the report must not invent two 0.00% tier lines.
+        assertThat(text).contains("Walang detalyadong datos ng pagtatangka");
+        assertThat(text).doesNotContain("Tier 1: Paturol");
+        assertThat(text).doesNotContain("Tier 2: Patanong");
+    }
+
+    @Test
+    public void vocabularyReportListsMasteredWords() throws Exception {
+        completeModule(learnerId, 2);
+        List<VocabularyItem> selfBodyWords = vocabularyItemRepository.findByDomain("self_body");
+        assertThat(selfBodyWords).isNotEmpty();
+        for (VocabularyItem item : selfBodyWords) {
+            wordMasteryRepository.save(greenMastery(learnerId, item.getId()));
+        }
+
+        String text = reportText(learnerId, 2);
+
+        assertThat(text).contains("Kabuuang Salitang Mastered (Green): " + selfBodyWords.size());
+        assertThat(text).contains("Magaling!");
+        assertThat(text).doesNotContain("Walang detalyadong datos");
+    }
+
+    @Test
+    public void vocabularyReportWithoutAnyWordDataRendersHonestFallback() throws Exception {
+        completeModule(learnerId, 3);
+
+        String text = reportText(learnerId, 3);
+
+        assertThat(text).contains("Walang detalyadong datos ng pagtatangka");
+        assertThat(text).doesNotContain("Magaling!");
+    }
+
+    private byte[] downloadReport(UUID userId, int moduleNumber) throws Exception {
+        MvcResult result = mockMvc.perform(get("/api/reports/generate/{userId}/{moduleNumber}", userId, moduleNumber)
+                .header("Authorization", "Bearer " + parentToken))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_PDF))
+                .andReturn();
+        return result.getResponse().getContentAsByteArray();
+    }
+
+    /**
+     * Extracts the PDF text and collapses whitespace so assertions are not
+     * sensitive to the stripper's line wrapping.
+     */
+    private String reportText(UUID userId, int moduleNumber) throws Exception {
+        byte[] pdf = downloadReport(userId, moduleNumber);
+        return extractText(pdf).replaceAll("\\s+", " ");
+    }
+
+    private String extractText(byte[] pdf) throws IOException {
+        try (PDDocument document = Loader.loadPDF(pdf)) {
+            return new PDFTextStripper().getText(document);
+        }
+    }
+
+    private WordMastery greenMastery(UUID userId, UUID vocabItemId) {
+        WordMastery mastery = new WordMastery(userId, vocabItemId);
+        mastery.setOverallAccuracy(new BigDecimal("92.00"));
+        mastery.setPakingganCompleted(true);
+        mastery.setKilalaninAccuracy(new BigDecimal("92.00"));
+        mastery.setBasahinAccuracy(new BigDecimal("92.00"));
+        mastery.setGamitinAccuracy(new BigDecimal("92.00"));
+        mastery.setStatus("green");
+        return mastery;
+    }
+
     private MvcResult register(String username, String name, Role role) throws Exception {
         RegisterRequest request = new RegisterRequest(username, name, null, "password123", role, "Lalaki");
         return mockMvc.perform(post("/api/auth/register")
@@ -160,12 +266,22 @@ public class ReportControllerTest {
     }
 
     private void completeModule(UUID userId, int moduleNumber) {
+        completeModule(userId, moduleNumber, null, null);
+    }
+
+    private void completeModule(UUID userId, int moduleNumber, BigDecimal tier1Accuracy, BigDecimal tier2Accuracy) {
         ModuleProgress progress = moduleProgressRepository
                 .findByUserIdAndModuleNumber(userId, moduleNumber)
                 .orElseGet(() -> new ModuleProgress(userId, moduleNumber, true, false));
         progress.setIsUnlocked(true);
         progress.setIsComplete(true);
         progress.setAccuracy(BigDecimal.valueOf(90.00).setScale(2));
+        if (tier1Accuracy != null) {
+            progress.setTier1Accuracy(tier1Accuracy);
+        }
+        if (tier2Accuracy != null) {
+            progress.setTier2Accuracy(tier2Accuracy);
+        }
         moduleProgressRepository.save(progress);
     }
 }

@@ -12,6 +12,7 @@ import com.pamana.parent.ParentReportRepository;
 import com.pamana.parent.SessionLogRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
@@ -171,6 +174,45 @@ public class SentenceControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(req)))
                                 .andExpect(status().isForbidden());
+        }
+
+        @Test
+        public void completingBothTiersSnapshotsTierAccuracy() throws Exception {
+                completeTier(1);
+                completeTier(2);
+
+                ModuleProgress m4 = moduleProgressRepository.findByUserIdAndModuleNumber(userId, 4)
+                                .orElseThrow(() -> new IllegalStateException("Module progress 4 not found"));
+
+                assertEquals(true, m4.getIsComplete(), "All sentence tasks should complete Module 4.");
+                assertEquals(0, new BigDecimal("100.00").compareTo(m4.getTier1Accuracy()),
+                                "Tier 1 accuracy should be snapshotted on the module progress row.");
+                assertEquals(0, new BigDecimal("100.00").compareTo(m4.getTier2Accuracy()),
+                                "Tier 2 accuracy should be snapshotted on the module progress row.");
+        }
+
+        private void completeTier(int tier) throws Exception {
+                for (int i = 0; i < 5; i++) {
+                        MvcResult taskResult = mockMvc.perform(get("/api/sentences/task")
+                                        .header("Authorization", "Bearer " + token)
+                                        .param("tier", String.valueOf(tier)))
+                                        .andExpect(status().isOk())
+                                        .andReturn();
+
+                        JsonNode task = objectMapper.readTree(taskResult.getResponse().getContentAsString());
+                        List<String> correctOrder = new ArrayList<>();
+                        task.get("correctOrder").forEach(node -> correctOrder.add(node.asText()));
+
+                        SentenceProgressRequest request = new SentenceProgressRequest(
+                                        UUID.fromString(task.get("taskId").asText()), correctOrder);
+
+                        mockMvc.perform(post("/api/sentences/progress")
+                                        .header("Authorization", "Bearer " + token)
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .content(objectMapper.writeValueAsString(request)))
+                                        .andExpect(status().isCreated())
+                                        .andExpect(jsonPath("$.correct", is(true)));
+                }
         }
 
         @Test
