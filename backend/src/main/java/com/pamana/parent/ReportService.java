@@ -33,6 +33,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -79,7 +81,7 @@ public class ReportService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Hindi nakita ang module progress record."));
 
-        if (!progress.getIsComplete()) {
+        if (!Boolean.TRUE.equals(progress.getIsComplete())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Hindi pa tapos ang module na ito upang ma-download ang report.");
         }
@@ -88,6 +90,11 @@ public class ReportService {
         String moduleTitle = getModuleTitle(moduleNumber);
         String accuracyStr = progress.getAccuracy() != null ? progress.getAccuracy().toString() + "%" : "N/A";
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        // Email is optional (username-only accounts store null), so fall back to
+        // a label instead of passing null to PDPageContentStream.showText.
+        String learnerEmail = (user.getEmail() == null || user.getEmail().isBlank())
+                ? "Walang naka-link na email"
+                : user.getEmail();
 
         // 3. Compile PDF using Apache PDFBox
         try (PDDocument document = new PDDocument()) {
@@ -124,7 +131,7 @@ public class ReportService {
                 stream.newLineAtOffset(50, yOffset);
                 stream.showText("Pangalan ng Mag-aaral (Learner): ");
                 stream.setFont(fontRegular, 11);
-                stream.showText(user.getName());
+                stream.showText(pdfSafe(user.getName()));
                 stream.endText();
 
                 yOffset -= 20;
@@ -133,7 +140,7 @@ public class ReportService {
                 stream.newLineAtOffset(50, yOffset);
                 stream.showText("Email ng Account: ");
                 stream.setFont(fontRegular, 11);
-                stream.showText(user.getEmail());
+                stream.showText(pdfSafe(learnerEmail));
                 stream.endText();
 
                 yOffset -= 20;
@@ -220,9 +227,10 @@ public class ReportService {
             stream.beginText();
             stream.setFont(fontBold, 10);
             stream.newLineAtOffset(60, yOffset);
-            stream.showText("- " + p.getSubLevel().toUpperCase() + " Set " + p.getSetId() + ": ");
+            stream.showText("- " + pdfSafe(p.getSubLevel()).toUpperCase() + " Set " + p.getSetId() + ": ");
             stream.setFont(fontRegular, 10);
-            stream.showText("Attempts: " + p.getAttempts() + ", Accuracy: " + p.getAccuracy() + "%");
+            String accuracy = p.getAccuracy() != null ? p.getAccuracy().toString() : "0";
+            stream.showText("Attempts: " + p.getAttempts() + ", Accuracy: " + accuracy + "%");
             stream.endText();
             yOffset -= 15;
         }
@@ -275,7 +283,7 @@ public class ReportService {
                     stream.beginText();
                     stream.setFont(fontRegular, 10);
                     stream.newLineAtOffset(80, yOffset);
-                    stream.showText("- " + w.getWord() + " (Katumpakan: " + w.getOverallAccuracy() + "%)");
+                    stream.showText("- " + pdfSafe(w.getWord()) + " (Katumpakan: " + w.getOverallAccuracy() + "%)");
                     stream.endText();
                 }
             }
@@ -336,6 +344,34 @@ public class ReportService {
         stream.endText();
 
         return yOffset - 20;
+    }
+
+    private static final Charset WINDOWS_1252 = Charset.forName("windows-1252");
+
+    /**
+     * Keeps text inside the WinAnsi character set used by the standard-14 PDF
+     * fonts. Characters outside it (emoji, en/em dashes, curly quotes) make
+     * PDPageContentStream.showText throw, so they are replaced with '?'.
+     */
+    private String pdfSafe(String value) {
+        if (value == null || value.isBlank()) {
+            return "-";
+        }
+        CharsetEncoder encoder = WINDOWS_1252.newEncoder();
+        StringBuilder out = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (Character.isHighSurrogate(c) && i + 1 < value.length()
+                    && Character.isLowSurrogate(value.charAt(i + 1))) {
+                out.append('?');
+                i++;
+            } else if (c < 0x20) {
+                out.append(' ');
+            } else {
+                out.append(encoder.canEncode(c) ? c : '?');
+            }
+        }
+        return out.toString().trim();
     }
 
     private String getModuleTitle(int moduleNumber) {
