@@ -74,6 +74,26 @@ const REPORT_LOCK_HINTS: Record<number, string> = {
   4: 'Tapusin ang dalawang tier ng pangungusap nang may 75% o higit pang kawastuhan para ma-unlock ang report.',
 }
 
+// With responseType 'blob' the server's error body also arrives as a Blob, so
+// it has to be read before a useful message can be shown.
+const describeDownloadError = async (error: unknown): Promise<string> => {
+  const err = error as { code?: string; response?: { data?: unknown } }
+  if (err?.code === 'ECONNABORTED') {
+    return 'Masyadong matagal ang pagbuo ng report. Subukan ulit.'
+  }
+  const body = err?.response?.data
+  if (body instanceof Blob) {
+    try {
+      const parsed = JSON.parse(await body.text()) as { message?: string; error?: string }
+      const detail = parsed.message || parsed.error
+      if (detail) return detail
+    } catch {
+      // Non-JSON error body; fall back to the generic message.
+    }
+  }
+  return 'Could not generate report. Please try again.'
+}
+
 const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNumber, isComplete, canDownload }) => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState('')
@@ -84,18 +104,25 @@ const PDFDownloadButton: React.FC<PDFDownloadButtonProps> = ({ userId, moduleNum
     setIsDownloading(true)
     setError('')
     try {
+      // Vocabulary reports used to take ~13s server-side, which is past the
+      // old 12s limit. Keep generous headroom so a slow connection or a cold
+      // backend never discards a report that was actually generated.
       const res = await api.get(`/reports/generate/${userId}/${moduleNumber}`, {
         responseType: 'blob',
-        timeout: 12000,
+        timeout: 60000,
       })
       const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
       const a = document.createElement('a')
       a.href = url
       a.download = `pamana_module${moduleNumber}_report.pdf`
+      a.rel = 'noopener'
+      document.body.appendChild(a)
       a.click()
-      URL.revokeObjectURL(url)
-    } catch {
-      setError('Could not generate report. Please try again.')
+      document.body.removeChild(a)
+      // Revoking the URL immediately can cancel the download in some browsers.
+      window.setTimeout(() => URL.revokeObjectURL(url), 2000)
+    } catch (e) {
+      setError(await describeDownloadError(e))
     } finally {
       setIsDownloading(false)
     }

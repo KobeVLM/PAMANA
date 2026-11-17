@@ -198,6 +198,26 @@ public class ReportControllerTest {
     }
 
     @Test
+    public void vocabularyReportListsWordsThatNeedPractice() throws Exception {
+        completeModule(learnerId, 2);
+        List<VocabularyItem> selfBodyWords = vocabularyItemRepository.findByDomain("self_body");
+        assertThat(selfBodyWords).isNotEmpty();
+        VocabularyItem weakWord = selfBodyWords.get(0);
+        wordMasteryRepository.save(redMastery(learnerId, weakWord.getId(), new BigDecimal("40.00")));
+        for (VocabularyItem item : selfBodyWords.subList(1, selfBodyWords.size())) {
+            wordMasteryRepository.save(greenMastery(learnerId, item.getId()));
+        }
+
+        String text = reportText(learnerId, 2);
+
+        assertThat(text).contains("Kabuuang Salitang Mastered (Green): " + (selfBodyWords.size() - 1)
+                + " / " + selfBodyWords.size());
+        assertThat(text).contains("Mga Salitang Kailangan Pang Sanayin (Red): 1");
+        assertThat(text).contains("- " + weakWord.getWord() + " (Katumpakan: 40.0%)");
+        assertThat(text).contains("Sanayin ang bata sa natitirang salita");
+    }
+
+    @Test
     public void vocabularyReportWithoutAnyWordDataRendersHonestFallback() throws Exception {
         completeModule(learnerId, 3);
 
@@ -323,6 +343,16 @@ public class ReportControllerTest {
         mastery.setBasahinAccuracy(new BigDecimal("92.00"));
         mastery.setGamitinAccuracy(new BigDecimal("92.00"));
         mastery.setStatus("green");
+        return mastery;
+    }
+
+    private WordMastery redMastery(UUID userId, UUID vocabItemId, BigDecimal accuracy) {
+        WordMastery mastery = new WordMastery(userId, vocabItemId);
+        mastery.setOverallAccuracy(accuracy);
+        mastery.setKilalaninAccuracy(accuracy);
+        mastery.setBasahinAccuracy(accuracy);
+        mastery.setGamitinAccuracy(accuracy);
+        mastery.setStatus("red");
         return mastery;
     }
 

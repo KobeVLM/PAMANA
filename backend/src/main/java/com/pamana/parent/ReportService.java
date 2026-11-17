@@ -4,18 +4,18 @@ import com.pamana.auth.UserRepository;
 import com.pamana.auth.User;
 import com.pamana.syllable.SyllableProgressRepository;
 import com.pamana.syllable.SyllableProgress;
+import com.pamana.vocabulary.VocabularyItem;
+import com.pamana.vocabulary.VocabularyItemRepository;
+import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.WordMasteryRepository;
-import com.pamana.vocabulary.dto.WordMasteryStatus;
 import com.pamana.sentence.SentenceProgressRepository;
 import com.pamana.sentence.SentenceProgress;
-import com.pamana.progress.ProgressService;
 import com.pamana.progress.ModuleProgressRepository;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.progress.ModuleLockService;
 import com.pamana.parent.ReportService;
 import com.pamana.parent.ParentReportRepository;
 import com.pamana.parent.ParentReport;
-import com.pamana.parent.dto.DashboardResponse;
 
 
 
@@ -38,7 +38,10 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -50,26 +53,26 @@ public class ReportService {
     private final ModuleProgressRepository moduleProgressRepository;
     private final SyllableProgressRepository syllableProgressRepository;
     private final WordMasteryRepository wordMasteryRepository;
+    private final VocabularyItemRepository vocabularyItemRepository;
     private final SentenceProgressRepository sentenceProgressRepository;
     private final ParentReportRepository parentReportRepository;
-    private final ProgressService progressService;
     private final ModuleLockService moduleLockService;
 
     public ReportService(UserRepository userRepository,
             ModuleProgressRepository moduleProgressRepository,
             SyllableProgressRepository syllableProgressRepository,
             WordMasteryRepository wordMasteryRepository,
+            VocabularyItemRepository vocabularyItemRepository,
             SentenceProgressRepository sentenceProgressRepository,
             ParentReportRepository parentReportRepository,
-            ProgressService progressService,
             ModuleLockService moduleLockService) {
         this.userRepository = userRepository;
         this.moduleProgressRepository = moduleProgressRepository;
         this.syllableProgressRepository = syllableProgressRepository;
         this.wordMasteryRepository = wordMasteryRepository;
+        this.vocabularyItemRepository = vocabularyItemRepository;
         this.sentenceProgressRepository = sentenceProgressRepository;
         this.parentReportRepository = parentReportRepository;
-        this.progressService = progressService;
         this.moduleLockService = moduleLockService;
     }
 
@@ -269,8 +272,16 @@ public class ReportService {
     private int renderVocabularyReportContent(PDPageContentStream stream, UUID userId, int moduleNumber,
             ModuleProgress progress, PDType1Font fontBold, PDType1Font fontRegular, int yOffset) throws Exception {
         
-        com.pamana.parent.dto.DashboardResponse metrics = progressService.getDashboardMetrics(userId);
-        List<com.pamana.vocabulary.dto.WordMasteryStatus> wordMasteryList = metrics.getWordMasteryList();
+        // Read exactly what this report needs. getDashboardMetrics() fans out
+        // into ~46 sequential queries (it looks each vocabulary word up on its
+        // own, twice), which pushed Modules 2 and 3 past the browser's report
+        // timeout in production. Two bulk queries are enough here.
+        String domain = moduleNumber == 2 ? "self_body" : "family_home";
+        List<VocabularyItem> domainItems = vocabularyItemRepository.findByDomain(domain);
+        Map<UUID, WordMastery> masteryByItem = new HashMap<>();
+        for (WordMastery mastery : wordMasteryRepository.findByUserId(userId)) {
+            masteryByItem.put(mastery.getVocabItemId(), mastery);
+        }
 
         stream.beginText();
         stream.setFont(fontBold, 12);
@@ -280,25 +291,27 @@ public class ReportService {
 
         yOffset -= 30;
 
-        // Counts must be scoped to this module's domain. The dashboard metrics
-        // aggregate both vocab modules, which would misreport a Module 2 or 3
-        // report (and any partial report).
-        String domain = moduleNumber == 2 ? "self_body" : "family_home";
-        List<com.pamana.vocabulary.dto.WordMasteryStatus> domainWords = wordMasteryList.stream()
-                .filter(w -> domain.equalsIgnoreCase(w.getDomain()))
-                .collect(java.util.stream.Collectors.toList());
-        int totalWords = domainWords.size();
-        long masteredWords = domainWords.stream()
-                .filter(w -> "green".equalsIgnoreCase(w.getStatus()))
-                .count();
-        long reviewWords = domainWords.stream()
-                .filter(w -> "red".equalsIgnoreCase(w.getStatus()))
-                .count();
-
-        // Every vocabulary word gets a row, so "no attempts yet" looks like all
-        // grey. Say so instead of praising an empty report.
-        boolean hasAttemptedWords = domainWords.stream()
-                .anyMatch(w -> w.getStatus() != null && !"grey".equalsIgnoreCase(w.getStatus()));
+        // Counts are scoped to this module's domain, not both vocabulary
+        // modules, so a Module 2 or 3 report never double-counts words.
+        int totalWords = domainItems.size();
+        long masteredWords = 0;
+        long reviewWords = 0;
+        boolean hasAttemptedWords = false;
+        List<VocabularyItem> reviewItems = new ArrayList<>();
+        for (VocabularyItem item : domainItems) {
+            WordMastery mastery = masteryByItem.get(item.getId());
+            String status = mastery != null ? mastery.getStatus() : null;
+            if (status == null || "grey".equalsIgnoreCase(status)) {
+                continue;
+            }
+            hasAttemptedWords = true;
+            if ("green".equalsIgnoreCase(status)) {
+                masteredWords++;
+            } else if ("red".equalsIgnoreCase(status)) {
+                reviewWords++;
+                reviewItems.add(item);
+            }
+        }
         if (!hasAttemptedWords) {
             yOffset -= 20;
             stream.beginText();
@@ -333,15 +346,17 @@ public class ReportService {
             stream.showText("Mga partikular na salitang pagtutuunan ng pansin:");
             stream.endText();
 
-            for (com.pamana.vocabulary.dto.WordMasteryStatus w : domainWords) {
-                if ("red".equalsIgnoreCase(w.getStatus())) {
-                    yOffset -= 15;
-                    stream.beginText();
-                    stream.setFont(fontRegular, 10);
-                    stream.newLineAtOffset(80, yOffset);
-                    stream.showText("- " + pdfSafe(w.getWord()) + " (Katumpakan: " + w.getOverallAccuracy() + "%)");
-                    stream.endText();
-                }
+            for (VocabularyItem item : reviewItems) {
+                WordMastery mastery = masteryByItem.get(item.getId());
+                double accuracy = mastery != null && mastery.getOverallAccuracy() != null
+                        ? mastery.getOverallAccuracy().doubleValue()
+                        : 0.0;
+                yOffset -= 15;
+                stream.beginText();
+                stream.setFont(fontRegular, 10);
+                stream.newLineAtOffset(80, yOffset);
+                stream.showText("- " + pdfSafe(item.getWord()) + " (Katumpakan: " + accuracy + "%)");
+                stream.endText();
             }
         }
 

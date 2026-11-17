@@ -59,8 +59,13 @@ public class ProgressService {
     public DashboardResponse getDashboardMetrics(UUID userId) {
         log.info("Aggregating parent dashboard metrics for userId: {}", userId);
 
+        // Single bulk read of the learner's mastery rows. Looking each word up
+        // individually made this endpoint issue ~46 sequential queries, which
+        // took several seconds against the remote database.
+        Map<UUID, WordMastery> masteryByItem = masteryByItem(userId);
+
         // 1. Module Accuracies Trend
-        List<ModuleAccuracy> accuracyTrend = computeAccuracyTrend(userId);
+        List<ModuleAccuracy> accuracyTrend = computeAccuracyTrend(userId, masteryByItem);
 
         // 2. Mastered & Needs-Review counts
         int masteredCount = (int) wordMasteryRepository.countByUserIdAndStatus(userId, "green");
@@ -79,7 +84,7 @@ public class ProgressService {
         double trailCompletion = (completedModules / 4.0) * 100.0;
 
         // 5. Word Mastery list sorted alphabetically
-        List<WordMasteryStatus> wordMasteryList = getWordMasteryList(userId);
+        List<WordMasteryStatus> wordMasteryList = getWordMasteryList(userId, masteryByItem);
 
         // 6. Recent Session History (sorted by startedAt descending, up to 5 entries)
         List<SessionLog> sessionHistory = sessionLogs.stream()
@@ -98,7 +103,7 @@ public class ProgressService {
         );
     }
 
-    private List<ModuleAccuracy> computeAccuracyTrend(UUID userId) {
+    private List<ModuleAccuracy> computeAccuracyTrend(UUID userId, Map<UUID, WordMastery> masteryByItem) {
         // Module 1 (Syllables) average accuracy
         List<SyllableProgress> sylAttempts = syllableProgressRepository.findByUserId(userId);
         double sylAcc = sylAttempts.stream()
@@ -108,11 +113,11 @@ public class ProgressService {
 
         // Module 2 (Self & Body Vocab) average accuracy
         List<VocabularyItem> m2Items = vocabularyItemRepository.findByDomain("self_body");
-        double m2Acc = getDomainAverageAccuracy(userId, m2Items);
+        double m2Acc = getDomainAverageAccuracy(m2Items, masteryByItem);
 
         // Module 3 (Family & Home Vocab) average accuracy
         List<VocabularyItem> m3Items = vocabularyItemRepository.findByDomain("family_home");
-        double m3Acc = getDomainAverageAccuracy(userId, m3Items);
+        double m3Acc = getDomainAverageAccuracy(m3Items, masteryByItem);
 
         // Module 4 (Sentences) average accuracy
         List<SentenceProgress> sentAttempts = sentenceProgressRepository.findByUserId(userId);
@@ -129,31 +134,42 @@ public class ProgressService {
         );
     }
 
-    private double getDomainAverageAccuracy(UUID userId, List<VocabularyItem> items) {
+    private double getDomainAverageAccuracy(List<VocabularyItem> items, Map<UUID, WordMastery> masteryByItem) {
         if (items.isEmpty()) {
             return 0.0;
         }
         double sum = 0.0;
         int counted = 0;
         for (VocabularyItem item : items) {
-            Optional<WordMastery> mastery = wordMasteryRepository.findByUserIdAndVocabItemId(userId, item.getId());
-            if (mastery.isPresent()) {
-                sum += mastery.get().getOverallAccuracy().doubleValue();
+            WordMastery mastery = masteryByItem.get(item.getId());
+            if (mastery != null) {
+                sum += mastery.getOverallAccuracy().doubleValue();
                 counted++;
             }
         }
         return counted == 0 ? 0.0 : sum / counted;
     }
 
+    private Map<UUID, WordMastery> masteryByItem(UUID userId) {
+        Map<UUID, WordMastery> masteryByItem = new HashMap<>();
+        for (WordMastery mastery : wordMasteryRepository.findByUserId(userId)) {
+            masteryByItem.put(mastery.getVocabItemId(), mastery);
+        }
+        return masteryByItem;
+    }
+
     @Transactional(readOnly = true)
     public List<WordMasteryStatus> getWordMasteryList(UUID userId) {
+        return getWordMasteryList(userId, masteryByItem(userId));
+    }
+
+    private List<WordMasteryStatus> getWordMasteryList(UUID userId, Map<UUID, WordMastery> masteryByItem) {
         List<VocabularyItem> allItems = vocabularyItemRepository.findAll();
         List<WordMasteryStatus> list = new ArrayList<>();
 
         for (VocabularyItem item : allItems) {
-            Optional<WordMastery> masteryOpt = wordMasteryRepository.findByUserIdAndVocabItemId(userId, item.getId());
-            if (masteryOpt.isPresent()) {
-                WordMastery m = masteryOpt.get();
+            WordMastery m = masteryByItem.get(item.getId());
+            if (m != null) {
                 list.add(new WordMasteryStatus(
                         item.getId(),
                         item.getWord(),
