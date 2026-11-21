@@ -5,6 +5,7 @@ import { useAudio } from '@/contexts/AudioContext'
 import { cn } from '@/lib/utils'
 import { ParentSidebar } from '@/components/layout/ParentSidebar'
 import { AdventurerOnboardingModal } from '@/components/auth/AdventurerOnboardingModal'
+import { StoryPart1Player } from '@/components/story/StoryPart1Player'
 import {
   BarChart2,
   LogOut,
@@ -398,6 +399,7 @@ const { user, logout, updateProfile } = useAuth()
         onComplete={handleOnboardingComplete}
         initialGender={character}
       />
+        <StoryPart1Player />
     </div>
   );
 };

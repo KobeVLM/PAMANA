@@ -90,7 +90,8 @@ describe('RegisterPage', () => {
       <MemoryRouter initialEntries={['/register']}>
         <Routes>
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/login" element={<div>Login Page Target</div>} />
+          {/* Route updated to /home */}
+          <Route path="/home" element={<div>Home Page Target</div>} />
         </Routes>
       </MemoryRouter>
     )
@@ -125,7 +126,8 @@ describe('RegisterPage', () => {
       )
     })
 
-    expect(await screen.findByText('Login Page Target')).toBeInTheDocument()
+    // Expecting Home Page Target instead of Login Page Target
+    expect(await screen.findByText('Home Page Target')).toBeInTheDocument()
   })
 
   it('handles 409 Conflict error by closing modal and showing duplicate username message', async () => {
@@ -161,5 +163,6 @@ describe('RegisterPage', () => {
       ).toBeInTheDocument()
     })
     expect(screen.queryByText('Create Your Adventurer!')).not.toBeInTheDocument()
+    // We REMOVED the 'Home Page Target' expectation here because a 409 means it stays on the Register Page
   })
 })

@@ -14,6 +14,8 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 
 // Landing Page
 import { LandingPage } from "@/pages/landingpage/landingpage";
+import { AboutPage } from '@/pages/about/AboutPage';
+import { ContactPage } from '@/pages/contact/ContactPage';
 
 // BGM & session shell components
 import { BGMController } from "@/components/music/BGMController";
@@ -109,7 +111,8 @@ function App() {
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
-
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/contact" element={<ContactPage />} /> 
                   {/* ✅ Home page WITH AppShell */}
                   <Route
                     path="/home"

@@ -1,71 +1,80 @@
-import React, { useState, useEffect } from 'react'
-import { AppShell } from '@/components/layout/AppShell'
-import { useAuth } from '@/contexts/AuthContext'
-import { User, Bell, Paintbrush, Check, Music, Copy, Star, Volume2, Mail } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import React, { useState, useEffect } from "react";
+import { AppShell } from "@/components/layout/AppShell";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  User,
+  Bell,
+  Paintbrush,
+  Check,
+  Music,
+  Copy,
+  Star,
+  Volume2,
+  Mail,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const SettingsPage: React.FC = () => {
-  const { user, updateProfile } = useAuth()
-  const [character, setCharacter] = useState<'Lalaki' | 'Babae'>('Lalaki')
-  const [musicEnabled, setMusicEnabled] = useState(true)
-  const [sfxEnabled, setSfxEnabled] = useState(true)
-  const [copiedCode, setCopiedCode] = useState(false)
+  const { user, updateProfile } = useAuth();
+  const [character, setCharacter] = useState<"Lalaki" | "Babae">("Lalaki");
+  const [musicEnabled, setMusicEnabled] = useState(true);
+  const [sfxEnabled, setSfxEnabled] = useState(true);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const handleCopyCode = () => {
     if (user?.id) {
-      navigator.clipboard.writeText(user.id)
-      setCopiedCode(true)
-      setTimeout(() => setCopiedCode(false), 2000)
+      navigator.clipboard.writeText(user.id);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
     }
-  }
+  };
 
   useEffect(() => {
-    const savedChar = localStorage.getItem('pamana_character')
-    if (savedChar === 'Lalaki' || savedChar === 'Babae') {
-      setCharacter(savedChar as 'Lalaki' | 'Babae')
+    const savedChar = localStorage.getItem("pamana_character");
+    if (savedChar === "Lalaki" || savedChar === "Babae") {
+      setCharacter(savedChar as "Lalaki" | "Babae");
     } else if (user?.gender) {
-      setCharacter(user.gender)
+      setCharacter(user.gender);
     }
 
-    const savedBgm = localStorage.getItem('pamana_bgm')
-    if (savedBgm === 'false') {
-      setMusicEnabled(false)
+    const savedBgm = localStorage.getItem("pamana_bgm");
+    if (savedBgm === "false") {
+      setMusicEnabled(false);
     }
 
-    const savedSfx = localStorage.getItem('pamana_sfx')
-    if (savedSfx === 'false') {
-      setSfxEnabled(false)
+    const savedSfx = localStorage.getItem("pamana_sfx");
+    if (savedSfx === "false") {
+      setSfxEnabled(false);
     }
-  }, [user?.gender])
+  }, [user?.gender]);
 
-  const handleCharacterChange = (char: 'Lalaki' | 'Babae') => {
-    setCharacter(char)
-    localStorage.setItem('pamana_character', char)
-    window.dispatchEvent(new Event('pamana_settings_changed'))
+  const handleCharacterChange = (char: "Lalaki" | "Babae") => {
+    setCharacter(char);
+    localStorage.setItem("pamana_character", char);
+    window.dispatchEvent(new Event("pamana_settings_changed"));
     if (user?.name) {
-      updateProfile(user.name, char).catch(console.error)
+      updateProfile(user.name, char).catch(console.error);
     }
-  }
+  };
 
   const toggleMusic = () => {
-    const newVal = !musicEnabled
-    setMusicEnabled(newVal)
-    localStorage.setItem('pamana_bgm', newVal ? 'true' : 'false')
-    window.dispatchEvent(new Event('pamana_settings_changed'))
-  }
+    const newVal = !musicEnabled;
+    setMusicEnabled(newVal);
+    localStorage.setItem("pamana_bgm", newVal ? "true" : "false");
+    window.dispatchEvent(new Event("pamana_settings_changed"));
+  };
 
   const toggleSfx = () => {
-    const newVal = !sfxEnabled
-    setSfxEnabled(newVal)
-    localStorage.setItem('pamana_sfx', newVal ? 'true' : 'false')
-    window.dispatchEvent(new Event('pamana_settings_changed'))
-  }
+    const newVal = !sfxEnabled;
+    setSfxEnabled(newVal);
+    localStorage.setItem("pamana_sfx", newVal ? "true" : "false");
+    window.dispatchEvent(new Event("pamana_settings_changed"));
+  };
 
   return (
     <AppShell>
       <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] p-4 md:p-8 pb-20">
         <div className="max-w-5xl mx-auto relative z-10 pt-4">
-          
           {/* Header Section */}
           <div className="mb-10 flex flex-col items-center justify-center text-center">
             <img
@@ -79,58 +88,69 @@ export const SettingsPage: React.FC = () => {
           </div>
 
           <div className="space-y-8">
-            
             {/* PROFILE SECTION */}
             <section className="bg-[#4CAF50] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#2E7D32] relative overflow-hidden">
               <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
-              
+
               <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#1B5E20] flex items-center gap-3">
-                    <User className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    <User
+                      className="w-8 h-8 text-yellow-300 drop-shadow-md"
+                      strokeWidth={3}
+                    />
                     YOUR PROFILE
                   </h2>
                   <div className="hidden sm:block">
                     <Star className="w-8 h-8 text-yellow-300 fill-yellow-300 drop-shadow-md" />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
                   <div className="space-y-2">
-                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Name</span>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">
+                      Name
+                    </span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg shadow-inner">
-                      {user?.name || 'Loading...'}
+                      {user?.name || "Loading..."}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Username</span>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">
+                      Username
+                    </span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-bold text-lg shadow-inner truncate">
-                      {user?.username || 'Loading...'}
+                      {user?.username || "Loading..."}
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">Role</span>
+                    <span className="block text-sm text-[#E8F5E9] font-black uppercase tracking-wider ml-2">
+                      Role
+                    </span>
                     <div className="p-4 bg-[#f4f9f0] rounded-2xl border-4 border-[#388E3C] text-[#1B5E20] font-black text-lg capitalize shadow-inner">
-                      {user?.role?.toLowerCase() || 'Loading...'}
+                      {user?.role?.toLowerCase() || "Loading..."}
                     </div>
                   </div>
                 </div>
 
-                {/* Email Placeholder (Optional / Coming Soon) */}
+                {/* Email Placeholder */}
                 <div className="mb-6 p-5 md:p-6 rounded-[1.5rem] bg-[#f4f9f0] border-4 border-[#388E3C] shadow-inner flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Mail className="w-5 h-5 text-[#2E7D32]" />
-                      <span className="text-sm text-[#1B5E20] font-black uppercase tracking-wider">Email Address</span>
+                      <span className="text-sm text-[#1B5E20] font-black uppercase tracking-wider">
+                        Email Address
+                      </span>
                       <span className="text-xs bg-[#C8E6C9] text-[#1B5E20] px-2.5 py-0.5 rounded-full font-black border border-[#81C784]">
                         Optional
                       </span>
                     </div>
                     <div className="text-base md:text-lg text-[#1B5E20] font-black">
-                      {user?.email || 'No email linked yet'}
+                      {user?.email || "No email linked yet"}
                     </div>
                     <p className="text-xs md:text-sm text-[#2E7D32] font-bold italic">
-                      Optional — Account recovery via email is coming soon in a future update.
+                      Optional — Account recovery via email is coming soon in a
+                      future update.
                     </p>
                   </div>
 
@@ -139,35 +159,35 @@ export const SettingsPage: React.FC = () => {
                     disabled
                     aria-disabled="true"
                     className="px-5 py-2.5 rounded-2xl font-black text-base bg-white/60 text-gray-400 border-2 border-gray-300 cursor-not-allowed opacity-80 shrink-0 self-start md:self-center shadow-none select-none"
-                    title="Account recovery via email is coming soon"
                   >
                     + Add Email
                   </button>
                 </div>
 
-                {user?.role === 'LEARNER' && (
+                {user?.role === "LEARNER" && (
                   <div className="p-5 md:p-6 rounded-[1.5rem] bg-[#FFF8E1] border-[5px] border-[#FFC107] flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_6px_0_#D4A017]">
                     <div className="w-full">
                       <div className="text-sm text-[#8B5A2B] font-black uppercase tracking-wider mb-2 flex items-center gap-2">
-                        <Star className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" /> 
+                        <Star className="w-5 h-5 fill-[#FFC107] text-[#FFC107]" />
                         Student ID (For Parent Linking)
                       </div>
                       <div className="font-mono text-sm md:text-base text-[#5D4037] bg-white px-4 py-3 rounded-xl border-2 border-[#FFC107] select-all inline-block break-all font-black shadow-sm w-full">
                         {user?.id}
                       </div>
                       <p className="text-xs md:text-sm text-[#795548] font-bold mt-2">
-                        Share this ID with your parent so they can link your account to their dashboard.
+                        Share this ID with your parent so they can link your
+                        account to their dashboard.
                       </p>
                     </div>
-                    
+
                     <button
                       type="button"
                       onClick={handleCopyCode}
                       className={cn(
                         "px-6 py-3 rounded-2xl font-black text-xl flex items-center justify-center gap-2 transition-all w-full md:w-auto shrink-0 border-4",
-                        copiedCode 
-                          ? "bg-[#4CAF50] text-white border-white shadow-[0_6px_0_#2E7D32]" 
-                          : "bg-gradient-to-b from-[#FFB74D] to-[#FF9800] text-white border-white shadow-[0_6px_0_#E65100] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none"
+                        copiedCode
+                          ? "bg-[#4CAF50] text-white border-white shadow-[0_6px_0_#2E7D32]"
+                          : "bg-gradient-to-b from-[#FFB74D] to-[#FF9800] text-white border-white shadow-[0_6px_0_#E65100] hover:brightness-110 active:border-b-0 active:translate-y-1.5 active:shadow-none",
                       )}
                     >
                       {copiedCode ? (
@@ -188,112 +208,154 @@ export const SettingsPage: React.FC = () => {
             </section>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              
               {/* PREFERENCES */}
               <section className="bg-[#00B0FF] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#0083B0] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
-                
+
                 <div className="relative z-10 flex-1 flex flex-col">
                   <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#005A7A] flex items-center gap-3 mb-8">
-                    <Paintbrush className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    <Paintbrush
+                      className="w-8 h-8 text-yellow-300 drop-shadow-md"
+                      strokeWidth={3}
+                    />
                     PREFERENCES
                   </h2>
 
                   <div className="space-y-8 flex-1">
                     <div className="space-y-3">
-                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">Choose your character</span>
+                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">
+                        Choose your character
+                      </span>
                       <div className="grid grid-cols-2 gap-4">
+                        {/* BOY BUTTON */}
                         <button
                           type="button"
-                          onClick={() => handleCharacterChange('Lalaki')}
-                          aria-label="Boy (Lalaki)"
+                          onClick={() => handleCharacterChange("Lalaki")}
+                          aria-label="Lino (Boy)"
                           className={cn(
-                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
-                            character === 'Lalaki'
+                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-lg md:text-xl transition-all duration-150 border-4",
+                            character === "Lalaki"
                               ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
-                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none"
+                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none",
                           )}
                         >
-                          <span className="text-4xl mb-1">👦</span>
-                          Boy (Lalaki) 
-                          {character === 'Lalaki' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
+                          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#E8F5E9] border-2 border-white shadow-sm overflow-hidden mb-2">
+                            <img
+                              src="/images/M_User.png"
+                              alt="Lino"
+                              className="w-full h-full object-cover object-top" // Added object-top
+                            />
+                          </div>
+                          Lino (Boy)
+                          {character === "Lalaki" && (
+                            <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />
+                          )}
                         </button>
+
+                        {/* GIRL BUTTON */}
                         <button
                           type="button"
-                          onClick={() => handleCharacterChange('Babae')}
-                          aria-label="Girl (Babae)"
+                          onClick={() => handleCharacterChange("Babae")}
+                          aria-label="Liway (Girl)"
                           className={cn(
-                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-xl transition-all duration-150 border-4",
-                            character === 'Babae'
+                            "flex flex-col items-center justify-center py-4 rounded-2xl font-black text-lg md:text-xl transition-all duration-150 border-4",
+                            character === "Babae"
                               ? "bg-[#FFC107] border-white text-[#5D4037] shadow-[0_6px_0_#D4A017] translate-y-0"
-                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none"
+                              : "bg-white/30 border-white/40 text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] hover:bg-white/40 active:translate-y-1 active:shadow-none",
                           )}
                         >
-                          <span className="text-4xl mb-1">👧</span>
-                          Girl (Babae) 
-                          {character === 'Babae' && <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />}
+                          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#FFF0F5] border-2 border-white shadow-sm overflow-hidden mb-2">
+                            <img
+                              src="/images/F_User.png"
+                              alt="Liway"
+                              className="w-full h-full object-cover object-top" // Added object-top
+                            />
+                          </div>
+                          Liway (Girl)
+                          {character === "Babae" && (
+                            <Check className="w-6 h-6 stroke-[4] mt-1 text-[#5D4037]" />
+                          )}
                         </button>
                       </div>
                     </div>
 
                     {/* IN-GAME AUDIO SETTINGS */}
                     <div className="space-y-4 pt-6 border-t-4 border-white/30 mt-auto">
-                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">In-Game Audio</span>
-                      
-                      {/* Background Music */}
+                      <span className="block text-sm text-[#E1F5FE] font-black uppercase tracking-wider ml-2">
+                        In-Game Audio
+                      </span>
+
+                      {/* Background Music Toggle */}
                       <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
                         <div className="flex items-center gap-3 text-white">
                           <div className="bg-white/20 p-2 rounded-xl">
-                            <Music className="w-6 h-6 text-white" strokeWidth={3} />
+                            <Music
+                              className="w-6 h-6 text-white"
+                              strokeWidth={3}
+                            />
                           </div>
-                          <span className="font-black text-lg drop-shadow-sm">Background Music</span>
+                          <span className="font-black text-lg drop-shadow-sm">
+                            Background Music
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={toggleMusic}
                           className={cn(
-                            "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",
-                            musicEnabled ? "bg-[#4CAF50]" : "bg-gray-400"
+                            "w-[72px] h-9 rounded-full border-4 border-white transition-colors duration-300 relative shadow-inner flex items-center shrink-0",
+                            musicEnabled ? "bg-[#4CAF50]" : "bg-gray-400",
                           )}
                         >
                           <div
                             className={cn(
-                              "w-8 h-8 rounded-full bg-white absolute top-0.5 transition-transform duration-300 shadow-md flex items-center justify-center",
-                              musicEnabled ? "translate-x-10" : "translate-x-0.5"
+                              "w-7 h-7 rounded-full bg-white absolute shadow-md flex items-center justify-center transition-transform duration-300",
+                              musicEnabled
+                                ? "translate-x-[34px]"
+                                : "translate-x-[2px]",
                             )}
                           >
-                            {musicEnabled && <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />}
+                            {musicEnabled && (
+                              <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />
+                            )}
                           </div>
                         </button>
                       </div>
 
-                      {/* Sound Effects */}
+                      {/* Sound Effects Toggle */}
                       <div className="flex items-center justify-between p-4 rounded-2xl border-4 border-white bg-white/30 shadow-inner">
                         <div className="flex items-center gap-3 text-white">
                           <div className="bg-white/20 p-2 rounded-xl">
-                            <Volume2 className="w-6 h-6 text-white" strokeWidth={3} />
+                            <Volume2
+                              className="w-6 h-6 text-white"
+                              strokeWidth={3}
+                            />
                           </div>
-                          <span className="font-black text-lg drop-shadow-sm">Sound Effects</span>
+                          <span className="font-black text-lg drop-shadow-sm">
+                            Sound Effects
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={toggleSfx}
                           className={cn(
-                            "w-20 h-10 rounded-full border-4 border-white transition-all duration-300 relative shadow-inner",
-                            sfxEnabled ? "bg-[#4CAF50]" : "bg-gray-400"
+                            "w-[72px] h-9 rounded-full border-4 border-white transition-colors duration-300 relative shadow-inner flex items-center shrink-0",
+                            sfxEnabled ? "bg-[#4CAF50]" : "bg-gray-400",
                           )}
                         >
                           <div
                             className={cn(
-                              "w-8 h-8 rounded-full bg-white absolute top-0.5 transition-transform duration-300 shadow-md flex items-center justify-center",
-                              sfxEnabled ? "translate-x-10" : "translate-x-0.5"
+                              "w-7 h-7 rounded-full bg-white absolute shadow-md flex items-center justify-center transition-transform duration-300",
+                              sfxEnabled
+                                ? "translate-x-[34px]"
+                                : "translate-x-[2px]",
                             )}
                           >
-                            {sfxEnabled && <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />}
+                            {sfxEnabled && (
+                              <Check className="w-5 h-5 text-[#4CAF50] stroke-[4]" />
+                            )}
                           </div>
                         </button>
                       </div>
-
                     </div>
                   </div>
                 </div>
@@ -302,16 +364,22 @@ export const SettingsPage: React.FC = () => {
               {/* ALERTS */}
               <section className="bg-[#AB47BC] border-[6px] border-white rounded-[2.5rem] p-6 md:p-8 shadow-[0_10px_0_#7B1FA2] relative overflow-hidden flex flex-col">
                 <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 rounded-t-[2.5rem] pointer-events-none" />
-                
+
                 <div className="relative z-10 flex flex-col h-full">
                   <h2 className="text-2xl md:text-3xl font-black text-white drop-shadow-[0_2px_0_#4A148C] flex items-center gap-3 mb-8">
-                    <Bell className="w-8 h-8 text-yellow-300 drop-shadow-md" strokeWidth={3} />
+                    <Bell
+                      className="w-8 h-8 text-yellow-300 drop-shadow-md"
+                      strokeWidth={3}
+                    />
                     ALERTS
                   </h2>
-                  
+
                   <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-white/10 rounded-[1.5rem] border-4 border-dashed border-white/40">
                     <div className="bg-white/20 p-4 rounded-full mb-4">
-                      <Bell className="w-12 h-12 text-white drop-shadow-md" strokeWidth={2.5} />
+                      <Bell
+                        className="w-12 h-12 text-white drop-shadow-md"
+                        strokeWidth={2.5}
+                      />
                     </div>
                     <p className="text-white font-black text-lg drop-shadow-[0_2px_0_#4A148C]">
                       Notification settings will be added in a future update!
@@ -319,11 +387,10 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
               </section>
-
             </div>
           </div>
         </div>
       </div>
     </AppShell>
-  )
-}
+  );
+};

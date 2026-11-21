@@ -1,81 +1,129 @@
-import React from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { BookOpen, Globe, Users, ChevronRight, Star, Leaf, Sparkle } from 'lucide-react';
+import React from "react";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  BookOpen,
+  Globe,
+  Users,
+  ChevronRight,
+  Star,
+  Leaf,
+  Sparkle,
+} from "lucide-react";
 
 export const LandingPage: React.FC = () => {
   const { user } = useAuth();
 
   // Redirect if already logged in
   if (user) {
-    const dest = user.role === 'PARENT' ? '/dashboard' : '/trail';
+    const dest = user.role === "PARENT" ? "/dashboard" : "/trail";
     return <Navigate to={dest} replace />;
   }
 
   // Reusable CSS filter to create the thick white sticker outline
-  const stickerEffect = "[filter:drop-shadow(2px_0_0_#fff)_drop-shadow(-2px_0_0_#fff)_drop-shadow(0_2px_0_#fff)_drop-shadow(0_-2px_0_#fff)_drop-shadow(0_6px_4px_rgba(0,0,0,0.15))]";
+  const stickerEffect =
+    "[filter:drop-shadow(2px_0_0_#fff)_drop-shadow(-2px_0_0_#fff)_drop-shadow(0_2px_0_#fff)_drop-shadow(0_-2px_0_#fff)_drop-shadow(0_6px_4px_rgba(0,0,0,0.15))]";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#87CEEB] to-[#98FB98] font-sans overflow-y-auto relative">
-      
       {/* --- DECORATIVE BACKGROUND ELEMENTS (STARS & LEAVES) --- */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        
         {/* TOP LEFT */}
-        <Leaf className="absolute top-[12%] left-[3%] w-12 h-12 md:w-16 md:h-16 text-green-500 stroke-white stroke-[2.5px] -rotate-45 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]" style={{ animationDuration: '4s' }} />
-        <Star className={`absolute top-[25%] left-[8%] w-12 h-12 md:w-16 md:h-16 text-orange-500 fill-yellow-400 ${stickerEffect} -rotate-12 animate-pulse`} />
-        <Sparkle className="absolute top-[42%] left-[5%] w-8 h-8 text-white fill-white animate-ping" style={{ animationDuration: '3s' }} />
-        
+        <Leaf
+          className="absolute top-[12%] left-[3%] w-12 h-12 md:w-16 md:h-16 text-green-500 stroke-white stroke-[2.5px] -rotate-45 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]"
+          style={{ animationDuration: "4s" }}
+        />
+        <Star
+          className={`absolute top-[25%] left-[8%] w-12 h-12 md:w-16 md:h-16 text-orange-500 fill-yellow-400 ${stickerEffect} -rotate-12 animate-pulse`}
+        />
+        <Sparkle
+          className="absolute top-[42%] left-[5%] w-8 h-8 text-white fill-white animate-ping"
+          style={{ animationDuration: "3s" }}
+        />
+
         {/* BOTTOM LEFT */}
-        <Star className={`absolute top-[65%] left-[6%] w-10 h-10 md:w-14 md:h-14 text-pink-600 fill-pink-400 ${stickerEffect} rotate-12 animate-bounce`} style={{ animationDuration: '3.5s' }} />
-        <Leaf className="absolute bottom-[15%] left-[4%] w-14 h-14 md:w-20 md:h-20 text-emerald-600 stroke-white stroke-[2.5px] rotate-90 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]" style={{ animationDuration: '5s' }} />
-        <Star className={`absolute bottom-[8%] left-[12%] w-8 h-8 md:w-10 md:h-10 text-orange-500 fill-yellow-400 ${stickerEffect} -rotate-45 animate-pulse`} style={{ animationDuration: '4s' }} />
+        <Star
+          className={`absolute top-[65%] left-[6%] w-10 h-10 md:w-14 md:h-14 text-pink-600 fill-pink-400 ${stickerEffect} rotate-12 animate-bounce`}
+          style={{ animationDuration: "3.5s" }}
+        />
+        <Leaf
+          className="absolute bottom-[15%] left-[4%] w-14 h-14 md:w-20 md:h-20 text-emerald-600 stroke-white stroke-[2.5px] rotate-90 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]"
+          style={{ animationDuration: "5s" }}
+        />
+        <Star
+          className={`absolute bottom-[8%] left-[12%] w-8 h-8 md:w-10 md:h-10 text-orange-500 fill-yellow-400 ${stickerEffect} -rotate-45 animate-pulse`}
+          style={{ animationDuration: "4s" }}
+        />
 
         {/* TOP RIGHT */}
-        <Star className={`absolute top-[15%] right-[5%] w-14 h-14 md:w-20 md:h-20 text-orange-500 fill-yellow-400 ${stickerEffect} rotate-12 animate-bounce`} style={{ animationDuration: '3s' }} />
-        <Leaf className="absolute top-[35%] right-[4%] w-14 h-14 md:w-20 md:h-20 text-green-600 stroke-white stroke-[2.5px] -rotate-12 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]" style={{ animationDuration: '6s' }} />
-        <Sparkle className="absolute top-[52%] right-[10%] w-10 h-10 text-yellow-200 fill-yellow-200 animate-pulse" style={{ animationDuration: '2s' }} />
-        
-        {/* BOTTOM RIGHT */}
-        <Star className={`absolute top-[68%] right-[6%] w-12 h-12 md:w-16 md:h-16 text-pink-600 fill-pink-400 ${stickerEffect} -rotate-12 animate-bounce`} style={{ animationDuration: '4.5s' }} />
-        <Sparkle className="absolute bottom-[25%] right-[15%] w-8 h-8 text-white fill-white animate-ping" style={{ animationDuration: '4s' }} />
-        <Star className={`absolute bottom-[10%] right-[8%] w-8 h-8 text-orange-500 fill-yellow-400 ${stickerEffect} rotate-45 animate-pulse`} />
+        <Star
+          className={`absolute top-[15%] right-[5%] w-14 h-14 md:w-20 md:h-20 text-orange-500 fill-yellow-400 ${stickerEffect} rotate-12 animate-bounce`}
+          style={{ animationDuration: "3s" }}
+        />
+        <Leaf
+          className="absolute top-[35%] right-[4%] w-14 h-14 md:w-20 md:h-20 text-green-600 stroke-white stroke-[2.5px] -rotate-12 animate-bounce [filter:drop-shadow(0_4px_4px_rgba(0,0,0,0.2))]"
+          style={{ animationDuration: "6s" }}
+        />
+        <Sparkle
+          className="absolute top-[52%] right-[10%] w-10 h-10 text-yellow-200 fill-yellow-200 animate-pulse"
+          style={{ animationDuration: "2s" }}
+        />
 
+        {/* BOTTOM RIGHT */}
+        <Star
+          className={`absolute top-[68%] right-[6%] w-12 h-12 md:w-16 md:h-16 text-pink-600 fill-pink-400 ${stickerEffect} -rotate-12 animate-bounce`}
+          style={{ animationDuration: "4.5s" }}
+        />
+        <Sparkle
+          className="absolute bottom-[25%] right-[15%] w-8 h-8 text-white fill-white animate-ping"
+          style={{ animationDuration: "4s" }}
+        />
+        <Star
+          className={`absolute bottom-[10%] right-[8%] w-8 h-8 text-orange-500 fill-yellow-400 ${stickerEffect} rotate-45 animate-pulse`}
+        />
       </div>
       {/* ------------------------------------------------------ */}
 
       {/* Navigation Bar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/40 backdrop-blur-md border-b-4 border-white/60">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="max-w-[1400px] mx-auto pl-2 sm:pl-4 md:pl-6 pr-4">
           <div className="flex justify-between items-center h-20 md:h-24">
-            
             {/* Logo Section */}
-            <div className="flex shrink-0 items-center space-x-1.5 sm:space-x-3">
+            <div className="flex shrink-0 items-center -ml-2 sm:-ml-4 md:-ml-6">
               <img
                 src="/images/S-Logo.png"
                 alt="S Logo"
-                className="h-8 sm:h-12 md:h-14 w-auto object-contain drop-shadow-md"
+                className="h-8 sm:h-10 md:h-12 w-auto object-contain drop-shadow-md z-10 relative"
               />
               <img
                 src="/images/W-Logo.png"
                 alt="PAMANA Logo"
-                className="h-9 sm:h-14 md:h-20 w-auto object-contain drop-shadow-md"
+                className="h-10 sm:h-14 md:h-20 w-auto object-contain drop-shadow-md ml-1 sm:ml-2 md:ml-3"
               />
             </div>
 
             {/* Desktop Links */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link to="/about" className="text-[#2b5c3b] font-black text-lg hover:text-[#1a2e05] transition-colors">
+              <Link
+                to="/about"
+                className="text-[#2b5c3b] font-black text-lg hover:text-[#1a2e05] transition-colors"
+              >
                 About Us
               </Link>
-              <Link to="/contact" className="text-[#2b5c3b] font-black text-lg hover:text-[#1a2e05] transition-colors">
+              <Link
+                to="/contact"
+                className="text-[#2b5c3b] font-black text-lg hover:text-[#1a2e05] transition-colors"
+              >
                 Contact
               </Link>
             </div>
 
             {/* Auth Buttons */}
             <div className="flex shrink-0 items-center space-x-1.5 sm:space-x-3 md:space-x-4">
-              <Link to="/login" className="text-[#2b5c3b] font-black hover:text-[#1a2e05] transition-colors whitespace-nowrap px-1.5 py-2 text-sm sm:px-3 sm:text-base md:px-4 md:text-lg">
+              <Link
+                to="/login"
+                className="text-[#2b5c3b] font-black hover:text-[#1a2e05] transition-colors whitespace-nowrap px-1.5 py-2 text-sm sm:px-3 sm:text-base md:px-4 md:text-lg"
+              >
                 Log in
               </Link>
               <Link to="/register">
@@ -90,11 +138,12 @@ export const LandingPage: React.FC = () => {
 
       {/* Hero Section */}
       <section className="relative z-10 pt-36 pb-16 md:pt-52 md:pb-24 overflow-hidden flex flex-col items-center justify-center text-center px-4">
-        
         {/* "Discover Your Roots" Pill */}
         <div className="inline-flex items-center gap-2 bg-[#FFC107] text-[#5D4037] rounded-full px-5 py-2 mb-8 border-4 border-white shadow-[0_4px_0_#D4A017] rotate-[-2deg]">
           <Star className="w-5 h-5 fill-[#5D4037]" />
-          <span className="text-sm md:text-base font-black uppercase tracking-wider">Discover Your Roots</span>
+          <span className="text-sm md:text-base font-black uppercase tracking-wider">
+            Discover Your Roots
+          </span>
         </div>
 
         {/* Main Title */}
@@ -105,8 +154,9 @@ export const LandingPage: React.FC = () => {
 
         {/* Subtitle */}
         <p className="text-lg md:text-xl text-[#1a2e05] font-bold max-w-2xl mx-auto mb-10 bg-white/70 px-6 py-3 rounded-3xl border-4 border-white shadow-sm leading-relaxed">
-          A world of interactive, Filipino Language learning awaits! Embark on an
-          immersive journey through the rich tapestry of Philippine traditions.
+          A world of interactive, Filipino Language learning awaits! Embark on
+          an immersive journey through the rich tapestry of Philippine
+          traditions.
         </p>
 
         {/* Hero Buttons */}
@@ -128,7 +178,6 @@ export const LandingPage: React.FC = () => {
       {/* Features Section (Three Pillars) */}
       <section className="relative z-10 py-20 bg-white/40 backdrop-blur-sm border-t-4 border-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-wider [-webkit-text-stroke:1.5px_#1a2e05] [paint-order:stroke_fill] drop-shadow-[0_4px_0_#1a2e05]">
               Discover the Three Pillars
@@ -140,39 +189,42 @@ export const LandingPage: React.FC = () => {
 
           <div className="grid md:grid-cols-3 gap-8">
             
-            {/* Interactive Lessons */}
+            {/* Pillar 1: The Trail */}
             <div className="bg-white/95 backdrop-blur-sm rounded-[2rem] p-8 shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-white hover:-translate-y-2 transition-transform duration-200">
               <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mb-6 text-green-600">
                 <BookOpen className="w-8 h-8 stroke-[3]" />
               </div>
-              <h3 className="text-2xl font-black text-slate-800 mb-3">Interactive Lessons</h3>
+              <h3 className="text-2xl font-black text-slate-800 mb-3">
+                Pamana Trail
+              </h3>
               <p className="text-slate-600 font-medium leading-relaxed">
-                Engaging modules covering grammar, vocabulary, and cultural context
-                with real-time feedback.
+                Embark on a guided journey through different modules. Learn syllables, vocabulary, and sentence structures step-by-step to unlock new areas.
               </p>
             </div>
 
-            {/* Culture Hub */}
+            {/* Pillar 2: Mastery */}
             <div className="bg-white/95 backdrop-blur-sm rounded-[2rem] p-8 shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-white hover:-translate-y-2 transition-transform duration-200">
               <div className="w-16 h-16 bg-sky-100 rounded-2xl flex items-center justify-center mb-6 text-sky-600">
                 <Globe className="w-8 h-8 stroke-[3]" />
               </div>
-              <h3 className="text-2xl font-black text-slate-800 mb-3">Culture Hub</h3>
+              <h3 className="text-2xl font-black text-slate-800 mb-3">
+                Mastery Challenges
+              </h3>
               <p className="text-slate-600 font-medium leading-relaxed">
-                Explore folktales, traditions, history, and regional diversity through
-                multimedia content.
+                Test your skills! Complete matching games, image recognition, and sentence creation challenges to prove you've mastered the words.
               </p>
             </div>
 
-            {/* Community */}
+            {/* Pillar 3: The Story */}
             <div className="bg-white/95 backdrop-blur-sm rounded-[2rem] p-8 shadow-[0_8px_0_rgba(0,0,0,0.1)] border-4 border-white hover:-translate-y-2 transition-transform duration-200">
               <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mb-6 text-purple-600">
                 <Users className="w-8 h-8 stroke-[3]" />
               </div>
-              <h3 className="text-2xl font-black text-slate-800 mb-3">Community</h3>
+              <h3 className="text-2xl font-black text-slate-800 mb-3">
+                Pamana Story
+              </h3>
               <p className="text-slate-600 font-medium leading-relaxed">
-                Connect with fellow learners, share experiences, and practice together
-                in a supportive space.
+                Join Lino and Liway as they uncover the beauty of Filipino heritage. Watch their journey unfold as you progress through the game.
               </p>
             </div>
 
@@ -184,7 +236,6 @@ export const LandingPage: React.FC = () => {
       <section className="relative z-10 py-24 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <div className="bg-[#FFC107] rounded-[2.5rem] p-10 md:p-14 border-8 border-white shadow-[0_12px_0_#D4A017] relative overflow-hidden">
-            
             {/* Glossy top effect */}
             <div className="absolute top-0 inset-x-0 h-1/2 bg-white/20 pointer-events-none" />
 
@@ -209,7 +260,6 @@ export const LandingPage: React.FC = () => {
           <p>© 2024 PAMANA Heritage Quest. Appreciating Filipino Language.</p>
         </div>
       </footer>
-      
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
 import { AdventurerOnboardingModal } from '@/components/auth/AdventurerOnboardingModal'
 
 export const RegisterPage: React.FC = () => {
-  const { register, user } = useAuth()
+  const { register } = useAuth() // Removed 'user' as we no longer need the auto-redirect
   const navigate = useNavigate()
 
   const [username, setUsername] = useState('')
@@ -17,12 +17,7 @@ export const RegisterPage: React.FC = () => {
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  React.useEffect(() => {
-    if (user) {
-      const dest = user.role === 'PARENT' ? '/dashboard' : '/home'
-      navigate(dest, { replace: true })
-    }
-  }, [user, navigate])
+  // ❌ Removed the React.useEffect that auto-redirected to /home
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -66,15 +61,20 @@ export const RegisterPage: React.FC = () => {
   const handleCompleteRegistration = async (data: { name: string; gender: 'Lalaki' | 'Babae' }) => {
     setIsLoading(true)
     setErrors({})
+    
     try {
       await register(username.trim(), password, role, data.name.trim(), data.gender)
       setIsOnboardingOpen(false)
+      
+      // ✅ Send them to login, passing the new user flag!
       navigate('/login', {
         state: {
           registeredUsername: username.trim(),
           registeredPassword: password,
+          isNewRegistration: true, 
         },
       })
+      
     } catch (err: unknown) {
       setIsOnboardingOpen(false)
       const axiosErr = err as { response?: { status?: number; data?: { message?: string } } }

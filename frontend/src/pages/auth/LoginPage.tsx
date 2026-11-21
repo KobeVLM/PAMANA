@@ -12,6 +12,7 @@ export const LoginPage: React.FC = () => {
     registeredUsername?: string
     registeredEmail?: string
     registeredPassword?: string
+    isNewRegistration?: boolean // ✅ Added this
   } | null
 
   const [username, setUsername] = useState(
@@ -40,7 +41,15 @@ export const LoginPage: React.FC = () => {
     setError('')
     try {
       await login(username.trim(), password)
-      // AuthContext will update user, useEffect above will redirect
+      
+      // ✅ If they just registered, send them to home WITH the video trigger
+      if (state?.isNewRegistration) {
+        navigate('/home?new=true', { replace: true })
+      } else {
+        // Normal login
+        navigate('/home', { replace: true })
+      }
+      
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { message?: string } } }
       setError(axiosErr?.response?.data?.message ?? 'Invalid username or password. Please try again.')
