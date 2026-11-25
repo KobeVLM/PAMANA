@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import { AccuracyChip, ProgressPill } from '@/components/practice/PracticeHud'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
@@ -11,9 +12,11 @@ import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useAnswerProgress } from '@/hooks/useAnswerProgress'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi, type Bi } from '@/lib/i18n'
 import api from '@/lib/api'
+import { createRunId } from '@/lib/runId'
 import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import bgmAudioFile from '@/components/music/ig-bgmusic.mp3'
@@ -43,6 +46,8 @@ interface SyllableStatus {
 }
 
 const SUB_LEVELS: SubLevel[] = ['pagsama', 'pakinggan', 'kilalanin', 'rhyming']
+// The backend serves five sets per sub-level.
+const SETS_PER_SUB_LEVEL = 5
 
 const SUB_LEVEL_LABELS: Record<SubLevel, Bi> = {
   pagsama: bi('1. Pagsama ng Tunog', '1. Blending Sounds'),
@@ -94,6 +99,10 @@ export const SyllableModulePage: React.FC = () => {
   const [moduleComplete, setModuleComplete] = useState(false)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
   const [celebrate, setCelebrate] = useState(0)
+
+  const [runId] = useState(createRunId)
+  const answerProgress = useAnswerProgress(SUB_LEVELS.length * SETS_PER_SUB_LEVEL)
+  const { recordAnswer, reset: resetAnswerProgress } = answerProgress
 
   // --- BGM Volume Ducking Logic ---
   const bgmRef = useRef<HTMLAudioElement | null>(null)
@@ -290,8 +299,12 @@ export const SyllableModulePage: React.FC = () => {
           selectedAnswer: optionId,
           correct: isCorrect,
           accuracy,
+          runId,
         })
         progress = res.data
+        // One scored item = one set. Retries of the same set only add wrong
+        // attempts; they cannot push the bar backwards or past 100%.
+        recordAnswer(`${currentSet.subLevel}:${currentSet.setId}`, isCorrect)
       } catch {
         toast.error('Hindi naitala ang sagot', {
           description: 'Pakitingnan ang koneksyon at subukan muli.',
@@ -346,6 +359,8 @@ export const SyllableModulePage: React.FC = () => {
       replayVoice,
       playWrong,
       duckBGM,
+      runId,
+      recordAnswer,
     ]
   )
 
@@ -358,6 +373,7 @@ export const SyllableModulePage: React.FC = () => {
       setCorrectId(null)
       setFeedback(null)
       setAttempts(0)
+      resetAnswerProgress()
       await init()
       if (bgmRef.current) {
         bgmRef.current.play()?.catch(() => {})
@@ -367,7 +383,7 @@ export const SyllableModulePage: React.FC = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [user?.id, init])
+  }, [user?.id, init, resetAnswerProgress])
 
   if (isLoading) {
     return (
@@ -462,19 +478,18 @@ export const SyllableModulePage: React.FC = () => {
           />
         </div>
 
-        {/* Right: Progress Bar */}
-        <div className="flex items-center z-30">
-          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-64 md:w-[22rem] lg:w-[26rem]">
-            <div className="flex-1 h-6 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
-              <div
-                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{ width: `${Math.round(status.moduleAccuracy)}%` }}
-              />
-            </div>
-            <span className="ml-3 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3.5ch] text-right tracking-wide">
-              {Math.round(status.moduleAccuracy)}%
-            </span>
-          </div>
+        {/* Right: answer-based progress + accuracy as a separate number */}
+        <div className="flex items-center gap-3 z-30">
+          <ProgressPill
+            size="wide"
+            value={moduleComplete ? 100 : answerProgress.progress}
+            label={
+              moduleComplete
+                ? '100%'
+                : `${answerProgress.correctItems}/${SUB_LEVELS.length * SETS_PER_SUB_LEVEL}`
+            }
+          />
+          <AccuracyChip accuracy={status?.moduleAccuracy ?? null} />
         </div>
       </div>
 

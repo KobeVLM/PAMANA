@@ -4,15 +4,19 @@ import { toast } from 'sonner'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { WordTiles, type WordTile } from '@/components/practice/WordTiles'
+import { AccuracyChip, ProgressPill } from '@/components/practice/PracticeHud'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { useSfx } from '@/hooks/useGameAudio'
+import { useAnswerProgress } from '@/hooks/useAnswerProgress'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS } from '@/lib/i18n'
 import api from '@/lib/api'
+import { createRunId } from '@/lib/runId'
+import type { ModuleProgress } from '@/types'
 import { ArrowLeft, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -48,6 +52,11 @@ export const SentenceModulePage: React.FC = () => {
   const [showReunionEnding, setShowReunionEnding] = useState(false)
   const [showTierAnnouncement, setShowTierAnnouncement] = useState(false)
   const [celebrate, setCelebrate] = useState(0)
+  const [moduleAccuracy, setModuleAccuracy] = useState<number | null>(null)
+
+  const [runId] = useState(createRunId)
+  const answerProgress = useAnswerProgress(TOTAL_TASKS_PER_TIER)
+  const { recordAnswer, reset: resetAnswerProgress } = answerProgress
 
   useScrollToTop(`${tier}-${taskIndex}`)
 
@@ -90,12 +99,31 @@ export const SentenceModulePage: React.FC = () => {
     if (user?.id) void fetchTask(1)
   }, [user?.id, fetchTask])
 
+  // Dashboard accuracy comes from the server; the HUD shows it next to the
+  // answer-based progress bar rather than trying to guess it from the bar.
+  const refreshAccuracy = useCallback(async () => {
+    if (!user?.id) return
+    try {
+      const res = await api.get(`/modules/progress/${user.id}`)
+      const mod = (res.data as ModuleProgress[]).find((p) => p.moduleNumber === 4)
+      setModuleAccuracy(mod?.accuracy ?? null)
+    } catch {
+      // Accuracy is decorative; a failed fetch must not interrupt the lesson.
+    }
+  }, [user?.id])
+
+  useEffect(() => {
+    void refreshAccuracy()
+  }, [refreshAccuracy])
+
   const handleStartTier2 = useCallback(() => {
     setShowTierAnnouncement(false)
     setTier(2)
     setTaskIndex(0)
+    // The denominator is five tasks per tier, so tier 2 starts a fresh run.
+    resetAnswerProgress()
     void fetchTask(2)
-  }, [fetchTask])
+  }, [fetchTask, resetAnswerProgress])
 
   const handleSubmit = useCallback(async () => {
     if (!task || isSubmitting || feedback === 'correct') return
@@ -128,7 +156,12 @@ export const SentenceModulePage: React.FC = () => {
         taskId: task.taskId,
         submittedOrder: orderedWords,
         accuracy,
+        runId,
       })
+      // Retrying the same task cannot count twice; a wrong attempt does not
+      // lower the bar.
+      recordAnswer(task.taskId, isCorrect)
+      void refreshAccuracy()
 
       if (res.data.moduleComplete) {
         setTimeout(() => setShowReunionEnding(true), 1500)
@@ -162,6 +195,9 @@ export const SentenceModulePage: React.FC = () => {
     fetchTask,
     playAudio,
     playWrong,
+    runId,
+    recordAnswer,
+    refreshAccuracy,
   ])
 
   // ── Tier 2 announcement screen ──────────────────────────────────────────
@@ -250,18 +286,13 @@ export const SentenceModulePage: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center z-30">
-          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-64 md:w-[22rem] lg:w-[26rem]">
-            <div className="flex-1 h-6 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
-              <div
-                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{ width: `${(Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER) / TOTAL_TASKS_PER_TIER) * 100}%` }}
-              />
-            </div>
-            <span className="ml-3 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3.5ch] text-right tracking-wide">
-              {Math.round((Math.min(taskIndex + 1, TOTAL_TASKS_PER_TIER) / TOTAL_TASKS_PER_TIER) * 100)}%
-            </span>
-          </div>
+        <div className="flex items-center gap-3 z-30">
+          <ProgressPill
+            size="wide"
+            value={answerProgress.progress}
+            label={`${answerProgress.correctItems}/${TOTAL_TASKS_PER_TIER}`}
+          />
+          <AccuracyChip accuracy={moduleAccuracy} />
         </div>
       </div>
 

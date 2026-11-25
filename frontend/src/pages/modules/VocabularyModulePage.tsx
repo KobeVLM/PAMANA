@@ -4,6 +4,11 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { PracticeCompletion } from "@/components/practice/PracticeCompletion";
+import {
+  AccuracyChip,
+  PracticeStepRail,
+  ProgressPill,
+} from "@/components/practice/PracticeHud";
 import { NPCDialogue } from "@/components/game/NPCDialogue";
 import { AudioPlayer } from "@/components/game/AudioPlayer";
 import { HINT_AFTER_ATTEMPTS } from "@/components/game/constants";
@@ -11,9 +16,11 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
+import { useAnswerProgress } from "@/hooks/useAnswerProgress";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi, type Bi } from "@/lib/i18n";
 import api from "@/lib/api";
+import { createRunId } from "@/lib/runId";
 import type { ModuleProgress } from "@/types";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -97,7 +104,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [correctId, setCorrectId] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [, setModuleAccuracy] = useState<number | null>(null);
+  const [moduleAccuracy, setModuleAccuracy] = useState<number | null>(null);
   const [nextWordError, setNextWordError] = useState<unknown>(null);
   const [optionsLoading, setOptionsLoading] = useState(false);
   const [optionsError, setOptionsError] = useState<unknown>(null);
@@ -107,7 +114,12 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [moduleComplete, setModuleComplete] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const totalWords = moduleNumber === 2 ? 10 : 9;
-  const [wordsCompleted, setWordsCompleted] = useState(0);
+  // pakinggan is listen-only; the other three spiral steps are scored.
+  const scoredItemsPerWord = 3;
+  const [runId] = useState(createRunId);
+  const answerProgress = useAnswerProgress(totalWords * scoredItemsPerWord);
+  const { recordAnswer, reset: resetAnswerProgress } = answerProgress;
+  const [, setWordsCompleted] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
   const [gamitinSentence, setGamitinSentence] = useState<string>(
     "Ang aking _____ ay malaki at maliwanag.",
@@ -372,7 +384,11 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           wordId: currentWord.wordId,
           step: currentStep,
           correct: isCorrect,
+          runId,
         });
+        // Only count answers the backend accepted, and group them by word +
+        // step so a retry of the same question cannot advance the bar twice.
+        recordAnswer(`${currentWord.wordId}:${currentStep}`, isCorrect);
       } catch {
         toast.error("Hindi naitala ang sagot", {
           description: "Pakitingnan ang koneksyon at subukan muli.",
@@ -421,6 +437,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       playWrong,
       refreshAccuracy,
       duckBGM,
+      runId,
+      recordAnswer,
     ],
   );
 
@@ -430,6 +448,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       await api.delete(`/modules/reset/${user?.id}/${moduleNumber}`);
       setModuleComplete(false);
       setWordsCompleted(0);
+      resetAnswerProgress();
       isFirstLoad.current = true;
       await fetchNextWord();
       if (bgmRef.current) {
@@ -440,7 +459,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     } finally {
       setIsResetting(false);
     }
-  }, [user?.id, moduleNumber, fetchNextWord]);
+  }, [user?.id, moduleNumber, fetchNextWord, resetAnswerProgress]);
 
   const formatWordAsSyllables = (word: string) => {
     const upperWord = word.toUpperCase();
@@ -609,49 +628,36 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           />
         </div>
 
-        <div className="flex items-center z-30">
-          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-64 md:w-[22rem] lg:w-[26rem]">
-            <div className="flex-1 h-6 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
-              <div
-                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{
-                  width: `${moduleComplete ? 100 : Math.round((wordsCompleted / totalWords) * 100)}%`,
-                }}
-              />
-            </div>
-            <span className="ml-3 text-white font-black text-xl md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3.5ch] text-right tracking-wide">
-              {moduleComplete
-                ? 100
-                : Math.round((wordsCompleted / totalWords) * 100)}
-              %
-            </span>
-          </div>
+        <div className="flex items-center gap-3 z-30">
+          <ProgressPill
+            size="wide"
+            value={
+              moduleComplete ? 100 : answerProgress.progress
+            }
+            label={
+              moduleComplete
+                ? "100%"
+                : `${answerProgress.correctItems}/${totalWords * scoredItemsPerWord}`
+            }
+          />
+          {/* Accuracy is a separate number: the bar only moves forward. */}
+          <AccuracyChip accuracy={moduleAccuracy} />
         </div>
       </div>
 
-      <div className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-8 md:mt-12 px-4">
-        {SPIRAL_STEPS.map((step, idx) => {
-          const isCurrent = currentStep === step;
-          const isDone = idx < stepIdx;
-          const label = STEP_LABELS[step].split(". ")[1];
-
-          return (
-            <div
-              key={step}
-              className={cn(
-                "px-5 py-2 md:px-7 md:py-2.5 rounded-full font-bold text-sm md:text-base border-b-4 shadow-md whitespace-nowrap transition-all",
-                isCurrent
-                  ? "bg-amber-400 border-amber-500 text-amber-950 scale-105"
-                  : isDone
-                    ? "bg-green-500 border-green-600 text-white"
-                    : "bg-gray-200 border-gray-300 text-gray-600",
-              )}
-            >
-              {label}
-            </div>
-          );
-        })}
-      </div>
+      <PracticeStepRail
+        size="wide"
+        className="mt-8 md:mt-12"
+        steps={SPIRAL_STEPS.map((step, idx) => ({
+          label: STEP_LABELS[step].split(". ")[1],
+          state:
+            currentStep === step
+              ? "current"
+              : idx < stepIdx
+                ? "done"
+                : "pending",
+        }))}
+      />
 
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-8 z-10 gap-4 md:gap-6">
         <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-4 md:mb-6">
