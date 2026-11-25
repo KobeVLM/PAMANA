@@ -17,4 +17,10 @@ public interface AnswerEventRepository extends JpaRepository<AnswerEvent, UUID> 
     List<AnswerEvent> findByRunIdAndUserIdOrderByAnsweredAtAsc(UUID runId, UUID userId);
 
     long countByRunIdAndItemKeyAndUserId(UUID runId, String itemKey, UUID userId);
+
+    /**
+     * Most recent answers for one learner and activity. Backs the adaptive
+     * tier resolver and uses the existing (user_id, answered_at DESC) index.
+     */
+    List<AnswerEvent> findTop10ByUserIdAndItemTypeOrderByAnsweredAtDesc(UUID userId, String itemType);
 }
