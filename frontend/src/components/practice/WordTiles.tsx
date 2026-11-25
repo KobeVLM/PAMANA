@@ -28,6 +28,11 @@ export interface WordTilesProps {
   items: WordTile[]
   onReorder: (items: WordTile[]) => void
   disabled?: boolean
+  /**
+   * Indices that scaffolding has pinned in place. Locked tiles cannot be
+   * dragged or swapped, but stay fully visible so the learner can read them.
+   */
+  lockedIndices?: readonly number[]
   /** Highlights the tile awaiting a click-swap partner. */
   selectedIndex?: number | null
   /** Enables click/tap-to-swap on focusable tiles. */
@@ -41,6 +46,7 @@ interface SortableTileProps {
   index: number
   isSelected: boolean
   disabled: boolean
+  locked: boolean
   onSelectIndex?: (index: number) => void
 }
 
@@ -49,6 +55,7 @@ function SortableTile({
   index,
   isSelected,
   disabled,
+  locked,
   onSelectIndex,
 }: SortableTileProps) {
   const {
@@ -58,7 +65,7 @@ function SortableTile({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id, disabled })
+  } = useSortable({ id: item.id, disabled: disabled || locked })
 
   return (
     <button
@@ -68,14 +75,16 @@ function SortableTile({
       {...attributes}
       {...listeners}
       onClick={() => {
-        if (!disabled && onSelectIndex) onSelectIndex(index)
+        if (!disabled && !locked && onSelectIndex) onSelectIndex(index)
       }}
-      disabled={disabled}
+      disabled={disabled || locked}
+      aria-label={locked ? `${item.word} (naka-lock)` : undefined}
       className={cn(
         "game-tile flex min-h-[56px] items-center gap-2.5 rounded-2xl border-2 px-5 py-3.5 font-heading text-base font-bold shadow-[0_4px_0_rgba(0,0,0,0.12)] transition-all duration-200 select-none sm:text-lg",
-        disabled
+        disabled || locked
           ? "cursor-default opacity-85"
           : "cursor-grab hover:scale-105 hover:border-[#FFC107] active:cursor-grabbing active:scale-95",
+        locked && "border-[#4CAF50] bg-[#e7f6e7] text-[#1B5E20]",
         isDragging && "z-10 scale-105 border-[#FFC107] opacity-80",
         isSelected
           ? "animate-pulse border-[#FFC107] bg-[#fff7db] text-[#7a5200] shadow-lg shadow-amber-500/20 ring-2 ring-[#FFC107]"
@@ -102,6 +111,7 @@ export function WordTiles({
   items,
   onReorder,
   disabled = false,
+  lockedIndices = [],
   selectedIndex = null,
   onSelectIndex,
   ariaLabel = "Mga salita",
@@ -149,6 +159,7 @@ export function WordTiles({
               index={idx}
               isSelected={selectedIndex === idx}
               disabled={disabled}
+              locked={lockedIndices.includes(idx)}
               onSelectIndex={onSelectIndex}
             />
           ))}

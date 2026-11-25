@@ -10,16 +10,20 @@ import {
   PracticeStepRail,
   ProgressPill,
 } from "@/components/practice/PracticeHud";
+import { FocusViewToggle } from "@/components/learning/FocusViewToggle";
+import { GestureDemo } from "@/components/learning/GestureDemo";
+import { ScaffoldMessage } from "@/components/learning/ScaffoldMessage";
 import { NPCDialogue } from "@/components/game/NPCDialogue";
 import { AudioPlayer } from "@/components/game/AudioPlayer";
-import { HINT_AFTER_ATTEMPTS } from "@/components/game/constants";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
 import { usePracticeAnswerProgress } from "@/hooks/usePracticeAnswerProgress";
+import { useFocusView } from "@/hooks/useFocusView";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi } from "@/lib/i18n";
+import { fadedDistractorId, scaffoldStage } from "@/lib/scaffolding";
 import api from "@/lib/api";
 import type { ModuleProgress } from "@/types";
 import { ArrowLeft } from "lucide-react";
@@ -58,6 +62,10 @@ const NPC_LINE = bi(
   'Identify! Which picture shows the word you heard?'
 );
 const NPC_AUDIO = '/static/assets/audio/npc/lolo_mod3_kilalanin.mp3';
+const GESTURE_LABEL = bi(
+  'Pindutin ang larawan ng narinig na salita',
+  'Tap the picture of the word you heard'
+);
 const ROUND_TOTAL = 5;
 const STEP_LABELS: Record<string, string> = {
   pakinggan: "1. Pakinggan",
@@ -110,6 +118,10 @@ export const ImagePracticePage: React.FC = () => {
     moduleNumber: 2,
   });
   const { recordAnswer, reset: resetAnswerProgress } = answerProgress;
+
+  const { focusView, toggleFocusView } = useFocusView();
+  const [showGesture, setShowGesture] = useState(true);
+  const finishGesture = useCallback(() => setShowGesture(false), []);
 
   useScrollToTop(String(roundIndex));
 
@@ -215,6 +227,7 @@ export const ImagePracticePage: React.FC = () => {
       if (picked.length > 0) {
         setCurrentWord(picked[0]);
         setRoundIndex(0);
+        setShowGesture(true);
       }
     } catch (err) {
       setLoadError(err);
@@ -283,28 +296,35 @@ export const ImagePracticePage: React.FC = () => {
       const nextIdx = roundIndex + 1;
       setRoundIndex(nextIdx);
       setCurrentWord(roundWords[nextIdx]);
+      setShowGesture(true);
     } else {
       setIsComplete(true);
     }
   }, [roundIndex, roundWords]);
 
-  const handleSelect = useCallback(
-    async (optionId: string) => {
-      if (!currentWord || !correctId || selectedId || isSubmitting) return;
-      
+  const submitAnswer = useCallback(
+    async (optionId: string, guided = false) => {
+      if (!currentWord || !correctId || (selectedId && !guided) || isSubmitting) return;
+
       duckBGM(2000);
-      const isCorrect = optionId === correctId;
+      // Guided confirmation after stage 3 counts as a solved item; the wrong
+      // attempts that led there are already in the answer log.
+      const isCorrect = guided || optionId === correctId;
+      const newAttempts = isCorrect ? attempts : attempts + 1;
+      const attemptStage = scaffoldStage(newAttempts);
       recordAnswer(currentWord.wordId, isCorrect, "kilalanin");
-      
+
       setSelectedId(optionId);
       setFeedback(isCorrect ? "correct" : "incorrect");
-      
+
       if (isCorrect) {
         setCelebrate((c) => c + 1);
         playTarget();
       } else {
-        setAttempts((a) => a + 1);
+        setAttempts(newAttempts);
         playWrong();
+        // Stage 1 replays the target word alongside the encouragement.
+        if (attemptStage === 1) playTarget();
       }
 
       setIsSubmitting(true);
@@ -320,14 +340,24 @@ export const ImagePracticePage: React.FC = () => {
         }
       }, 500);
     },
-    [currentWord, correctId, selectedId, isSubmitting, advance, playTarget, playWrong, duckBGM, recordAnswer]
+    [currentWord, correctId, selectedId, isSubmitting, attempts, advance, playTarget, playWrong, duckBGM, recordAnswer]
   );
+
+  const handleSelect = useCallback(
+    (optionId: string) => submitAnswer(optionId),
+    [submitAnswer]
+  );
+
+  const handleGuidedConfirm = useCallback(() => {
+    if (correctId) void submitAnswer(correctId, true);
+  }, [correctId, submitAnswer]);
 
   const handlePlayAgain = useCallback(() => {
     const picked = pickRoundWords(roundWords);
     setRoundWords(picked);
     setRoundIndex(0);
     setCurrentWord(picked[0] ?? null);
+    setShowGesture(true);
     resetAnswerProgress();
     setIsComplete(false);
     if (bgmRef.current) bgmRef.current.play()?.catch(() => {});
@@ -391,12 +421,15 @@ export const ImagePracticePage: React.FC = () => {
   const steps = ["pakinggan", "kilalanin", "basahin", "gamitin"];
   const currentStepIndex = 1; // Hardcoded to "kilalanin" for this practice mode
 
+  const stage = scaffoldStage(attempts);
+  const fadedId = fadedDistractorId(stage, options, correctId);
+
   return (
     <div
       className="relative h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
       style={{ backgroundImage: "url('/images/module-bg/m-Kitchen.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
+      <div data-decorative className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
 
       {/* TOP BAR */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
@@ -409,7 +442,7 @@ export const ImagePracticePage: React.FC = () => {
           Bumalik
         </button>
 
-        <div className="absolute left-1/2 -translate-x-1/2 top-2 md:top-4 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
+        <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-2 md:top-4 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
           <h1 
             className="text-4xl md:text-6xl lg:text-7xl font-black text-center tracking-wide"
             style={{
@@ -435,6 +468,7 @@ export const ImagePracticePage: React.FC = () => {
         </div>
         
         <div className="flex flex-col items-end z-30 mt-1 gap-3">
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
           <ProgressPill
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${totalRounds}`}
@@ -444,14 +478,16 @@ export const ImagePracticePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sub-level Steps */}
-      <PracticeStepRail
-        className="mt-2 md:mt-3"
-        steps={steps.map((step, idx) => ({
-          label: STEP_LABELS[step].split(". ")[1],
-          state: idx === currentStepIndex ? "current" : idx < currentStepIndex ? "done" : "pending",
-        }))}
-      />
+      {/* Sub-level Steps are decorative in Focus View; the HUD stays visible. */}
+      <div data-decorative>
+        <PracticeStepRail
+          className="mt-2 md:mt-3"
+          steps={steps.map((step, idx) => ({
+            label: STEP_LABELS[step].split(". ")[1],
+            state: idx === currentStepIndex ? "current" : idx < currentStepIndex ? "done" : "pending",
+          }))}
+        />
+      </div>
 
       {/* Main Game Content */}
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-4 z-10 gap-2 md:gap-4">
@@ -511,14 +547,19 @@ export const ImagePracticePage: React.FC = () => {
         </div>
 
         {/* Options / Choices */}
-        <div className="w-full max-w-2xl px-4 md:px-0 mt-2">
+        <div className="relative w-full max-w-2xl px-4 md:px-0 mt-2">
+          {showGesture && (
+            <GestureDemo label={GESTURE_LABEL} onComplete={finishGesture} />
+          )}
           <div className="grid grid-cols-4 gap-3 md:gap-6 w-full">
             {options.map((opt) => {
               const isSelected = selectedId === opt.id;
               const isActuallyCorrect = correctId === opt.id;
-              
+              const isFaded = fadedId === opt.id;
+
               const showGreen = isSelected && isActuallyCorrect;
-              const showHintGreen = attempts >= HINT_AFTER_ATTEMPTS && isActuallyCorrect;
+              // Stage 3 reveals the correct answer for comparison.
+              const showHintGreen = stage >= 3 && isActuallyCorrect;
               const isWrong = isSelected && !isActuallyCorrect;
 
               let bgImg = "/images/Y_button.png";
@@ -528,9 +569,18 @@ export const ImagePracticePage: React.FC = () => {
               return (
                 <button
                   key={opt.id}
+                  aria-label={isFaded ? `${opt.label} (tinanggal)` : opt.label}
                   onClick={() => void handleSelect(opt.id)}
-                  disabled={isSubmitting || (!!selectedId && !isWrong)}
-                  className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
+                  disabled={
+                    showGesture ||
+                    isSubmitting ||
+                    isFaded ||
+                    (!!selectedId && !isWrong)
+                  }
+                  className={cn(
+                    "relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md",
+                    isFaded && "opacity-25 grayscale"
+                  )}
                   style={{ backgroundImage: `url(${bgImg})` }}
                 >
                   {/* Image for the option */}
@@ -573,23 +623,19 @@ export const ImagePracticePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Feedback Area */}
-        <div className="h-10 w-full flex items-center justify-center mt-1">
-          {feedback && (
-            <div
-              className={cn(
-                "px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce",
-                feedback === "correct" ? "bg-green-500" : "bg-red-500"
-              )}
-            >
-              {feedback === "correct" ? "Tama! Magaling!" : "Almost ! Try again."}
+        {/* Feedback Area: progressive scaffolding instead of a generic retry */}
+        <div className="w-full flex items-center justify-center mt-1">
+          {feedback === "correct" && (
+            <div className="px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce bg-green-500">
+              Tama! Magaling!
             </div>
           )}
-          {attempts >= HINT_AFTER_ATTEMPTS && !selectedId && (
-            <div className="px-6 py-2 rounded-full font-bold bg-green-500 text-white shadow-lg">
-              Hint: It's color Green!
-            </div>
-          )}
+          <ScaffoldMessage
+            stage={stage}
+            target={currentWord.word.toUpperCase()}
+            onReplay={playTarget}
+            onConfirm={handleGuidedConfirm}
+          />
         </div>
       </div>
     </div>

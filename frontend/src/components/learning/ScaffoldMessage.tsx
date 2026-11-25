@@ -1,6 +1,6 @@
 import { RotateCcw } from "lucide-react"
 import { FeedbackBanner } from "@/components/feedback/FeedbackBanner"
-import { STRINGS } from "@/lib/i18n"
+import { STRINGS, type Bi } from "@/lib/i18n"
 import { scaffoldGuidance, type ScaffoldStage } from "@/lib/scaffolding"
 import { cn } from "@/lib/utils"
 
@@ -10,6 +10,11 @@ export interface ScaffoldMessageProps {
   target?: string
   /** Sound parts, e.g. ["B", "A"] for "BA". */
   parts?: string[]
+  /**
+   * Override the wording for this item's stage. Sentence ordering pins a word
+   * instead of removing a distractor, so its stage-2 message needs to differ.
+   */
+  message?: Bi
   /** Stage 1 replays the target sound. */
   onReplay?: () => void
   /** Stage 3 asks for a confirming tap before play continues. */
@@ -26,6 +31,7 @@ export function ScaffoldMessage({
   stage,
   target,
   parts = [],
+  message,
   onReplay,
   onConfirm,
   className,
@@ -33,6 +39,7 @@ export function ScaffoldMessage({
   if (stage === 0) return null
 
   const guidance = scaffoldGuidance(stage, target)
+  const displayMessage = message ?? guidance.message
 
   return (
     <FeedbackBanner
@@ -41,10 +48,10 @@ export function ScaffoldMessage({
       data-scaffold-stage={stage}
     >
       <span className="block text-sm font-black md:text-base">
-        {guidance.message.fil}
+        {displayMessage.fil}
       </span>
       <span className="block text-xs font-semibold opacity-80 md:text-sm">
-        {guidance.message.en}
+        {displayMessage.en}
       </span>
 
       {stage === 1 && onReplay && (

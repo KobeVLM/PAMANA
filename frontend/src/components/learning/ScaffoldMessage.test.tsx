@@ -26,6 +26,19 @@ describe("ScaffoldMessage", () => {
     expect(screen.queryByText("BA")).not.toBeInTheDocument()
   })
 
+  it("uses a custom stage message when one is supplied", () => {
+    render(
+      <ScaffoldMessage
+        stage={2}
+        message={{ fil: "Isang salita ang naitama na", en: "One word is in place" }}
+      />
+    )
+
+    expect(screen.getByText("Isang salita ang naitama na")).toBeInTheDocument()
+    expect(screen.getByText("One word is in place")).toBeInTheDocument()
+    expect(screen.queryByText(/tinanggal/)).not.toBeInTheDocument()
+  })
+
   it("compares the parts with the target and confirms at stage 3", () => {
     const onConfirm = vi.fn()
     render(
