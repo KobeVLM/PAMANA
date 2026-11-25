@@ -15,9 +15,10 @@ export interface GestureDemoProps {
 }
 
 /**
- * Two-second animated hand-cursor demonstration shown before a new game
- * mechanic becomes interactive. It is a status message for screen readers and
- * never traps focus; callers disable the answer controls while it is visible.
+ * Five-second animated hand-cursor demonstration shown before a new game
+ * mechanic becomes interactive. Tapping anywhere dismisses it early. It is a
+ * status message for screen readers and never traps focus; callers disable the
+ * answer controls while it is visible.
  */
 export function GestureDemo({
   label,
@@ -50,26 +51,30 @@ export function GestureDemo({
         className
       )}
     >
-      <Hand
-        aria-hidden="true"
-        className={cn(
-          "h-12 w-12 -rotate-12 text-[#2d5e3e] drop-shadow-lg",
-          !reduceMotion && "animate-gesture-point"
-        )}
-      />
-      <p className="rounded-xl border-2 border-[#a4cba9] bg-white/95 px-4 py-2 text-center font-heading text-sm font-black text-[#1B5E20] shadow-md md:text-base">
-        {label.fil}
-        <span className="mt-0.5 block text-xs font-bold text-[#3f7d52] md:text-sm">
-          {label.en}
-        </span>
-      </p>
       <button
         type="button"
+        aria-label="Laktawan ang demonstrasyon (Skip demonstration)"
         onClick={finish}
-        className="pointer-events-auto rounded-full border-2 border-[#a4cba9] bg-white/95 px-3 py-1 text-xs font-bold text-[#2b5c3b] hover:bg-white"
-      >
-        Skip / Laktawan
-      </button>
+        className="pointer-events-auto absolute inset-0 z-0 cursor-pointer rounded-3xl"
+      />
+      <div className="pointer-events-none relative z-10 flex flex-col items-center gap-2">
+        <Hand
+          aria-hidden="true"
+          className={cn(
+            "h-12 w-12 -rotate-12 text-[#2d5e3e] drop-shadow-lg",
+            !reduceMotion && "animate-gesture-point"
+          )}
+        />
+        <p className="rounded-xl border-2 border-[#a4cba9] bg-white/95 px-4 py-2 text-center font-heading text-sm font-black text-[#1B5E20] shadow-md md:text-base">
+          {label.fil}
+          <span className="mt-0.5 block text-xs font-bold text-[#3f7d52] md:text-sm">
+            {label.en}
+          </span>
+        </p>
+        <p className="text-xs font-bold text-[#2b5c3b] md:text-sm">
+          I-tap kahit saan para laktawan / Tap anywhere to skip
+        </p>
+      </div>
     </div>
   )
 }

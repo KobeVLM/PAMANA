@@ -1,7 +1,7 @@
 import { bi, type Bi } from "@/lib/i18n"
 
 /** How long the hand-cursor demonstration stays up before play begins. */
-export const GESTURE_DEMO_MS = 2000
+export const GESTURE_DEMO_MS = 5000
 
 /**
  * Error-scaffolding level for the current item.

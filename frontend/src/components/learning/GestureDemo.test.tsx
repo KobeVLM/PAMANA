@@ -14,27 +14,28 @@ describe("GestureDemo", () => {
     vi.useRealTimers()
   })
 
-  it("shows bilingual guidance and completes after two seconds by default", () => {
+  it("shows bilingual guidance and completes after five seconds by default", () => {
     const onComplete = vi.fn()
     render(<GestureDemo label={LABEL} onComplete={onComplete} />)
 
     expect(screen.getByRole("status")).toHaveTextContent("I-tap ang tamang sagot")
     expect(screen.getByRole("status")).toHaveTextContent("Tap the correct answer")
+    expect(screen.getByRole("status")).toHaveTextContent("Tap anywhere to skip")
     expect(onComplete).not.toHaveBeenCalled()
 
-    act(() => vi.advanceTimersByTime(2000))
+    act(() => vi.advanceTimersByTime(5000))
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 
-  it("lets a child skip the demonstration", () => {
+  it("lets a child tap anywhere to skip the demonstration", () => {
     const onComplete = vi.fn()
-    render(<GestureDemo label={LABEL} onComplete={onComplete} durationMs={5000} />)
+    render(<GestureDemo label={LABEL} onComplete={onComplete} />)
 
     fireEvent.click(screen.getByRole("button", { name: /Skip/i }))
     expect(onComplete).toHaveBeenCalledTimes(1)
 
     act(() => vi.advanceTimersByTime(5000))
-    // Timer cleanup prevents a second completion after unmount/skip.
+    // The ref guard prevents a second completion if the timer outlives the tap.
     expect(onComplete).toHaveBeenCalledTimes(1)
   })
 })

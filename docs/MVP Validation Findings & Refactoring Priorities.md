@@ -241,7 +241,7 @@ Cognitive Friction in Task Instructions and Corrective Feedback Scaffolding.
 
 **5\. Proposed refactored approach**
 
-1. *Interactive Hand-Cursor Demonstration: Upon entering any new game mechanic (Pagsama, Spiral Matching, Bumuo ng Pangungusap), display an animated finger cursor demonstrating the action for 2 seconds before user interaction begins.*  
+1. *Interactive Hand-Cursor Demonstration: Upon entering any new game mechanic (Pagsama, Spiral Matching, Bumuo ng Pangungusap), display an animated finger cursor demonstrating the action for 5 seconds before user interaction begins; tapping the demonstration dismisses it early.*  
 2. *3-Stage Progressive Error Scaffolding:*  
    1. *Attempt 1: Soft highlight on the chosen card, gentle audio encouragement ("Halos nakuha mo na\! Pakinggan nating muli..."), and replay of the target sound.*  
    2. *Attempt 2: Visually fade out one incorrect distractor card, reducing choices from 4 to 3\.*  

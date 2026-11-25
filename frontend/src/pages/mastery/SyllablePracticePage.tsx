@@ -396,14 +396,17 @@ export const SyllablePracticePage: React.FC = () => {
       {/* Top Bar */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
         
-        {/* Left: Back Button */}
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 mt-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
-        >
-          <ArrowLeft className="w-5 h-5 stroke-[3]" />
-          Bumalik
-        </button>
+        {/* Left: Back button + Focus View, kept clear of the title. */}
+        <div className="flex flex-col items-start gap-2 z-30">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 mt-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[3]" />
+            Bumalik
+          </button>
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
+        </div>
 
         {/* Center: Title (decorative in Focus View) */}
         <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-2 md:top-4 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
@@ -431,9 +434,8 @@ export const SyllablePracticePage: React.FC = () => {
           </h1>
         </div>
 
-        {/* Right: focus toggle, progress and accuracy stay visible in Focus View */}
+        {/* Right: HUD stays visible in Focus View; toggle is on the left. */}
         <div className="flex flex-col items-end z-30 mt-1 gap-3">
-          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
           <ProgressPill
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${SUB_LEVELS.length * 2}`}

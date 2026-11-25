@@ -499,14 +499,17 @@ export const SyllableModulePage: React.FC = () => {
 
       {/* Top Bar */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
-        {/* Left: Back Button */}
-        <button
-          onClick={() => navigate('/trail')}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
-        >
-          <ArrowLeft className="w-5 h-5 stroke-[3]" />
-          Pamana Trail
-        </button>
+        {/* Left: Trail button + Focus View, kept clear of the title. */}
+        <div className="flex flex-col items-start gap-2 z-30">
+          <button
+            onClick={() => navigate('/trail')}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[3]" />
+            Pamana Trail
+          </button>
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
+        </div>
 
         {/* Center: Title Image (decorative in Focus View) */}
         <div data-decorative className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-2 md:pt-4">
@@ -517,10 +520,9 @@ export const SyllableModulePage: React.FC = () => {
           />
         </div>
 
-        {/* Right: focus toggle + answer-based progress + accuracy. None of
-            these are decorative: progress must stay visible in Focus View. */}
+        {/* Right: answer-based progress and accuracy. Both stay visible in
+            Focus View; the toggle lives under the Trail button on the left. */}
         <div className="flex items-center gap-3 z-30">
-          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
           <ProgressPill
             size="wide"
             value={moduleComplete ? 100 : answerProgress.progress}
