@@ -1,5 +1,7 @@
 package com.pamana.progress;
 
+import com.pamana.adaptive.AdaptiveTier;
+import com.pamana.adaptive.AdaptiveTierResolver;
 import com.pamana.progress.dto.AnswerEventRequest;
 
 import jakarta.validation.Valid;
@@ -27,9 +29,12 @@ import java.util.UUID;
 public class AnswerEventController {
 
     private final AnswerEventService answerEventService;
+    private final AdaptiveTierResolver adaptiveTierResolver;
 
-    public AnswerEventController(AnswerEventService answerEventService) {
+    public AnswerEventController(AnswerEventService answerEventService,
+            AdaptiveTierResolver adaptiveTierResolver) {
         this.answerEventService = answerEventService;
+        this.adaptiveTierResolver = adaptiveTierResolver;
     }
 
     @PostMapping
@@ -37,6 +42,10 @@ public class AnswerEventController {
     public ResponseEntity<Void> record(@Valid @RequestBody AnswerEventRequest request, Principal principal) {
         UUID userId = UUID.fromString(principal.getName());
 
+        // Practice screens do not send a tier: resolve it here from the same
+        // answer history the question dispatcher used, so telemetry records the
+        // tier that was actually served. Out-of-scope item types stay STANDARD.
+        AdaptiveTier tier = adaptiveTierResolver.forItemType(userId, request.getItemType());
         answerEventService.record(
                 userId,
                 request.getRunId(),
@@ -45,7 +54,8 @@ public class AnswerEventController {
                 request.getItemKey(),
                 request.getStep(),
                 request.getModuleNumber(),
-                request.isCorrect());
+                request.isCorrect(),
+                tier.value());
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

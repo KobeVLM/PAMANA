@@ -18,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -242,14 +243,47 @@ public class AnswerEventTest {
         assertThat(wordMasteryRepository.count()).isZero();
     }
 
+    @Test
+    public void practiceVocabularyAnswersRecordTheServedTier() throws Exception {
+        seedHistory("vocabulary_word", "basahin", 2, 3, 7); // 30% -> FOUNDATIONAL
+
+        postPracticeEvent(UUID.randomUUID(), "word-1:basahin", true);
+
+        assertThat(latestEvent("word-1:basahin").getDifficultyTier()).isEqualTo("FOUNDATIONAL");
+    }
+
+    @Test
+    public void practiceSyllableAnswersRecordTheServedTier() throws Exception {
+        seedHistory("syllable_set", "pagsama", 1, 9, 1); // 90% -> CHALLENGE
+
+        postEvent(UUID.randomUUID(), "syllable_set", "pagsama:1", "pagsama", 1, true);
+
+        assertThat(latestEvent("pagsama:1").getDifficultyTier()).isEqualTo("CHALLENGE");
+    }
+
+    @Test
+    public void outOfScopeItemTypesKeepTheStandardTier() throws Exception {
+        // A strong vocabulary history must not leak into sentence telemetry.
+        seedHistory("vocabulary_word", "basahin", 2, 9, 1);
+
+        postEvent(UUID.randomUUID(), "sentence_task", "sentence-1", "tier1", 4, true);
+
+        assertThat(latestEvent("sentence-1").getDifficultyTier()).isEqualTo("STANDARD");
+    }
+
     private void postPracticeEvent(UUID runId, String itemKey, boolean correct) throws Exception {
+        postEvent(runId, "vocabulary_word", itemKey, "basahin", 2, correct);
+    }
+
+    private void postEvent(UUID runId, String itemType, String itemKey, String step,
+            int moduleNumber, boolean correct) throws Exception {
         String body = objectMapper.writeValueAsString(java.util.Map.of(
                 "runId", runId.toString(),
                 "activity", "practice",
-                "itemType", "vocabulary_word",
+                "itemType", itemType,
                 "itemKey", itemKey,
-                "step", "basahin",
-                "moduleNumber", 2,
+                "step", step,
+                "moduleNumber", moduleNumber,
                 "correct", correct));
 
         mockMvc.perform(post("/api/answer-events")
@@ -257,6 +291,33 @@ public class AnswerEventTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
                 .andExpect(status().isCreated());
+    }
+
+    private void seedHistory(String itemType, String step, int moduleNumber, int correct, int incorrect) {
+        LocalDateTime base = LocalDateTime.now().minusMinutes(5);
+        int second = 0;
+        for (int i = 0; i < correct + incorrect; i++) {
+            AnswerEvent event = new AnswerEvent(
+                    userId,
+                    UUID.randomUUID(),
+                    "practice",
+                    itemType,
+                    "drill-" + i + ":" + step,
+                    step,
+                    moduleNumber,
+                    1,
+                    i < correct);
+            event.setAnsweredAt(base.plusSeconds(second++));
+            answerEventRepository.save(event);
+        }
+    }
+
+    private AnswerEvent latestEvent(String itemKey) {
+        return answerEventRepository.findAll().stream()
+                .filter(event -> userId.equals(event.getUserId()))
+                .filter(event -> itemKey.equals(event.getItemKey()))
+                .max(java.util.Comparator.comparing(AnswerEvent::getAnsweredAt))
+                .orElseThrow();
     }
 
     private void answerSyllable(UUID runId, String subLevel, int setId, boolean correct) throws Exception {

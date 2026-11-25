@@ -55,10 +55,12 @@ when the dispatcher moves the learner.
 ## Telemetry and measurement
 
 Flyway `V7__add_answer_difficulty_tier.sql` adds
-`answer_events.difficulty_tier` (default `STANDARD`). Vocabulary and syllable
-answers record the tier that was actually served; older callers keep the
-default. Telemetry stays append-only and separate from replay tracking
-(`replay_events`): replays never create answer attempts or change progress.
+`answer_events.difficulty_tier` (default `STANDARD`). Both module answers and
+practice answers resolve the tier server-side and store the one that was
+actually served, so a practice screen does not need to send a tier. Out-of-scope
+item types (for example `sentence_task`) keep `STANDARD`. Telemetry stays
+append-only and separate from replay tracking (`replay_events`): replays never
+create answer attempts or change progress.
 
 This makes the Priority 3 measures computable in-app — accuracy and completion
 by tier — alongside the evaluator rating and longitudinal retention targets in

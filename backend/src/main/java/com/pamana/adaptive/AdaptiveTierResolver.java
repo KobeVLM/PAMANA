@@ -52,6 +52,22 @@ public class AdaptiveTierResolver {
     }
 
     /**
+     * Tier for an incoming answer event's item type. Activities outside the
+     * Priority 3 scope (for example sentence tasks) stay at STANDARD so their
+     * telemetry keeps the historical default.
+     */
+    @Transactional(readOnly = true)
+    public AdaptiveTier forItemType(UUID userId, String itemType) {
+        if (ITEM_TYPE_VOCABULARY.equalsIgnoreCase(itemType)) {
+            return forVocabulary(userId);
+        }
+        if (ITEM_TYPE_SYLLABLE.equalsIgnoreCase(itemType)) {
+            return forSyllables(userId);
+        }
+        return AdaptiveTier.STANDARD;
+    }
+
+    /**
      * @param excludedStep step to ignore (e.g. listening-only {@code pakinggan}),
      *                     or {@code null} to count every answer
      */
