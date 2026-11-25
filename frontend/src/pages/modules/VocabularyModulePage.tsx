@@ -687,7 +687,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
             }
           />
           {/* Accuracy is a separate number: the bar only moves forward. */}
-          <AccuracyChip accuracy={moduleAccuracy} />
+          <AccuracyChip size="wide" accuracy={moduleAccuracy} />
         </div>
       </div>
 

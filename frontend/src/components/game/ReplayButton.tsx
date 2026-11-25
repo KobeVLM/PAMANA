@@ -37,7 +37,7 @@ export function ReplayButton({
     >
       <Volume2 className="h-6 w-6 shrink-0" strokeWidth={3} aria-hidden="true" />
       <span className="whitespace-nowrap">{label}</span>
-      <span className="whitespace-nowrap text-xs font-bold opacity-80">
+      <span className="hidden whitespace-nowrap text-xs font-bold opacity-80 sm:inline">
         / {labelEn}
       </span>
     </button>

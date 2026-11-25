@@ -207,4 +207,23 @@ describe("NPCDialogue", () => {
       })
     )
   })
+
+  it("groups replay under the mascot rather than over the speech bubble", () => {
+    render(
+      <NPCDialogue
+        npc="lolo"
+        line="Pakinggan nang mabuti!"
+        audioUrl="/audio/npc/lolo_mod2_pagsama.mp3"
+        autoPlay={false}
+      />
+    )
+
+    const replay = screen.getByRole("button", { name: /Makinig Ulit/i })
+    const bubble = screen.getByText("Pakinggan nang mabuti!").closest(
+      "div[class*='rounded-2xl']"
+    ) as HTMLElement
+
+    expect(bubble).not.toContainElement(replay)
+    expect(replay.parentElement).toContainElement(screen.getByText("Lolo"))
+  })
 })

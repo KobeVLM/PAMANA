@@ -68,6 +68,32 @@ describe("AccuracyChip", () => {
 
     expect(screen.getByRole("img", { name: /Wala pang iskor/ })).toBeInTheDocument()
   })
+
+  it("uses the same footprint as the progress pill at both sizes", () => {
+    const { rerender } = render(
+      <>
+        <ProgressPill value={40} />
+        <AccuracyChip accuracy={80} />
+      </>
+    )
+
+    const compactBar = screen.getByRole("progressbar")
+    const compactChip = screen.getByLabelText("Katumpakan (Accuracy)")
+    expect([...compactChip.classList].sort()).toEqual([...compactBar.classList].sort())
+    expect(compactChip.firstElementChild).toHaveClass("h-5", "md:h-8")
+
+    rerender(
+      <>
+        <ProgressPill size="wide" value={40} />
+        <AccuracyChip size="wide" accuracy={80} />
+      </>
+    )
+
+    const wideBar = screen.getByRole("progressbar")
+    const wideChip = screen.getByLabelText("Katumpakan (Accuracy)")
+    expect([...wideChip.classList].sort()).toEqual([...wideBar.classList].sort())
+    expect(wideChip.firstElementChild).toHaveClass("h-6", "md:h-8")
+  })
 })
 
 describe("PracticeModeBadge", () => {

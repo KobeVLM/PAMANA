@@ -292,7 +292,7 @@ export const SentenceModulePage: React.FC = () => {
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${TOTAL_TASKS_PER_TIER}`}
           />
-          <AccuracyChip accuracy={moduleAccuracy} />
+          <AccuracyChip size="wide" accuracy={moduleAccuracy} />
         </div>
       </div>
 

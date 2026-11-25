@@ -15,19 +15,38 @@ const clampPercent = (value: number) => {
   return Math.min(100, Math.max(0, value))
 }
 
+/**
+ * Shared footprint for both HUD chips. Keeping these classes in one place means
+ * the progress pill and the accuracy chip cannot drift apart visually.
+ */
+const HUD_CHIP_SIZES = {
+  compact: {
+    shell: "w-48 md:w-64 lg:w-80",
+    track: "h-5 md:h-8",
+    value: "ml-2 min-w-[3ch] text-lg md:ml-3 md:text-2xl",
+  },
+  wide: {
+    shell: "w-64 md:w-[22rem] lg:w-[26rem]",
+    track: "h-6 md:h-8",
+    value: "ml-3 min-w-[3.5ch] text-xl md:text-2xl",
+  },
+} as const
+
+export type HudChipSize = keyof typeof HUD_CHIP_SIZES
+
 export interface ProgressPillProps {
   /** 0-100. Clamped, so a bad caller can never render past the pill. */
   value: number
   /** Shown instead of the percentage, e.g. "3/8" or "2/4". */
   label?: string
   /** `compact` matches the mastery screens, `wide` the module screens. */
-  size?: "compact" | "wide"
+  size?: HudChipSize
   className?: string
 }
 
 export function ProgressPill({ value, label, size = "compact", className }: ProgressPillProps) {
   const percent = clampPercent(value)
-  const wide = size === "wide"
+  const sizes = HUD_CHIP_SIZES[size]
 
   return (
     <div
@@ -38,14 +57,14 @@ export function ProgressPill({ value, label, size = "compact", className }: Prog
       aria-label={`Progreso (Progress): ${Math.round(percent)}%`}
       className={cn(
         "flex items-center rounded-full border-[4px] border-[#6A9C2C] bg-[#8CC63F] p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)]",
-        wide ? "w-64 md:w-[22rem] lg:w-[26rem]" : "w-48 md:w-64 lg:w-80",
+        sizes.shell,
         className
       )}
     >
       <div
         className={cn(
           "relative flex-1 overflow-hidden rounded-full border-[3px] border-[#204D2B] bg-[#2F6A3E] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)]",
-          wide ? "h-6 md:h-8" : "h-5 md:h-8"
+          sizes.track
         )}
       >
         <div
@@ -56,9 +75,7 @@ export function ProgressPill({ value, label, size = "compact", className }: Prog
       <span
         className={cn(
           "text-right font-black tracking-wide text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]",
-          wide
-            ? "ml-3 min-w-[3.5ch] text-xl md:text-2xl"
-            : "ml-2 min-w-[3ch] text-lg md:ml-3 md:text-2xl"
+          sizes.value
         )}
       >
         {label ?? `${Math.round(percent)}%`}
@@ -116,6 +133,8 @@ export interface AccuracyChipProps {
   accuracy: number | null
   label?: string
   labelEn?: string
+  /** Matches the neighbouring ProgressPill footprint. */
+  size?: HudChipSize
   className?: string
 }
 
@@ -123,26 +142,46 @@ export interface AccuracyChipProps {
  * The correctness number for the run, kept next to the progress bar so the two
  * quantities are never confused: the bar only moves forward, the accuracy can
  * reflect a wrong attempt, and the accuracy is the value the Parent Dashboard
- * reports for the same run.
+ * reports for the same run. It shares the progress pill's shell and track size
+ * so the two chips read as a matched pair.
  */
 export function AccuracyChip({
   accuracy,
   label = "Katumpakan",
   labelEn = "Accuracy",
+  size = "compact",
   className,
 }: AccuracyChipProps) {
+  const sizes = HUD_CHIP_SIZES[size]
+
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-full border-2 border-white/80 bg-white/85 px-3 py-1 shadow-[0_4px_0_rgba(0,0,0,0.12)]",
+        "flex items-center rounded-full border-[4px] border-[#6A9C2C] bg-[#8CC63F] p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)]",
+        sizes.shell,
         className
       )}
       aria-label={`${label} (${labelEn})`}
     >
-      <span className="text-[10px] font-black uppercase tracking-wide text-[#2b5c3b]">
-        {label}
-      </span>
-      <StarMeter accuracy={accuracy} size="sm" />
+      <div
+        className={cn(
+          "relative flex flex-1 items-center gap-2 overflow-hidden rounded-full border-[3px] border-[#204D2B] bg-[#2F6A3E] px-2 shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)]",
+          sizes.track
+        )}
+      >
+        <span className="hidden text-[10px] font-black uppercase tracking-wide text-white/90 sm:inline">
+          {label}
+        </span>
+        <StarMeter accuracy={accuracy} size={size === "wide" ? "md" : "sm"} />
+        <span
+          className={cn(
+            "font-black tracking-wide text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]",
+            sizes.value
+          )}
+        >
+          {accuracy === null ? "—" : `${Math.round(accuracy)}%`}
+        </span>
+      </div>
     </div>
   )
 }

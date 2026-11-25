@@ -532,7 +532,7 @@ export const SyllableModulePage: React.FC = () => {
                 : `${answerProgress.correctItems}/${SUB_LEVELS.length * SETS_PER_SUB_LEVEL}`
             }
           />
-          <AccuracyChip accuracy={status?.moduleAccuracy ?? null} />
+          <AccuracyChip size="wide" accuracy={status?.moduleAccuracy ?? null} />
         </div>
       </div>
 

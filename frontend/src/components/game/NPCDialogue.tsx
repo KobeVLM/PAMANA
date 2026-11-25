@@ -108,8 +108,8 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
 
   return (
     <div className={cn('flex items-start gap-2.5', className)}>
-      {/* NPC Avatar */}
-      <div className="flex-shrink-0 flex flex-col items-center gap-1 z-10">
+      {/* NPC identity + replay control, grouped with the speaker */}
+      <div className="flex w-[132px] shrink-0 flex-col items-center gap-1 z-10 md:w-[240px]">
         <Mascot
           directions={mascot.directions}
           reactions={mascot.reactions}
@@ -129,14 +129,17 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         >
           {name}
         </span>
+        {(audioUrl || onPlayAudio) && (
+          <ReplayButton
+            onReplay={handlePlay}
+            isSpeaking={isSpeaking}
+            className="mt-2 px-2 text-xs md:px-4 md:text-base"
+          />
+        )}
       </div>
 
-      {/* Speech bubble + prominent replay control, centred at the activity top */}
-      <div className="flex min-w-0 flex-col items-center gap-1.5">
-        {(audioUrl || onPlayAudio) && (
-          <ReplayButton onReplay={handlePlay} isSpeaking={isSpeaking} />
-        )}
-
+      {/* Speech bubble is the primary content; replay sits under the speaker. */}
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
         <div
           data-speaking={isSpeaking ? 'true' : undefined}
           className={cn(
