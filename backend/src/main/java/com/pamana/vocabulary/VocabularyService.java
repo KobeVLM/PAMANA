@@ -8,6 +8,11 @@ import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
+import com.pamana.adaptive.AdaptiveTier;
+import com.pamana.adaptive.AdaptiveTierResolver;
+import com.pamana.adaptive.ContentBankItem;
+import com.pamana.adaptive.ContentBankRepository;
+import com.pamana.adaptive.TieredDistractors;
 import com.pamana.progress.AnswerEventService;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.common.BaseGameService;
@@ -31,6 +36,8 @@ public class VocabularyService extends BaseGameService {
     private final VocabularyItemRepository vocabularyItemRepository;
     private final WordMasteryRepository wordMasteryRepository;
     private final AnswerEventService answerEventService;
+    private final AdaptiveTierResolver adaptiveTierResolver;
+    private final ContentBankRepository contentBankRepository;
 
     // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG
     // competencies
@@ -68,10 +75,14 @@ public class VocabularyService extends BaseGameService {
 
     public VocabularyService(VocabularyItemRepository vocabularyItemRepository,
             WordMasteryRepository wordMasteryRepository,
-            AnswerEventService answerEventService) {
+            AnswerEventService answerEventService,
+            AdaptiveTierResolver adaptiveTierResolver,
+            ContentBankRepository contentBankRepository) {
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.wordMasteryRepository = wordMasteryRepository;
         this.answerEventService = answerEventService;
+        this.adaptiveTierResolver = adaptiveTierResolver;
+        this.contentBankRepository = contentBankRepository;
     }
 
     @Transactional(readOnly = true)
@@ -129,20 +140,19 @@ public class VocabularyService extends BaseGameService {
     }
 
     @Transactional(readOnly = true)
-    public MatchOptionsResponse getMatchOptions(UUID wordId, String step) {
-        log.info("Compiling match options for wordId: {}, step: {}", wordId, step);
+    public MatchOptionsResponse getMatchOptions(UUID wordId, String step, UUID userId) {
+        AdaptiveTier tier = adaptiveTierResolver.forVocabulary(userId);
+        log.info("Compiling match options for wordId: {}, step: {}, tier: {}", wordId, step, tier);
 
         VocabularyItem target = vocabularyItemRepository.findById(wordId)
                 .orElseThrow(() -> new IllegalArgumentException("Vocabulary item not found with ID: " + wordId));
 
         List<VocabularyItem> sameDomainItems = vocabularyItemRepository.findByDomain(target.getDomain());
-        List<VocabularyItem> distractors = sameDomainItems.stream()
-                .filter(item -> !item.getId().equals(wordId))
-                .sorted(Comparator.comparing(VocabularyItem::getOrdinal))
-                .collect(Collectors.toList());
+        List<VocabularyItem> distractors = tieredDistractorItems(target, sameDomainItems, tier);
 
-        // Shuffle and take 3 distractors
-        long seed = (long) wordId.hashCode() + (step != null ? step.hashCode() : 0);
+        // Shuffle and take 3 distractors. The tier is part of the seed: options
+        // stay stable while the tier does, but change when it changes.
+        long seed = (long) wordId.hashCode() + (step != null ? step.hashCode() : 0) + tier.hashCode();
         Collections.shuffle(distractors, new Random(seed));
         List<VocabularyItem> selectedDistractors = distractors.subList(0, Math.min(3, distractors.size()));
 
@@ -165,8 +175,9 @@ public class VocabularyService extends BaseGameService {
     }
 
     @Transactional(readOnly = true)
-    public DialogueResponse getGamitinDialogue(UUID wordId) {
-        log.info("Compiling dialogue response for wordId: {}", wordId);
+    public DialogueResponse getGamitinDialogue(UUID wordId, UUID userId) {
+        AdaptiveTier tier = adaptiveTierResolver.forVocabulary(userId);
+        log.info("Compiling dialogue response for wordId: {}, tier: {}", wordId, tier);
 
         VocabularyItem target = vocabularyItemRepository.findById(wordId)
                 .orElseThrow(() -> new IllegalArgumentException("Vocabulary item not found with ID: " + wordId));
@@ -176,13 +187,11 @@ public class VocabularyService extends BaseGameService {
         // Compile same-domain distractors (only written labels are needed for
         // DialogueCompletion)
         List<VocabularyItem> sameDomainItems = vocabularyItemRepository.findByDomain(target.getDomain());
-        List<String> distractors = sameDomainItems.stream()
-                .filter(item -> !item.getId().equals(wordId))
-                .sorted(Comparator.comparing(VocabularyItem::getOrdinal))
+        List<String> distractors = tieredDistractorItems(target, sameDomainItems, tier).stream()
                 .map(VocabularyItem::getWord)
                 .collect(Collectors.toList());
 
-        long seed = (long) wordId.hashCode() + "gamitin".hashCode();
+        long seed = (long) wordId.hashCode() + "gamitin".hashCode() + tier.hashCode();
         Collections.shuffle(distractors, new Random(seed));
         List<String> options = new ArrayList<>();
         options.add(target.getWord());
@@ -197,6 +206,45 @@ public class VocabularyService extends BaseGameService {
                 target.getWord(),
                 options,
                 target.getAudioUrl());
+    }
+
+    /**
+     * Distractors for the learner's assigned tier, taken from the Content Bank.
+     * A missing or stale pool falls back to the legacy same-domain options so a
+     * partially migrated database still serves playable questions.
+     */
+    private List<VocabularyItem> tieredDistractorItems(VocabularyItem target,
+            List<VocabularyItem> sameDomainItems, AdaptiveTier tier) {
+        List<VocabularyItem> legacy = sameDomainItems.stream()
+                .filter(item -> !item.getId().equals(target.getId()))
+                .sorted(Comparator.comparing(VocabularyItem::getOrdinal))
+                .collect(Collectors.toList());
+
+        Map<String, VocabularyItem> byWord = new HashMap<>();
+        for (VocabularyItem item : legacy) {
+            byWord.putIfAbsent(item.getWord().toLowerCase(Locale.ROOT), item);
+        }
+
+        Optional<ContentBankItem> pool = contentBankRepository.findByActivityAndItemKeyAndDifficultyTier(
+                TieredDistractors.ACTIVITY_VOCABULARY,
+                target.getWord().toLowerCase(Locale.ROOT),
+                tier.value());
+
+        if (pool.isEmpty()) {
+            return legacy;
+        }
+
+        List<VocabularyItem> selected = new ArrayList<>();
+        for (String label : pool.get().getDistractors().split(",")) {
+            VocabularyItem item = byWord.get(label.trim());
+            if (item == null) {
+                log.warn("Stale Content Bank label '{}' for {} / {}; using legacy distractors",
+                        label, target.getWord(), tier);
+                return legacy;
+            }
+            selected.add(item);
+        }
+        return selected.isEmpty() ? legacy : selected;
     }
 
     @Transactional
@@ -247,6 +295,7 @@ public class VocabularyService extends BaseGameService {
         // history lives in answer_events. Granularity is one scored question,
         // i.e. a word's step, so retries are counted per question.
         int moduleNumber = "family_home".equalsIgnoreCase(item.getDomain()) ? 3 : 2;
+        AdaptiveTier tier = adaptiveTierResolver.forVocabulary(userId);
         answerEventService.record(
                 userId,
                 runId,
@@ -255,7 +304,8 @@ public class VocabularyService extends BaseGameService {
                 wordId + ":" + step.toLowerCase(java.util.Locale.ROOT),
                 step.toLowerCase(java.util.Locale.ROOT),
                 moduleNumber,
-                isCorrect);
+                isCorrect,
+                tier.value());
 
         // Check if the answered word's own domain is now fully complete (meaning
         // all words in it are green). Using the word's domain (instead of the

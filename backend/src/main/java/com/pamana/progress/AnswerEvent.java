@@ -68,6 +68,11 @@ public class AnswerEvent {
     @Column(name = "is_correct", nullable = false)
     private Boolean correct;
 
+    /** Adaptive tier that was served with this question (Priority 3 metric). */
+    @NotBlank
+    @Column(name = "difficulty_tier", nullable = false, length = 16)
+    private String difficultyTier = "STANDARD";
+
     @NotNull
     @Column(name = "answered_at", nullable = false)
     private LocalDateTime answeredAt;
@@ -173,6 +178,14 @@ public class AnswerEvent {
 
     public void setCorrect(Boolean correct) {
         this.correct = correct;
+    }
+
+    public String getDifficultyTier() {
+        return difficultyTier;
+    }
+
+    public void setDifficultyTier(String difficultyTier) {
+        this.difficultyTier = difficultyTier;
     }
 
     public LocalDateTime getAnsweredAt() {

@@ -83,19 +83,23 @@ public class VocabularyController {
     @PreAuthorize("hasRole('LEARNER')")
     public ResponseEntity<MatchOptionsResponse> getMatchOptions(
             @PathVariable UUID wordId,
-            @RequestParam String step) {
-        log.info("REST API: Fetch match options for word: {}, step: {}", wordId, step);
+            @RequestParam String step,
+            Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
+        log.info("REST API: Fetch match options for word: {}, step: {}, user: {}", wordId, step, userId);
 
-        MatchOptionsResponse response = vocabularyService.getMatchOptions(wordId, step);
+        MatchOptionsResponse response = vocabularyService.getMatchOptions(wordId, step, userId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/vocabulary/gamitin/{wordId}")
     @PreAuthorize("hasRole('LEARNER')")
-    public ResponseEntity<DialogueResponse> getGamitinDialogue(@PathVariable UUID wordId) {
-        log.info("REST API: Fetch Gamitin dialogue completion details for word: {}", wordId);
+    public ResponseEntity<DialogueResponse> getGamitinDialogue(
+            @PathVariable UUID wordId, Principal principal) {
+        UUID userId = UUID.fromString(principal.getName());
+        log.info("REST API: Fetch Gamitin dialogue completion details for word: {}, user: {}", wordId, userId);
 
-        DialogueResponse response = vocabularyService.getGamitinDialogue(wordId);
+        DialogueResponse response = vocabularyService.getGamitinDialogue(wordId, userId);
         return ResponseEntity.ok(response);
     }
 

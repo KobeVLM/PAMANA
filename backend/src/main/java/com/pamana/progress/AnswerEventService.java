@@ -41,11 +41,21 @@ public class AnswerEventService {
     @Transactional
     public int record(UUID userId, UUID runId, String activity, String itemType, String itemKey,
             String step, Integer moduleNumber, boolean correct) {
+        return record(userId, runId, activity, itemType, itemKey, step, moduleNumber, correct, "STANDARD");
+    }
+
+    /**
+     * Appends one attempt together with the adaptive tier that was served.
+     * Older callers keep the {@code STANDARD} default via the overload above.
+     */
+    @Transactional
+    public int record(UUID userId, UUID runId, String activity, String itemType, String itemKey,
+            String step, Integer moduleNumber, boolean correct, String difficultyTier) {
         UUID effectiveRunId = runId != null ? runId : UUID.randomUUID();
         int attemptNumber = (int) answerEventRepository
                 .countByRunIdAndItemKeyAndUserId(effectiveRunId, itemKey, userId) + 1;
 
-        answerEventRepository.save(new AnswerEvent(
+        AnswerEvent event = new AnswerEvent(
                 userId,
                 effectiveRunId,
                 activity,
@@ -54,7 +64,9 @@ public class AnswerEventService {
                 step,
                 moduleNumber,
                 attemptNumber,
-                correct));
+                correct);
+        event.setDifficultyTier(difficultyTier != null ? difficultyTier : "STANDARD");
+        answerEventRepository.save(event);
 
         return attemptNumber;
     }
