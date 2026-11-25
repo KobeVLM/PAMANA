@@ -4,6 +4,12 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAudio } from "@/contexts/AudioContext";
 import { PracticeCompletion } from "@/components/practice/PracticeCompletion";
+import {
+  AccuracyChip,
+  PracticeModeBadge,
+  PracticeStepRail,
+  ProgressPill,
+} from "@/components/practice/PracticeHud";
 import { NPCDialogue } from "@/components/game/NPCDialogue";
 import { AudioPlayer } from "@/components/game/AudioPlayer";
 import { HINT_AFTER_ATTEMPTS } from "@/components/game/constants";
@@ -11,6 +17,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
+import { useAnswerProgress } from "@/hooks/useAnswerProgress";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi } from "@/lib/i18n";
 import api from "@/lib/api";
@@ -76,7 +83,6 @@ export const WordPracticePage: React.FC = () => {
 
   const [roundWords, setRoundWords] = useState<VocabWord[]>([]);
   const [roundIndex, setRoundIndex] = useState(0);
-  const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   
   const [currentWord, setCurrentWord] = useState<VocabWord | null>(null);
@@ -99,6 +105,8 @@ export const WordPracticePage: React.FC = () => {
   const hasPlayedNpcRef = useRef(false);
 
   const totalRounds = roundWords.length || ROUND_TOTAL;
+  const answerProgress = useAnswerProgress(totalRounds);
+  const { recordAnswer, reset: resetAnswerProgress } = answerProgress;
 
   useScrollToTop(String(roundIndex));
 
@@ -276,13 +284,13 @@ export const WordPracticePage: React.FC = () => {
       
       duckBGM(2000);
       const isCorrect = optionId === correctId;
+      recordAnswer(currentWord.wordId, isCorrect);
       
       setSelectedId(optionId);
       setFeedback(isCorrect ? "correct" : "incorrect");
       
       if (isCorrect) {
         setCelebrate((c) => c + 1);
-        setScore((s) => s + 1);
         playTarget();
       } else {
         setAttempts((a) => a + 1); // 👈 Increment attempts on wrong answer
@@ -302,7 +310,7 @@ export const WordPracticePage: React.FC = () => {
         }
       }, 500);
     },
-    [currentWord, correctId, selectedId, isSubmitting, advance, playTarget, playWrong, duckBGM]
+    [currentWord, correctId, selectedId, isSubmitting, advance, playTarget, playWrong, duckBGM, recordAnswer]
   );
 
   const handlePlayAgain = useCallback(() => {
@@ -310,10 +318,10 @@ export const WordPracticePage: React.FC = () => {
     setRoundWords(picked);
     setRoundIndex(0);
     setCurrentWord(picked[0] ?? null);
-    setScore(0);
+    resetAnswerProgress();
     setIsComplete(false);
     if (bgmRef.current) bgmRef.current.play()?.catch(() => {});
-  }, [roundWords]);
+  }, [roundWords, resetAnswerProgress]);
 
   if (isLoading) {
     return (
@@ -335,7 +343,7 @@ export const WordPracticePage: React.FC = () => {
   }
 
   if (isComplete) {
-    const accuracy = totalRounds > 0 ? Math.round((score / totalRounds) * 100) : 0;
+    const accuracy = answerProgress.accuracy ?? 0;
     return (
       <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center p-4">
         <PracticeCompletion
@@ -417,51 +425,23 @@ export const WordPracticePage: React.FC = () => {
         </div>
         
         <div className="flex flex-col items-end z-30 mt-1 gap-3">
-          
-          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-48 md:w-64 lg:w-80">
-            <div className="flex-1 h-5 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
-              <div
-                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{ width: `${Math.round(((roundIndex + 1) / totalRounds) * 100)}%` }}
-              />
-            </div>
-            <span className="ml-2 md:ml-3 text-white font-black text-lg md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3ch] text-right tracking-wide">
-              {roundIndex + 1}/{totalRounds}
-            </span>
-          </div>
-
-          <div className="bg-[#2d5e3e]/95 backdrop-blur-md px-4 py-1.5 md:px-6 md:py-2 rounded-full border-4 border-[#a4cba9] shadow-[0_4px_0_#1e422b]">
-            <span className="text-sm md:text-base font-black text-white font-heading drop-shadow-md uppercase tracking-wider">
-              Practice Mode
-            </span>
-          </div>
+          <ProgressPill
+            value={answerProgress.progress}
+            label={`${answerProgress.correctItems}/${totalRounds}`}
+          />
+          <AccuracyChip accuracy={answerProgress.accuracy} />
+          <PracticeModeBadge />
         </div>
       </div>
 
       {/* Sub-level Steps */}
-      <div className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-2 md:mt-4 px-4">
-        {steps.map((step, idx) => {
-          const isCurrent = idx === currentStepIndex;
-          const isDone = idx < currentStepIndex;
-          const label = STEP_LABELS[step].split(". ")[1];
-
-          return (
-            <div
-              key={step}
-              className={cn(
-                "px-4 py-1.5 md:px-6 md:py-2 rounded-full font-bold text-xs md:text-sm border-b-4 shadow-md whitespace-nowrap transition-all",
-                isCurrent
-                  ? "bg-amber-400 border-amber-500 text-amber-950 scale-105"
-                  : isDone
-                  ? "bg-green-500 border-green-600 text-white"
-                  : "bg-gray-200 border-gray-300 text-gray-600"
-              )}
-            >
-              {label}
-            </div>
-          );
-        })}
-      </div>
+      <PracticeStepRail
+        className="mt-2 md:mt-4"
+        steps={steps.map((step, idx) => ({
+          label: STEP_LABELS[step].split(". ")[1],
+          state: idx === currentStepIndex ? "current" : idx < currentStepIndex ? "done" : "pending",
+        }))}
+      />
     
       {/* Main Game Content */}
       {/* 👇 Removed pt-20 to let it center naturally, and adjusted the gap */}

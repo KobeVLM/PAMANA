@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
+import {
+  AccuracyChip,
+  PracticeModeBadge,
+  PracticeStepRail,
+  ProgressPill,
+} from '@/components/practice/PracticeHud'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
@@ -10,6 +16,7 @@ import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
+import { useAnswerProgress } from '@/hooks/useAnswerProgress'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi, type Bi } from '@/lib/i18n'
 import api from '@/lib/api'
@@ -86,12 +93,12 @@ export const SyllablePracticePage: React.FC = () => {
   const [practiceComplete, setPracticeComplete] = useState(false)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
   const [celebrate, setCelebrate] = useState(0)
-  
-  // Score tracking
-  const [totalScore, setTotalScore] = useState(0)
-  const [totalQuestions, setTotalQuestions] = useState(0)
 
   const currentSubLevel = SUB_LEVELS[currentSubLevelIndex]
+
+  // Two sets per sub-level, four sub-levels: eight scored items per run.
+  const answerProgress = useAnswerProgress(SUB_LEVELS.length * 2)
+  const { recordAnswer, reset: resetAnswerProgress } = answerProgress
 
   // --- BGM Volume Ducking Logic ---
   const bgmRef = useRef<HTMLAudioElement | null>(null)
@@ -235,13 +242,12 @@ export const SyllablePracticePage: React.FC = () => {
       duckBGM(2000)
 
       const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
+      recordAnswer(`${currentSubLevel}:${setId}`, isCorrect)
       setSelectedId(optionId)
       setFeedback(isCorrect ? 'correct' : 'incorrect')
-      setTotalQuestions(prev => prev + 1)
 
       if (isCorrect) {
         setCelebrate((count) => count + 1)
-        setTotalScore(prev => prev + 1)
         replayVoice()
       } else {
         playWrong()
@@ -269,20 +275,19 @@ export const SyllablePracticePage: React.FC = () => {
         }
       }, 500)
     },
-    [currentSet, selectedId, isSubmitting, attempts, advance, replayVoice, playWrong, duckBGM]
+    [currentSet, selectedId, isSubmitting, attempts, advance, replayVoice, playWrong, duckBGM, currentSubLevel, setId, recordAnswer]
   )
 
   // Handle Resets
   const handleResetPractice = useCallback(() => {
     setCurrentSubLevelIndex(0)
     setSetId(1)
-    setTotalScore(0)
-    setTotalQuestions(0)
+    resetAnswerProgress()
     setPracticeComplete(false)
     if (bgmRef.current) {
       bgmRef.current.play()?.catch(() => {})
     }
-  }, [])
+  }, [resetAnswerProgress])
 
   if (isLoading) {
     return (
@@ -304,7 +309,7 @@ export const SyllablePracticePage: React.FC = () => {
   }
 
   if (practiceComplete) {
-    const accuracy = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0
+    const accuracy = answerProgress.accuracy ?? 0
 
     return (
       <div className="min-h-screen w-full bg-[#EAF0D8] flex items-center justify-center p-4">
@@ -384,53 +389,23 @@ export const SyllablePracticePage: React.FC = () => {
 
         {/* Right: Progress Bar & Practice Mode */}
         <div className="flex flex-col items-end z-30 mt-1 gap-3">
-          
-          {/* Progress Bar (Original style) */}
-          <div className="flex items-center bg-[#8CC63F] border-[4px] border-[#6A9C2C] rounded-full p-1.5 pr-5 shadow-[0_4px_6px_rgba(0,0,0,0.3)] w-48 md:w-64 lg:w-80">
-            <div className="flex-1 h-5 md:h-8 bg-[#2F6A3E] rounded-full border-[3px] border-[#204D2B] shadow-[inset_0_3px_5px_rgba(0,0,0,0.6)] overflow-hidden relative">
-              <div
-                className="absolute top-0 left-0 h-full bg-[#8CC63F] rounded-full transition-all duration-500 border-r-2 border-[#6A9C2C]"
-                style={{ width: `${Math.round(((currentSubLevelIndex + 1) / SUB_LEVELS.length) * 100)}%` }}
-              />
-            </div>
-            <span className="ml-2 md:ml-3 text-white font-black text-lg md:text-2xl drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] min-w-[3ch] text-right tracking-wide">
-              {currentSubLevelIndex + 1}/4
-            </span>
-          </div>
-
-          {/* Practice Mode Badge */}
-          <div className="bg-[#2d5e3e]/95 backdrop-blur-md px-4 py-1.5 md:px-6 md:py-2 rounded-full border-4 border-[#a4cba9] shadow-[0_4px_0_#1e422b]">
-            <span className="text-sm md:text-base font-black text-white font-heading drop-shadow-md uppercase tracking-wider">
-              Practice Mode
-            </span>
-          </div>
+          <ProgressPill
+            value={answerProgress.progress}
+            label={`${answerProgress.correctItems}/${SUB_LEVELS.length * 2}`}
+          />
+          <AccuracyChip accuracy={answerProgress.accuracy} />
+          <PracticeModeBadge />
         </div>
       </div>
 
       {/* Sub-level Steps */}
-      <div className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-2 md:mt-4 px-4">
-        {SUB_LEVELS.map((sl, idx) => {
-          const label = SUB_LEVEL_LABELS[sl].fil.split('. ')[1]
-          const isCurrent = currentSubLevelIndex === idx
-          const isDone = idx < currentSubLevelIndex
-
-          return (
-            <div
-              key={sl}
-              className={cn(
-                'px-4 py-1.5 md:px-6 md:py-2 rounded-full font-bold text-xs md:text-sm border-b-4 shadow-md whitespace-nowrap transition-all',
-                isCurrent
-                  ? 'bg-amber-400 border-amber-500 text-amber-950 scale-105'
-                  : isDone
-                  ? 'bg-green-500 border-green-600 text-white'
-                  : 'bg-gray-200 border-gray-300 text-gray-600'
-              )}
-            >
-              {label}
-            </div>
-          )
-        })}
-      </div>
+      <PracticeStepRail
+        className="mt-2 md:mt-4"
+        steps={SUB_LEVELS.map((sl, idx) => ({
+          label: SUB_LEVEL_LABELS[sl].fil.split('. ')[1],
+          state: idx === currentSubLevelIndex ? 'current' : idx < currentSubLevelIndex ? 'done' : 'pending',
+        }))}
+      />
 
       {/* Main Game Content */}
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-4 z-10 gap-4 md:gap-6">
