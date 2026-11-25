@@ -94,6 +94,8 @@ describe("SyllableModulePage", () => {
   beforeEach(() => {
     mockGet.mockReset()
     mockPost.mockReset()
+    window.localStorage.clear()
+    document.documentElement.classList.remove("pamana-focus")
     mockGet.mockImplementation((url: string) =>
       Promise.resolve({
         data: url.startsWith("/syllables/set") ? makeSet() : statusData,
@@ -102,34 +104,71 @@ describe("SyllableModulePage", () => {
     mockPost.mockResolvedValue({ data: { nextSetId: 2 } })
   })
 
-  it("keeps the same option set on wrong tries and reveals the hint on the third", async () => {
+  it("keeps the same option set on wrong tries, fades one, then asks for confirmation", async () => {
     const user = userEvent.setup()
     render(<SyllableModulePage />)
 
     await screen.findByRole("button", { name: "KA" })
+    // The two-second hand demonstration gates the first interaction.
+    await user.click(screen.getByRole("button", { name: /Skip/i }))
     expect(tileNames()).toEqual(["BA", "KA", "LA", "MA"])
 
+    // Attempt 1: gentle encouragement, no answer revealed.
     await user.click(screen.getByRole("button", { name: "KA" }))
     expect(buttonBg("KA")).toContain("R_button.png")
-    expect(screen.queryByText(/color Green/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Halos nakuha mo na/)).toBeInTheDocument()
     expect(tileNames()).toEqual(["BA", "KA", "LA", "MA"])
 
+    // Attempt 2: one wrong choice is faded and disabled.
     await waitForReset("KA")
     await user.click(screen.getByRole("button", { name: "KA" }))
-    expect(screen.queryByText(/color Green/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/Isa nang mali ang tinanggal/)).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "KA (tinanggal)" })).toBeDisabled()
 
-    await waitForReset("KA")
-    await user.click(screen.getByRole("button", { name: "KA" }))
+    // Attempt 3: side-by-side comparison and a confirming tap. KA is faded,
+    // so the retry uses a different (still active) distractor.
+    await waitFor(
+      () =>
+        expect(screen.getByRole("button", { name: "LA" })).not.toBeDisabled(),
+      { timeout: 3000 }
+    )
+    await user.click(screen.getByRole("button", { name: "LA" }))
     expect(buttonBg("BA")).toContain("G_button.png")
-    await waitForReset("KA")
-    expect(screen.getByText(/color Green/i)).toBeInTheDocument()
+    expect(screen.getByText(/Heto ang tamang sagot: BA/)).toBeInTheDocument()
+    await user.click(screen.getByRole("button", { name: /Kumpirmahin/i }))
+    await waitFor(
+      () =>
+        expect(mockGet).toHaveBeenCalledWith(
+          expect.stringContaining("/syllables/set?subLevel=pagsama&setId=2")
+        ),
+      { timeout: 4000 }
+    )
   }, 20000)
+
+  it("keeps the progress bar visible while Focus View hides scenery", async () => {
+    render(<SyllableModulePage />)
+
+    await screen.findByRole("button", { name: /Buksan ang Focus View/i })
+    expect(screen.getByRole("progressbar")).toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /Buksan ang Focus View/i })
+    )
+
+    expect(document.documentElement).toHaveClass("pamana-focus")
+    expect(
+      screen.getByRole("button", { name: /Lumabas sa Focus View/i })
+    ).toHaveAttribute("aria-pressed", "true")
+    // The HUD is not marked decorative, so it survives Focus View.
+    expect(screen.getByRole("progressbar")).toBeInTheDocument()
+  })
 
   it("reveals the correct answer immediately and advances to the next set", async () => {
     const user = userEvent.setup()
     render(<SyllableModulePage />)
 
     await screen.findByRole("button", { name: "BA" })
+    await user.click(screen.getByRole("button", { name: /Skip/i }))
     await user.click(screen.getByRole("button", { name: "BA" }))
 
     const correct = screen.getByRole("button", { name: "BA" })

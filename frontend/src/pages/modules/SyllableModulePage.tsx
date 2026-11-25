@@ -5,16 +5,23 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useAudio } from '@/contexts/AudioContext'
 import { PracticeCompletion } from '@/components/practice/PracticeCompletion'
 import { AccuracyChip, ProgressPill } from '@/components/practice/PracticeHud'
+import { FocusViewToggle } from '@/components/learning/FocusViewToggle'
+import { GestureDemo } from '@/components/learning/GestureDemo'
+import { ScaffoldMessage } from '@/components/learning/ScaffoldMessage'
 import { NPCDialogue } from '@/components/game/NPCDialogue'
 import { AudioPlayer } from '@/components/game/AudioPlayer'
-import { HINT_AFTER_ATTEMPTS } from '@/components/game/constants'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
 import { useAnswerProgress } from '@/hooks/useAnswerProgress'
+import { useFocusView } from '@/hooks/useFocusView'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi, type Bi } from '@/lib/i18n'
+import {
+  fadedDistractorId,
+  scaffoldStage,
+} from '@/lib/scaffolding'
 import api from '@/lib/api'
 import { createRunId } from '@/lib/runId'
 import { ArrowLeft } from 'lucide-react'
@@ -48,6 +55,11 @@ interface SyllableStatus {
 const SUB_LEVELS: SubLevel[] = ['pagsama', 'pakinggan', 'kilalanin', 'rhyming']
 // The backend serves five sets per sub-level.
 const SETS_PER_SUB_LEVEL = 5
+
+const GESTURE_LABEL = bi(
+  'Pindutin ang tamang pantig',
+  'Tap the matching syllable'
+)
 
 const SUB_LEVEL_LABELS: Record<SubLevel, Bi> = {
   pagsama: bi('1. Pagsama ng Tunog', '1. Blending Sounds'),
@@ -103,6 +115,19 @@ export const SyllableModulePage: React.FC = () => {
   const [runId] = useState(createRunId)
   const answerProgress = useAnswerProgress(SUB_LEVELS.length * SETS_PER_SUB_LEVEL)
   const { recordAnswer, reset: resetAnswerProgress } = answerProgress
+
+  const { focusView, toggleFocusView } = useFocusView()
+  const [showGesture, setShowGesture] = useState(true)
+  const finishGesture = useCallback(() => setShowGesture(false), [])
+
+  const stage = scaffoldStage(attempts)
+  const fadedId = currentSet
+    ? fadedDistractorId(
+        stage,
+        currentSet.options,
+        currentSet.targetSyllable.toLowerCase()
+      )
+    : null
 
   // --- BGM Volume Ducking Logic ---
   const bgmRef = useRef<HTMLAudioElement | null>(null)
@@ -233,6 +258,7 @@ export const SyllableModulePage: React.FC = () => {
       setStatus(s)
       const set = await fetchSet(s.currentSubLevel, s.currentSetId)
       setCurrentSet(set)
+      setShowGesture(true)
     } catch (err) {
       setLoadError(err)
     } finally {
@@ -255,6 +281,7 @@ export const SyllableModulePage: React.FC = () => {
         setStatus(updatedStatus)
         const set = await fetchSet(subLevel, setId)
         setCurrentSet(set)
+        setShowGesture(true)
       } catch {
         toast.error('Hindi ma-load ang susunod na gawain.')
       }
@@ -262,31 +289,33 @@ export const SyllableModulePage: React.FC = () => {
     [fetchStatus, fetchSet]
   )
 
-  const handleSelect = useCallback(
-    async (optionId: string) => {
-      if (!currentSet || selectedId || isSubmitting) return
-      
+  const submitAnswer = useCallback(
+    async (optionId: string, guided = false) => {
+      if (!currentSet || (selectedId && !guided) || isSubmitting) return
+
       duckBGM(2000)
 
-      const isCorrect =
-        optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
+      const targetId = currentSet.targetSyllable.toLowerCase()
+      // A stage-3 confirm is a guided success: the wrong attempts stay in the
+      // telemetry, and the final acknowledgement counts as the solved item.
+      const isCorrect = guided || optionId.toLowerCase() === targetId
+      const newAttempts = attempts + 1
+      const attemptStage = scaffoldStage(newAttempts)
+
       setSelectedId(optionId)
       setFeedback(isCorrect ? 'correct' : 'incorrect')
+      setAttempts(newAttempts)
+      setCorrectId(isCorrect || attemptStage >= 3 ? targetId : null)
 
       if (isCorrect) {
         setCelebrate((count) => count + 1)
         replayVoice()
       } else {
         playWrong()
+        // Stage 1 replays the target sound with the encouragement.
+        if (attemptStage === 1) replayVoice()
       }
 
-      const newAttempts = attempts + 1
-      setAttempts(newAttempts)
-      setCorrectId(
-        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS
-          ? currentSet.targetSyllable.toLowerCase()
-          : null
-      )
       const accuracy = isCorrect ? 100 : Math.max(0, 100 - newAttempts * 25)
 
       setIsSubmitting(true)
@@ -363,6 +392,16 @@ export const SyllableModulePage: React.FC = () => {
       recordAnswer,
     ]
   )
+
+  const handleSelect = useCallback(
+    (optionId: string) => submitAnswer(optionId),
+    [submitAnswer]
+  )
+
+  const handleGuidedConfirm = useCallback(() => {
+    if (!currentSet) return
+    void submitAnswer(currentSet.targetSyllable.toLowerCase(), true)
+  }, [currentSet, submitAnswer])
 
   const handleResetModule = useCallback(async () => {
     setIsLoading(true)
@@ -456,7 +495,7 @@ export const SyllableModulePage: React.FC = () => {
       className="relative h-screen w-full bg-cover bg-center flex flex-col font-sans overflow-hidden"
       style={{ backgroundImage: "url('/images/module-bg/m-Farm.jpg')" }}
     >
-      <div className="absolute inset-0 bg-black/15 z-0 pointer-events-none" />
+      <div data-decorative className="absolute inset-0 bg-black/15 z-0 pointer-events-none" />
 
       {/* Top Bar */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
@@ -469,8 +508,8 @@ export const SyllableModulePage: React.FC = () => {
           Pamana Trail
         </button>
 
-        {/* Center: Title Image */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-2 md:pt-4">
+        {/* Center: Title Image (decorative in Focus View) */}
+        <div data-decorative className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-2 md:pt-4">
           <img
             src="/images/moduletitles/C_m1.png"
             alt="Module 1"
@@ -478,8 +517,10 @@ export const SyllableModulePage: React.FC = () => {
           />
         </div>
 
-        {/* Right: answer-based progress + accuracy as a separate number */}
+        {/* Right: focus toggle + answer-based progress + accuracy. None of
+            these are decorative: progress must stay visible in Focus View. */}
         <div className="flex items-center gap-3 z-30">
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
           <ProgressPill
             size="wide"
             value={moduleComplete ? 100 : answerProgress.progress}
@@ -493,8 +534,8 @@ export const SyllableModulePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Sub-level Steps */}
-      <div className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-8 md:mt-12 px-4">
+      {/* Sub-level Steps (decorative; the progress pill above stays visible) */}
+      <div data-decorative className="relative z-20 flex justify-center flex-wrap gap-2 md:gap-4 mt-8 md:mt-12 px-4">
         {SUB_LEVELS.map((sl) => {
           const acc = status.subLevelAccuracies[sl] ?? 0
           const label = SUB_LEVEL_LABELS[sl].fil.split('. ')[1]
@@ -613,12 +654,16 @@ export const SyllableModulePage: React.FC = () => {
         </div>
 
         {/* Options / Choices */}
-        <div className="w-full max-w-2xl px-4 md:px-0 mt-2">
+        <div className="relative w-full max-w-2xl px-4 md:px-0 mt-2">
+          {showGesture && (
+            <GestureDemo label={GESTURE_LABEL} onComplete={finishGesture} />
+          )}
           <div className="grid grid-cols-4 gap-3 md:gap-6 w-full">
             {currentSet.options.map((opt) => {
               const isSelected = selectedId === opt.id
               const isCorrect = correctId === opt.id
               const isWrong = isSelected && !isCorrect
+              const isFaded = fadedId === opt.id
 
               let bgImg = '/images/Y_button.png'
               if (isCorrect) bgImg = '/images/G_button.png'
@@ -627,11 +672,18 @@ export const SyllableModulePage: React.FC = () => {
               return (
                 <button
                   key={opt.id}
-                  aria-label={opt.label}
+                  aria-label={isFaded ? `${opt.label} (tinanggal)` : opt.label}
                   onClick={() => handleSelect(opt.id)}
-                  disabled={isSubmitting || (!!selectedId && !isWrong)}
-                  // ✅ REMOVED disabled:opacity-80 so it stays 100% bright
-                  className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
+                  disabled={
+                    showGesture ||
+                    isSubmitting ||
+                    isFaded ||
+                    (!!selectedId && !isWrong)
+                  }
+                  className={cn(
+                    'relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md',
+                    isFaded && 'opacity-25 grayscale'
+                  )}
                   style={{ backgroundImage: `url(${bgImg})` }}
                 >
                   <span 
@@ -649,25 +701,26 @@ export const SyllableModulePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Feedback Area */}
-        <div className="h-12 w-full flex items-center justify-center mt-2">
-          {feedback && (
-            <div
-              className={cn(
-                'px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce',
-                feedback === 'correct' ? 'bg-green-500' : 'bg-red-500'
-              )}
-            >
-              {feedback === 'correct'
-                ? STRINGS.correct.fil
-                : 'Almost ! Try again.'}
+        {/* Feedback Area: stage-based guidance instead of a generic retry */}
+        <div className="w-full flex items-center justify-center mt-2">
+          {feedback === 'correct' && (
+            <div className="px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce bg-green-500">
+              {STRINGS.correct.fil}
             </div>
           )}
-          {attempts >= HINT_AFTER_ATTEMPTS && !selectedId && (
-            <div className="px-6 py-2 rounded-full font-bold bg-green-500 text-white shadow-lg">
-              Hint: It's color Green!
-            </div>
-          )}
+          <ScaffoldMessage
+            stage={stage}
+            target={currentSet.targetSyllable.toUpperCase()}
+            parts={
+              currentSet.subLevel === 'pagsama'
+                ? [currentSet.consonant ?? '', currentSet.vowel ?? ''].filter(
+                    Boolean
+                  )
+                : []
+            }
+            onReplay={replayVoice}
+            onConfirm={handleGuidedConfirm}
+          />
         </div>
       </div>
     </div>

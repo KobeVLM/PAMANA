@@ -9,16 +9,20 @@ import {
   PracticeStepRail,
   ProgressPill,
 } from "@/components/practice/PracticeHud";
+import { FocusViewToggle } from "@/components/learning/FocusViewToggle";
+import { GestureDemo } from "@/components/learning/GestureDemo";
+import { ScaffoldMessage } from "@/components/learning/ScaffoldMessage";
 import { NPCDialogue } from "@/components/game/NPCDialogue";
 import { AudioPlayer } from "@/components/game/AudioPlayer";
-import { HINT_AFTER_ATTEMPTS } from "@/components/game/constants";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
 import { useAnswerProgress } from "@/hooks/useAnswerProgress";
+import { useFocusView } from "@/hooks/useFocusView";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi, type Bi } from "@/lib/i18n";
+import { fadedDistractorId, scaffoldStage } from "@/lib/scaffolding";
 import api from "@/lib/api";
 import { createRunId } from "@/lib/runId";
 import type { ModuleProgress } from "@/types";
@@ -46,6 +50,16 @@ interface Props {
   moduleNumber: 2 | 3;
   domain?: "self_body" | "family_home";
 }
+
+const GESTURE_LABEL = bi(
+  'Pindutin ang tamang sagot',
+  'Tap the correct answer'
+)
+
+const GESTURE_LISTEN_LABEL = bi(
+  'Pakinggan, tap ang Susunod',
+  'Listen, then tap Next'
+)
 
 const STEP_LABELS: Record<SpiralStep, string> = {
   pakinggan: "1. Pakinggan",
@@ -119,6 +133,18 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
   const [runId] = useState(createRunId);
   const answerProgress = useAnswerProgress(totalWords * scoredItemsPerWord);
   const { recordAnswer, reset: resetAnswerProgress } = answerProgress;
+
+  const { focusView, toggleFocusView } = useFocusView();
+  const [showGesture, setShowGesture] = useState(true);
+  const finishGesture = useCallback(() => setShowGesture(false), []);
+
+  const stage = scaffoldStage(attempts);
+  const targetId =
+    currentStep === "gamitin"
+      ? "correct-answer"
+      : (currentWord?.wordId ?? null);
+  const fadedId = fadedDistractorId(stage, matchOptions, targetId);
+
   const [, setWordsCompleted] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
   const [gamitinSentence, setGamitinSentence] = useState<string>(
@@ -254,6 +280,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       }
       isFirstLoad.current = false;
       setCurrentStep("pakinggan");
+      setShowGesture(true);
       setSelectedId(null);
       setCorrectId(null);
       setAttempts(0);
@@ -333,25 +360,25 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
     }
   }, [currentWord, currentStep, loadStepOptions]);
 
-  const handleStepSelect = useCallback(
-    async (optionId: string) => {
-      if (!currentWord || selectedId || isSubmitting) return;
+  const submitStepAnswer = useCallback(
+    async (optionId: string, guided = false) => {
+      if (!currentWord || (selectedId && !guided) || isSubmitting) return;
 
       duckBGM(2000);
 
-      const isCorrect =
-        (currentStep === "gamitin" && optionId === "correct-answer") ||
-        (currentStep !== "gamitin" && optionId === currentWord.wordId);
-
-      const targetId =
+      const answerTargetId =
         currentStep === "gamitin" ? "correct-answer" : currentWord.wordId;
+      // A stage-3 confirm is a guided success. The earlier wrong attempts stay
+      // in the event log; the acknowledgement counts as the solved item.
+      const isCorrect = guided || optionId === answerTargetId;
       const newAttempts = attempts + 1;
+      const attemptStage = scaffoldStage(newAttempts);
       setAttempts(newAttempts);
 
       setSelectedId(optionId);
       setFeedback(isCorrect ? "correct" : "incorrect");
       setCorrectId(
-        isCorrect || newAttempts >= HINT_AFTER_ATTEMPTS ? targetId : null,
+        isCorrect || attemptStage >= 3 ? answerTargetId : null,
       );
 
       if (isCorrect) {
@@ -375,6 +402,8 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         }
       } else {
         playWrong();
+        // Stage 1 replays the target word with the encouragement.
+        if (attemptStage === 1) replayWord();
       }
 
       setIsSubmitting(true);
@@ -415,6 +444,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         const stepIdx = SPIRAL_STEPS.indexOf(currentStep);
         if (stepIdx < SPIRAL_STEPS.length - 1) {
           setCurrentStep(SPIRAL_STEPS[stepIdx + 1]);
+          setShowGesture(true);
           setSelectedId(null);
           setCorrectId(null);
           setFeedback(null);
@@ -441,6 +471,16 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
       recordAnswer,
     ],
   );
+
+  const handleStepSelect = useCallback(
+    (optionId: string) => submitStepAnswer(optionId),
+    [submitStepAnswer]
+  );
+
+  const handleGuidedConfirm = useCallback(() => {
+    if (!targetId) return;
+    void submitStepAnswer(targetId, true);
+  }, [targetId, submitStepAnswer]);
 
   const handleResetModule = useCallback(async () => {
     setIsResetting(true);
@@ -599,7 +639,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           : "url('/images/module-bg/m-Kitchen.jpg')",
       }}
     >
-      <div className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
+      <div data-decorative className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
 
       {/* Top Bar — Identical to Module 1 */}
       <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
@@ -611,7 +651,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           Pamana Trail
         </button>
 
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-6 md:pt-8">
+        <div data-decorative className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-6 md:pt-8">
           <img
             src={
               isModule2
@@ -628,7 +668,9 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           />
         </div>
 
+        {/* Focus toggle, progress and accuracy stay visible in Focus View. */}
         <div className="flex items-center gap-3 z-30">
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
           <ProgressPill
             size="wide"
             value={
@@ -645,19 +687,22 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         </div>
       </div>
 
-      <PracticeStepRail
-        size="wide"
-        className="mt-8 md:mt-12"
-        steps={SPIRAL_STEPS.map((step, idx) => ({
-          label: STEP_LABELS[step].split(". ")[1],
-          state:
-            currentStep === step
-              ? "current"
-              : idx < stepIdx
-                ? "done"
-                : "pending",
-        }))}
-      />
+      {/* Decorative in Focus View; the progress pill above still shows progress. */}
+      <div data-decorative>
+        <PracticeStepRail
+          size="wide"
+          className="mt-8 md:mt-12"
+          steps={SPIRAL_STEPS.map((step, idx) => ({
+            label: STEP_LABELS[step].split(". ")[1],
+            state:
+              currentStep === step
+                ? "current"
+                : idx < stepIdx
+                  ? "done"
+                  : "pending",
+          }))}
+        />
+      </div>
 
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-8 z-10 gap-4 md:gap-6">
         <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-4 md:mb-6">
@@ -783,9 +828,19 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
         </div>
 
         {currentStep === "pakinggan" && (
-          <div className="w-full flex justify-center mt-2 z-20">
+          <div className="relative w-full flex justify-center mt-2 z-20">
+            {showGesture && (
+              <GestureDemo
+                label={GESTURE_LISTEN_LABEL}
+                onComplete={finishGesture}
+              />
+            )}
             <button
-              onClick={() => setCurrentStep("kilalanin")}
+              onClick={() => {
+                setCurrentStep("kilalanin");
+                setShowGesture(true);
+              }}
+              disabled={showGesture}
               className="flex items-center gap-3 bg-[#43A047] hover:bg-[#2E7D32] text-white font-black px-10 py-4 rounded-full border-b-[6px] border-[#1B5E20] active:border-b-0 active:translate-y-1 transition-all shadow-xl text-xl"
             >
               Susunod <ArrowRight className="w-6 h-6 stroke-[3]" />
@@ -793,7 +848,13 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           </div>
         )}
 
-        <div className="w-full max-w-2xl px-4 md:px-0 mt-2">
+        <div className="relative w-full max-w-2xl px-4 md:px-0 mt-2">
+          {!optionsLoading &&
+            !optionsError &&
+            currentStep !== "pakinggan" &&
+            showGesture && (
+              <GestureDemo label={GESTURE_LABEL} onComplete={finishGesture} />
+            )}
           {optionsLoading ? (
             <div className="text-white font-bold text-center animate-pulse">
               Inihahanda ang mga opsyon...
@@ -809,6 +870,7 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                   const isSelected = selectedId === opt.id;
                   const isCorrect = correctId === opt.id;
                   const isWrong = isSelected && !isCorrect;
+                  const isFaded = fadedId === opt.id;
 
                   let bgImg = "/images/Y_button.png";
                   if (isCorrect) bgImg = "/images/G_button.png";
@@ -817,9 +879,20 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
                   return (
                     <button
                       key={opt.id}
+                      aria-label={
+                        isFaded ? `${opt.label} (tinanggal)` : opt.label
+                      }
                       onClick={() => void handleStepSelect(opt.id)}
-                      disabled={isSubmitting || (!!selectedId && !isWrong)}
-                      className="relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md"
+                      disabled={
+                        showGesture ||
+                        isSubmitting ||
+                        isFaded ||
+                        (!!selectedId && !isWrong)
+                      }
+                      className={cn(
+                        "relative aspect-square flex items-center justify-center bg-contain bg-center bg-no-repeat transition-transform hover:scale-105 active:scale-95 disabled:hover:scale-100 outline-none focus-visible:ring-4 focus-visible:ring-amber-400 rounded-[20%] overflow-hidden drop-shadow-md",
+                        isFaded && "opacity-25 grayscale"
+                      )}
                       style={{ backgroundImage: `url(${bgImg})` }}
                     >
                       {opt.imageUrl && currentStep === "kilalanin" ? (
@@ -864,24 +937,29 @@ export const VocabularyModulePage: React.FC<Props> = ({ moduleNumber }) => {
           )}
         </div>
 
-        <div className="h-12 w-full flex items-center justify-center mt-2">
-          {feedback && (
-            <div
-              className={cn(
-                "px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce",
-                feedback === "correct" ? "bg-green-500" : "bg-red-500",
-              )}
-            >
-              {feedback === "correct"
-                ? "Tama! Magaling!"
-                : "Almost ! Try again."}
+        {/* Feedback Area: stage-based guidance instead of a generic retry */}
+        <div className="w-full flex items-center justify-center mt-2">
+          {feedback === "correct" && (
+            <div className="px-6 py-2 rounded-full font-bold text-white shadow-lg animate-bounce bg-green-500">
+              Tama! Magaling!
             </div>
           )}
-          {attempts >= HINT_AFTER_ATTEMPTS && !selectedId && (
-            <div className="px-6 py-2 rounded-full font-bold bg-green-500 text-white shadow-lg">
-              Hint: It's color Green!
-            </div>
-          )}
+          <ScaffoldMessage
+            stage={stage}
+            target={
+              currentStep === "gamitin"
+                ? (matchOptions.find((o) => o.id === "correct-answer")?.label ??
+                  currentWord.word)
+                : currentWord.word.toUpperCase()
+            }
+            parts={
+              currentStep === "gamitin"
+                ? []
+                : formatWordAsSyllables(currentWord.word).split(" - ")
+            }
+            onReplay={replayWord}
+            onConfirm={handleGuidedConfirm}
+          />
         </div>
       </div>
     </div>

@@ -66,11 +66,18 @@ const mockGamitinData = {
 const mockGet = api.get as Mock
 const mockPost = api.post as Mock
 
+const skipGesture = async (user: ReturnType<typeof userEvent.setup>) => {
+  const skip = screen.queryByRole("button", { name: /Skip/i })
+  if (skip) await user.click(skip)
+}
+
 describe("VocabularyModulePage", () => {
   beforeEach(() => {
     mockGet.mockReset()
     mockPost.mockReset()
     playAudioResolve = null
+    window.localStorage.clear()
+    document.documentElement.classList.remove("pamana-focus")
 
     mockGet.mockImplementation((url: string) => {
       if (url.startsWith("/vocabulary/next")) {
@@ -109,15 +116,24 @@ describe("VocabularyModulePage", () => {
 
     // 1. Step: pakinggan -> click Susunod
     const nextBtn = await screen.findByRole("button", { name: /susunod/i })
+    await skipGesture(user)
     await user.click(nextBtn)
 
     // 2. Step: kilalanin -> click option matching target
     const optImage = await screen.findByAltText("mata")
+    await skipGesture(user)
     const optButtonKilalanin = optImage.closest("button")!
     await user.click(optButtonKilalanin)
 
+    // Wait for the kilalanin image cards to be replaced by text cards.
+    await waitFor(
+      () => expect(screen.queryByAltText("mata")).not.toBeInTheDocument(),
+      { timeout: 3000 }
+    )
+
     // Wait for step transition to basahin (1500ms timeout in handleStepSelect)
     const optButtonBasahin = await screen.findByRole("button", { name: "mata" }, { timeout: 3000 })
+    await skipGesture(user)
     await user.click(optButtonBasahin)
 
     // Wait for step transition to gamitin (1500ms timeout in handleStepSelect)
@@ -128,6 +144,7 @@ describe("VocabularyModulePage", () => {
       expect(screen.getByRole("button", { name: "kamay" })).toBeInTheDocument()
     })
 
+    await skipGesture(user)
     const optButtonGamitin = screen.getByRole("button", { name: "mata" })
     expect(optButtonGamitin.style.backgroundImage).toContain("Y_button.png")
 
@@ -154,15 +171,24 @@ describe("VocabularyModulePage", () => {
 
     // 1. Step: pakinggan -> click Susunod
     const nextBtn = await screen.findByRole("button", { name: /susunod/i })
+    await skipGesture(user)
     await user.click(nextBtn)
 
     // 2. Step: kilalanin -> click option matching target
     const optImage = await screen.findByAltText("mata")
+    await skipGesture(user)
     const optButtonKilalanin = optImage.closest("button")!
     await user.click(optButtonKilalanin)
 
+    // Wait for the kilalanin image cards to be replaced by text cards.
+    await waitFor(
+      () => expect(screen.queryByAltText("mata")).not.toBeInTheDocument(),
+      { timeout: 3000 }
+    )
+
     // Wait for step transition to basahin
     const optButtonBasahin = await screen.findByRole("button", { name: "mata" }, { timeout: 3000 })
+    await skipGesture(user)
     await user.click(optButtonBasahin)
 
     // Wait for step transition to gamitin
@@ -172,14 +198,17 @@ describe("VocabularyModulePage", () => {
       expect(screen.getByRole("button", { name: "kamay" })).toBeInTheDocument()
     })
 
+    await skipGesture(user)
     const wrongButton = screen.getByRole("button", { name: "kamay" })
     expect(wrongButton.style.backgroundImage).toContain("Y_button.png")
 
     // Click WRONG answer
     await user.click(wrongButton)
 
-    // VERIFY: The button turns RED
+    // VERIFY: The button turns RED and stage-1 encouragement replaces the
+    // generic retry message.
     expect(wrongButton.style.backgroundImage).toContain("R_button.png")
-    expect(screen.getByText("Almost ! Try again.")).toBeInTheDocument()
+    expect(screen.getByText(/Halos nakuha mo na/)).toBeInTheDocument()
+    expect(screen.queryByText(/Almost ! Try again/)).not.toBeInTheDocument()
   }, 15000)
 })
