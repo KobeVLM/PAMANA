@@ -15,7 +15,7 @@ import { AudioPlayer } from '@/components/game/AudioPlayer'
 import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { useSfx } from '@/hooks/useGameAudio'
-import { useAnswerProgress } from '@/hooks/useAnswerProgress'
+import { usePracticeAnswerProgress } from '@/hooks/usePracticeAnswerProgress'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi } from '@/lib/i18n'
 import api from '@/lib/api'
@@ -76,7 +76,10 @@ export const SentencePracticePage: React.FC = () => {
   const [celebrate, setCelebrate] = useState(0)
 
   const [task, setTask] = useState<SentenceTask | null>(null)
-  const answerProgress = useAnswerProgress(MAX_ROUNDS)
+  const answerProgress = usePracticeAnswerProgress(MAX_ROUNDS, {
+    itemType: 'sentence_task',
+    moduleNumber: 4,
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<unknown>(null)
   const [isNoTasks, setIsNoTasks] = useState(false) // 👈 NEW STATE for empty response
@@ -204,7 +207,7 @@ export const SentencePracticePage: React.FC = () => {
     if (!task || submitted) return
 
     const correct = arranged.map((i) => i.word).join(' ') === task.correctOrder.join(' ')
-    answerProgress.recordAnswer(task.taskId, correct)
+    answerProgress.recordAnswer(task.taskId, correct, 'tier1')
     setIsCorrect(correct)
     setSubmitted(true)
     setSelectedSwapIndex(null)

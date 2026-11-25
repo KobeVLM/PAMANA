@@ -17,7 +17,7 @@ import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
 import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
-import { useAnswerProgress } from "@/hooks/useAnswerProgress";
+import { usePracticeAnswerProgress } from "@/hooks/usePracticeAnswerProgress";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi } from "@/lib/i18n";
 import api from "@/lib/api";
@@ -105,7 +105,10 @@ export const ImagePracticePage: React.FC = () => {
   const hasPlayedNpcRef = useRef(false);
 
   const totalRounds = roundWords.length || ROUND_TOTAL;
-  const answerProgress = useAnswerProgress(totalRounds);
+  const answerProgress = usePracticeAnswerProgress(totalRounds, {
+    itemType: "vocabulary_word",
+    moduleNumber: 2,
+  });
   const { recordAnswer, reset: resetAnswerProgress } = answerProgress;
 
   useScrollToTop(String(roundIndex));
@@ -291,7 +294,7 @@ export const ImagePracticePage: React.FC = () => {
       
       duckBGM(2000);
       const isCorrect = optionId === correctId;
-      recordAnswer(currentWord.wordId, isCorrect);
+      recordAnswer(currentWord.wordId, isCorrect, "kilalanin");
       
       setSelectedId(optionId);
       setFeedback(isCorrect ? "correct" : "incorrect");

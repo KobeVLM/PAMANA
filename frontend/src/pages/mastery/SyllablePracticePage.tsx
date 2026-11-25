@@ -16,7 +16,7 @@ import { LoadingState } from '@/components/common/LoadingState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { BilingualText } from '@/components/common/BilingualText'
 import { useAudioElement, useSfx } from '@/hooks/useGameAudio'
-import { useAnswerProgress } from '@/hooks/useAnswerProgress'
+import { usePracticeAnswerProgress } from '@/hooks/usePracticeAnswerProgress'
 import { useScrollToTop } from '@/hooks/useScrollToTop'
 import { STRINGS, bi, type Bi } from '@/lib/i18n'
 import api from '@/lib/api'
@@ -97,7 +97,10 @@ export const SyllablePracticePage: React.FC = () => {
   const currentSubLevel = SUB_LEVELS[currentSubLevelIndex]
 
   // Two sets per sub-level, four sub-levels: eight scored items per run.
-  const answerProgress = useAnswerProgress(SUB_LEVELS.length * 2)
+  const answerProgress = usePracticeAnswerProgress(SUB_LEVELS.length * 2, {
+    itemType: 'syllable_set',
+    moduleNumber: 1,
+  })
   const { recordAnswer, reset: resetAnswerProgress } = answerProgress
 
   // --- BGM Volume Ducking Logic ---
@@ -242,7 +245,7 @@ export const SyllablePracticePage: React.FC = () => {
       duckBGM(2000)
 
       const isCorrect = optionId.toLowerCase() === currentSet.targetSyllable.toLowerCase()
-      recordAnswer(`${currentSubLevel}:${setId}`, isCorrect)
+      recordAnswer(`${currentSubLevel}:${setId}`, isCorrect, currentSubLevel)
       setSelectedId(optionId)
       setFeedback(isCorrect ? 'correct' : 'incorrect')
 
