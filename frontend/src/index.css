@@ -170,6 +170,33 @@
   }
 }
 
+/* P1: the micro-tutorial hand moves down onto the answer cards. */
+@keyframes gesture-point {
+  from {
+    transform: translate(-14px, -18px) rotate(-12deg) scale(0.95);
+    opacity: 0.7;
+  }
+  to {
+    transform: translate(10px, 10px) rotate(-4deg) scale(1.05);
+    opacity: 1;
+  }
+}
+
+/*
+ * P1 Focus View: hide only scenery explicitly marked as decorative. The
+ * progress HUD, guidance, and answer cards are never marked, so nothing that
+ * drives the lesson disappears when a child turns focus mode on.
+ */
+.pamana-focus [data-decorative] {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gesture-point {
+    animation: none;
+  }
+}
+
 @layer utilities {
   /* Animation utilities for game feedback */
   .animate-bounce-in {
@@ -186,6 +213,11 @@
 
   .animate-star-pop {
     animation: star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  /* P1: hand cursor demonstrating a tap before play begins. */
+  .animate-gesture-point {
+    animation: gesture-point 1s ease-in-out infinite alternate;
   }
 
   /* Minimum touch target helpers */
