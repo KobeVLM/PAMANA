@@ -6,6 +6,7 @@ import com.pamana.auth.dto.LoginRequest;
 import com.pamana.auth.dto.RegisterRequest;
 import com.pamana.syllable.SyllableProgressRepository;
 import com.pamana.syllable.dto.SyllableProgressRequest;
+import com.pamana.vocabulary.WordMasteryRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +49,9 @@ public class AnswerEventTest {
     private SyllableProgressRepository syllableProgressRepository;
 
     @Autowired
+    private WordMasteryRepository wordMasteryRepository;
+
+    @Autowired
     private ModuleProgressRepository moduleProgressRepository;
 
     @Autowired
@@ -63,6 +67,7 @@ public class AnswerEventTest {
     public void setup() throws Exception {
         answerEventRepository.deleteAll();
         syllableProgressRepository.deleteAll();
+        wordMasteryRepository.deleteAll();
         moduleProgressRepository.deleteAll();
         userRepository.deleteAll();
 
@@ -196,6 +201,62 @@ public class AnswerEventTest {
                 .andExpect(jsonPath("$.correctItems", is(0)))
                 .andExpect(jsonPath("$.answeredItems", is(0)))
                 .andExpect(jsonPath("$.progressPercent", is(0.0)));
+    }
+
+    @Test
+    public void practiceAnswerIsLoggedWithoutChangingMastery() throws Exception {
+        UUID runId = UUID.randomUUID();
+
+        postPracticeEvent(runId, "word-1:basahin", false);
+
+        mockMvc.perform(get("/api/progress/" + userId + "/answer-progress")
+                .param("runId", runId.toString())
+                .param("totalItems", "2")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.correctItems", is(0)))
+                .andExpect(jsonPath("$.wrongAttempts", is(1)))
+                .andExpect(jsonPath("$.progressPercent", is(0.0)));
+
+        // Practice Mode must not touch the lesson score.
+        assertThat(wordMasteryRepository.count()).isZero();
+    }
+
+    @Test
+    public void practiceRunProgressesOnlyForSolvedItems() throws Exception {
+        UUID runId = UUID.randomUUID();
+
+        postPracticeEvent(runId, "word-1:basahin", false);
+        postPracticeEvent(runId, "word-1:basahin", true); // retry of the same item
+        postPracticeEvent(runId, "word-2:basahin", true);
+
+        mockMvc.perform(get("/api/progress/" + userId + "/answer-progress")
+                .param("runId", runId.toString())
+                .param("totalItems", "2")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.correctItems", is(2)))
+                .andExpect(jsonPath("$.wrongAttempts", is(1)))
+                .andExpect(jsonPath("$.progressPercent", is(100.0)));
+
+        assertThat(wordMasteryRepository.count()).isZero();
+    }
+
+    private void postPracticeEvent(UUID runId, String itemKey, boolean correct) throws Exception {
+        String body = objectMapper.writeValueAsString(java.util.Map.of(
+                "runId", runId.toString(),
+                "activity", "practice",
+                "itemType", "vocabulary_word",
+                "itemKey", itemKey,
+                "step", "basahin",
+                "moduleNumber", 2,
+                "correct", correct));
+
+        mockMvc.perform(post("/api/answer-events")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(body))
+                .andExpect(status().isCreated());
     }
 
     private void answerSyllable(UUID runId, String subLevel, int setId, boolean correct) throws Exception {
