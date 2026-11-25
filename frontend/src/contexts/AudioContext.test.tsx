@@ -54,7 +54,12 @@ function Harness({ onReady }: { onReady: (api: AudioApi) => void }) {
   useEffect(() => {
     onReady(api)
   }, [api, onReady])
-  return <span>{api.isAudioPlaying ? 'playing' : 'idle'}</span>
+  return (
+    <>
+      <span>{api.isAudioPlaying ? 'playing' : 'idle'}</span>
+      <span data-testid="current-url">{api.currentAudioUrl ?? 'none'}</span>
+    </>
+  )
 }
 
 function setup() {
@@ -121,6 +126,27 @@ describe('AudioProvider', () => {
 
     await expect(promise).resolves.toBe('ended')
     await waitFor(() => expect(screen.getByText('idle')).toBeInTheDocument())
+  })
+
+  it('exposes the speaking URL so captions can highlight in sync', async () => {
+    const getApi = setup()
+    expect(screen.getByTestId('current-url')).toHaveTextContent('none')
+
+    let promise!: Promise<PlaybackResult>
+    act(() => {
+      promise = getApi().playAudio('/audio/words/mata.mp3')
+    })
+    expect(screen.getByTestId('current-url')).toHaveTextContent(
+      '/audio/words/mata.mp3'
+    )
+
+    act(() => {
+      FakeAudio.instances.at(-1)!.end()
+    })
+    await expect(promise).resolves.toBe('ended')
+    await waitFor(() =>
+      expect(screen.getByTestId('current-url')).toHaveTextContent('none')
+    )
   })
 
   it('interrupts playback when stopAudio is called', async () => {

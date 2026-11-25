@@ -192,7 +192,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-gesture-point {
+  .animate-gesture-point,
+  .animate-pulse-glow,
+  .animate-replay-pulse {
     animation: none;
   }
 }

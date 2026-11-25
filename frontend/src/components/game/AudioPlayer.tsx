@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef } from 'react'
 import { Volume2, RefreshCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAudio } from '@/contexts/AudioContext'
+import { useReplayTelemetry } from '@/hooks/useReplayTelemetry'
 
 interface AudioPlayerProps {
   audioUrl: string
@@ -30,9 +31,9 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   fallbackText,
   size = 'md',
 }) => {
-  const { playAudio } = useAudio()
+  const { playAudio, isAudioPlaying, currentAudioUrl } = useAudio()
+  const { trackReplay } = useReplayTelemetry()
   const [hasError, setHasError] = React.useState(false)
-  const [isPlaying, setIsPlaying] = React.useState(false)
   const isMountedRef = useRef(true)
 
   useEffect(() => {
@@ -48,10 +49,8 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       return
     }
     setHasError(false)
-    setIsPlaying(true)
     const result = await playAudio(audioUrl, { fallbackText })
     if (!isMountedRef.current) return
-    setIsPlaying(false)
     if (result === 'error') setHasError(true)
   }, [audioUrl, fallbackText, playAudio])
 
@@ -60,6 +59,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       void play()
     }
   }, [autoPlay, audioUrl, play])
+
+  // Only taps are replays; the initial auto-play is not a learner request.
+  const handleClick = () => {
+    trackReplay({
+      itemType: 'target_audio',
+      itemKey: audioUrl,
+      source: 'target',
+    })
+    void play()
+  }
+
+  const isSpeaking = isAudioPlaying && currentAudioUrl === audioUrl
 
   const sizeClasses = {
     sm: 'w-10 h-10 text-sm',
@@ -76,14 +87,16 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   return (
     <button
       type="button"
-      onClick={() => void play()}
+      onClick={handleClick}
       aria-label={labelEn ? `${label} (${labelEn})` : label}
+      data-speaking={isSpeaking ? 'true' : undefined}
       className={cn(
-        'rounded-full flex flex-col items-center justify-center gap-1',
+        'flex flex-col items-center justify-center gap-1 rounded-full',
         'border-4 border-white bg-gradient-to-br from-pamana-gold to-pamana-amber',
         'text-white shadow-[0_6px_0_rgba(0,0,0,0.15)] transition-all duration-200',
         'hover:scale-105 active:scale-95',
-        isPlaying && 'animate-pulse-glow',
+        'animate-pulse-glow',
+        isSpeaking && 'ring-4 ring-white/90',
         sizeClasses[size],
         className
       )}

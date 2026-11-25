@@ -123,6 +123,11 @@ export default {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(45, 125, 70, 0.4)" },
           "50%": { boxShadow: "0 0 0 8px rgba(45, 125, 70, 0)" },
         },
+        /* P2: gentle pulse on the oversized replay button. */
+        "replay-pulse": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.06)" },
+        },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-8px)" },
@@ -160,6 +165,7 @@ export default {
         "bounce-in": "bounce-in 0.4s ease-out",
         shake: "shake 0.4s ease-in-out",
         "pulse-glow": "pulse-glow 2s infinite",
+        "replay-pulse": "replay-pulse 1.8s ease-in-out infinite",
         float: "float 3s ease-in-out infinite",
         "float-slow": "float-slow 6s ease-in-out infinite",
         "star-pop": "star-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)",

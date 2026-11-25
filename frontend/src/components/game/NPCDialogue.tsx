@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Volume2 } from 'lucide-react'
 import { Mascot } from './Mascot'
+import { ReplayButton } from './ReplayButton'
 import { cn } from '@/lib/utils'
 import { useAudio } from '@/contexts/AudioContext'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useReplayTelemetry } from '@/hooks/useReplayTelemetry'
 
 interface NPCDialogueProps {
   npc: 'lolo' | 'lola'
@@ -32,8 +34,13 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   className,
   moduleNumber, // 👈 Destructured here
 }) => {
-  const { playAudio } = useAudio()
-  
+  const { playAudio, isAudioPlaying, currentAudioUrl } = useAudio()
+  const { trackReplay } = useReplayTelemetry()
+
+  // The bubble lights up only while this exact clip is the active voice, so a
+  // different clip (target word, sound effect) cannot falsely highlight it.
+  const isSpeaking = Boolean(audioUrl) && isAudioPlaying && currentAudioUrl === audioUrl
+
   const name = npc === 'lolo' ? 'Lolo' : 'Lola'
   
   const mascot = npc === 'lolo'
@@ -85,6 +92,12 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
   }, [audioUrl, autoPlay, playInstruction])
 
   const handlePlay = () => {
+    trackReplay({
+      itemType: 'npc_instruction',
+      itemKey: audioUrl ?? line,
+      moduleNumber,
+      source: 'npc',
+    })
     if (audioUrl) {
       lastPlayedUrlRef.current = audioUrl
       playInstruction(audioUrl)
@@ -118,28 +131,42 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         </span>
       </div>
 
-      {/* Speech Bubble */}
-      <div className="relative w-fit min-w-0 max-w-sm sm:max-w-md md:max-w-lg rounded-2xl rounded-tl-sm border-[3px] border-[#D4A373] bg-[#FFF8E7] p-3 shadow-[0_5px_0_rgba(90,62,43,0.3)] mt-1">
-        
-        {/* Custom Triangle pointer */}
-        <div className="absolute -left-[13px] top-4 h-5 w-5 rotate-45 border-b-[3px] border-l-[3px] border-[#D4A373] bg-[#FFF8E7] rounded-sm" />
+      {/* Speech bubble + prominent replay control, centred at the activity top */}
+      <div className="flex min-w-0 flex-col items-center gap-1.5">
+        {(audioUrl || onPlayAudio) && (
+          <ReplayButton onReplay={handlePlay} isSpeaking={isSpeaking} />
+        )}
 
-        <div className="flex items-start justify-between gap-3 relative z-10">
-          <p className="flex-1 text-sm md:text-base leading-snug font-bold text-[#4A2F1D]">
-            {line}
-          </p>
-          
-          <div className="flex shrink-0 flex-col items-center gap-1.5 mt-0.5">
-            {(audioUrl || onPlayAudio) && (
-              <button
-                onClick={handlePlay}
-                aria-label="Pakinggan ang tagubilin"
-                className="flex h-8 w-8 items-center justify-center rounded-full border-[2px] border-[#C28A1D] bg-[#F6B333] text-white shadow-[0_2px_0_#C28A1D] hover:bg-[#F9C35B] active:translate-y-0.5 active:shadow-none transition-all"
-              >
-                <Volume2 className="w-4 h-4 drop-shadow-md" strokeWidth={3} />
-              </button>
+        <div
+          data-speaking={isSpeaking ? 'true' : undefined}
+          className={cn(
+            'relative mt-1 w-fit min-w-0 max-w-sm rounded-2xl rounded-tl-sm border-[3px] p-3 shadow-[0_5px_0_rgba(90,62,43,0.3)] sm:max-w-md md:max-w-lg',
+            isSpeaking
+              ? 'border-[#F6B333] bg-white ring-4 ring-[#F6B333]/70'
+              : 'border-[#D4A373] bg-[#FFF8E7]'
+          )}
+        >
+          {/* Custom Triangle pointer */}
+          <div
+            className={cn(
+              'absolute -left-[13px] top-4 h-5 w-5 rotate-45 rounded-sm border-b-[3px] border-l-[3px]',
+              isSpeaking ? 'border-[#F6B333] bg-white' : 'border-[#D4A373] bg-[#FFF8E7]'
             )}
-            
+          />
+
+          {isSpeaking && (
+            <p className="relative z-10 mb-1 inline-flex items-center gap-1 rounded-full bg-[#F6B333] px-2 py-0.5 text-xs font-black text-white">
+              <Volume2 className="h-3.5 w-3.5" aria-hidden="true" />
+              Nagsasalita / Speaking
+            </p>
+          )}
+
+          <div className="relative z-10 flex items-start justify-between gap-3">
+            {/* 32px == 24pt, the minimum readable size for read-along text. */}
+            <p className="flex-1 text-[32px] font-black leading-[1.1] text-[#2B1A0F]">
+              {line}
+            </p>
+
             {canToggleEn && (
               <button
                 type="button"
@@ -151,25 +178,25 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
                     ? 'Itago ang Ingles (Hide English)'
                     : 'Ipakita ang Ingles (Show English)'
                 }
-                className="rounded-full border-[2px] border-[#C28A1D] bg-[#F6B333] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_2px_0_#C28A1D] hover:bg-[#F9C35B] active:translate-y-0.5 active:shadow-none transition-all"
+                className="shrink-0 rounded-full border-[2px] border-[#C28A1D] bg-[#F6B333] px-2 py-0.5 text-[10px] font-black text-white shadow-[0_2px_0_#C28A1D] hover:bg-[#F9C35B] active:translate-y-0.5 active:shadow-none transition-all"
               >
                 EN
               </button>
             )}
           </div>
-        </div>
 
-        {canToggleEn && showEn && (
-          <div className="absolute top-full left-0 right-0 mt-2 z-50">
-            <p
-              id={enId}
-              lang="en"
-              className="border-[3px] border-[#D4A373] bg-[#FFF8E7] p-3 shadow-[0_5px_0_rgba(90,62,43,0.3)] rounded-xl text-xs md:text-sm leading-snug text-[#6B4A2D] font-bold"
-            >
-              {lineEn}
-            </p>
-          </div>
-        )}
+          {canToggleEn && showEn && (
+            <div className="absolute top-full left-0 right-0 mt-2 z-50">
+              <p
+                id={enId}
+                lang="en"
+                className="border-[3px] border-[#D4A373] bg-[#FFF8E7] p-3 shadow-[0_5px_0_rgba(90,62,43,0.3)] rounded-xl text-xs md:text-sm leading-snug text-[#6B4A2D] font-bold"
+              >
+                {lineEn}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

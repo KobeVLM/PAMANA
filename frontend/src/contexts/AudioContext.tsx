@@ -19,6 +19,8 @@ export interface PlayAudioOptions {
 
 interface AudioContextType {
   isAudioPlaying: boolean
+  /** URL of the clip currently speaking, used to sync NPC captions. */
+  currentAudioUrl: string | null
   playAudio: (url: string, options?: PlayAudioOptions) => Promise<PlaybackResult>
   stopAudio: () => void
 }
@@ -52,6 +54,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false)
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const pendingRef = useRef<((result: PlaybackResult) => void) | null>(null)
   const tokenRef = useRef(0)
@@ -88,6 +91,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
     getSpeechSynthesis()?.cancel()
     resolvePending('interrupted')
     setIsAudioPlaying(false)
+    setCurrentAudioUrl(null)
   }, [resolvePending])
 
   const stopAudio = useCallback(() => {
@@ -103,6 +107,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
       if (id !== tokenRef.current) return
       pendingRef.current = null
       setIsAudioPlaying(false)
+      setCurrentAudioUrl(null)
       resolve(result)
     },
     []
@@ -146,6 +151,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
         haltPlayback()
         const id = tokenRef.current + 1
         tokenRef.current = id
+        // Set before the source loads so captions highlight on the same frame
+        // the tap is handled, even when speechSynthesis is the fallback.
+        setCurrentAudioUrl(url || null)
 
         const fallbackText = options.fallbackText ?? deriveFallbackText(url)
         if (!url) {
@@ -230,7 +238,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [stopAudio])
 
   return (
-    <AudioContext.Provider value={{ isAudioPlaying, playAudio, stopAudio }}>
+    <AudioContext.Provider
+      value={{ isAudioPlaying, currentAudioUrl, playAudio, stopAudio }}
+    >
       {children}
     </AudioContext.Provider>
   )

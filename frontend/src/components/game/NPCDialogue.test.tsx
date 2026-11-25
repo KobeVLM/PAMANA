@@ -1,14 +1,27 @@
 import { StrictMode } from "react"
-import { describe, it, expect, vi } from "vitest"
+import { beforeEach, describe, it, expect, vi } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { NPCDialogue } from "./NPCDialogue"
 
-const { playAudioMock } = vi.hoisted(() => ({ playAudioMock: vi.fn() }))
+const { playAudioMock, postMock, audioState } = vi.hoisted(() => ({
+  playAudioMock: vi.fn(),
+  postMock: vi.fn(),
+  audioState: {
+    isAudioPlaying: false,
+    currentAudioUrl: null as string | null,
+  },
+}))
 
 vi.mock("@/contexts/AudioContext", () => ({
-  useAudio: () => ({ playAudio: playAudioMock }),
+  useAudio: () => ({
+    playAudio: playAudioMock,
+    isAudioPlaying: audioState.isAudioPlaying,
+    currentAudioUrl: audioState.currentAudioUrl,
+  }),
 }))
+
+vi.mock("@/lib/api", () => ({ default: { post: postMock } }))
 
 function sheetUrls(button: HTMLElement) {
   return Array.from(button.querySelectorAll("span")).map(
@@ -24,6 +37,15 @@ function reactionLayer() {
 }
 
 describe("NPCDialogue", () => {
+  beforeEach(() => {
+    playAudioMock.mockReset()
+    playAudioMock.mockResolvedValue("ended")
+    postMock.mockReset()
+    postMock.mockResolvedValue({ data: {} })
+    audioState.isAudioPlaying = false
+    audioState.currentAudioUrl = null
+  })
+
   it("shows the grandpa mascot for lolo", () => {
     render(<NPCDialogue npc="lolo" line="Kumusta, apo!" />)
 
@@ -114,5 +136,75 @@ describe("NPCDialogue", () => {
     finish("ended")
 
     await waitFor(() => expect(onAudioEnd).toHaveBeenCalledTimes(1))
+  })
+
+  it("highlights the large transcript only while its own clip is speaking", () => {
+    const { container, rerender } = render(
+      <NPCDialogue
+        npc="lolo"
+        line="Pakinggan ang salita."
+        audioUrl="/audio/npc/test.mp3"
+        autoPlay={false}
+      />
+    )
+
+    const bubble = () => container.querySelector("[data-speaking]")
+    expect(bubble()).toBeNull()
+
+    audioState.isAudioPlaying = true
+    audioState.currentAudioUrl = "/audio/npc/different.mp3"
+    rerender(
+      <NPCDialogue
+        npc="lolo"
+        line="Pakinggan ang salita."
+        audioUrl="/audio/npc/test.mp3"
+        autoPlay={false}
+      />
+    )
+    expect(bubble()).toBeNull()
+
+    audioState.currentAudioUrl = "/audio/npc/test.mp3"
+    rerender(
+      <NPCDialogue
+        npc="lolo"
+        line="Pakinggan ang salita."
+        audioUrl="/audio/npc/test.mp3"
+        autoPlay={false}
+      />
+    )
+    expect(bubble()).toHaveAttribute("data-speaking", "true")
+    expect(screen.getByText("Nagsasalita / Speaking")).toBeInTheDocument()
+    expect(screen.getByText("Pakinggan ang salita.").className).toContain(
+      "text-[32px]"
+    )
+  })
+
+  it("uses the prominent button for instant replay and logs the tap", async () => {
+    const user = userEvent.setup()
+    render(
+      <NPCDialogue
+        npc="lola"
+        line="Pakinggan nang mabuti!"
+        audioUrl="/audio/npc/lola_mod2_pagsama.mp3"
+        autoPlay={false}
+        moduleNumber={2}
+      />
+    )
+
+    await user.click(screen.getByRole("button", { name: /Makinig Ulit/i }))
+
+    expect(playAudioMock).toHaveBeenCalledWith(
+      "/audio/npc/lola_mod2_pagsama.mp3",
+      expect.anything()
+    )
+    expect(postMock).toHaveBeenCalledWith(
+      "/replay-events",
+      expect.objectContaining({
+        activity: "module",
+        itemType: "npc_instruction",
+        moduleNumber: 2,
+        source: "npc",
+      })
+    )
   })
 })

@@ -2,6 +2,7 @@ import { RotateCcw } from "lucide-react"
 import { FeedbackBanner } from "@/components/feedback/FeedbackBanner"
 import { STRINGS, type Bi } from "@/lib/i18n"
 import { scaffoldGuidance, type ScaffoldStage } from "@/lib/scaffolding"
+import { useReplayTelemetry } from "@/hooks/useReplayTelemetry"
 import { cn } from "@/lib/utils"
 
 export interface ScaffoldMessageProps {
@@ -36,10 +37,22 @@ export function ScaffoldMessage({
   onConfirm,
   className,
 }: ScaffoldMessageProps) {
+  const { trackReplay } = useReplayTelemetry()
+
   if (stage === 0) return null
 
   const guidance = scaffoldGuidance(stage, target)
   const displayMessage = message ?? guidance.message
+
+  const handleReplay = () => {
+    if (!onReplay) return
+    trackReplay({
+      itemType: 'scaffold_replay',
+      itemKey: target ?? 'guided-replay',
+      source: 'scaffold',
+    })
+    onReplay()
+  }
 
   return (
     <FeedbackBanner
@@ -57,8 +70,8 @@ export function ScaffoldMessage({
       {stage === 1 && onReplay && (
         <button
           type="button"
-          onClick={onReplay}
-          className="touch-target mt-2 inline-flex items-center gap-1.5 rounded-full border-2 border-[#D4A017] bg-white px-3 py-1 text-xs font-black text-[#7a5200] hover:bg-[#fff7db] md:text-sm"
+          onClick={handleReplay}
+          className="touch-target mt-2 inline-flex min-h-[56px] items-center gap-1.5 rounded-full border-2 border-[#D4A017] bg-white px-4 py-1 text-xs font-black text-[#7a5200] hover:bg-[#fff7db] md:text-sm"
         >
           <RotateCcw className="h-4 w-4" aria-hidden="true" />
           {STRINGS.listenAgain.fil} / {STRINGS.listenAgain.en}
