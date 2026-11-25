@@ -80,7 +80,7 @@ describe("AccuracyChip", () => {
     const compactBar = screen.getByRole("progressbar")
     const compactChip = screen.getByLabelText("Katumpakan (Accuracy)")
     expect([...compactChip.classList].sort()).toEqual([...compactBar.classList].sort())
-    expect(compactChip.firstElementChild).toHaveClass("h-5", "md:h-8")
+    expect(compactChip.firstElementChild).toHaveClass("h-5", "md:h-7")
 
     rerender(
       <>

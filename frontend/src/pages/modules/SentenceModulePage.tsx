@@ -267,37 +267,38 @@ export const SentenceModulePage: React.FC = () => {
     >
       <div className="absolute inset-0 bg-black/20 z-0 pointer-events-none" />
 
-      {/* Top Bar */}
-      <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
-        <button
-          onClick={() => navigate('/trail')}
-          className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
-        >
-          <ArrowLeft className="w-5 h-5 stroke-[3]" />
-          Pamana Trail
-        </button>
+      {/* Top Bar: title on its own row, HUD centred below it. */}
+      <div className="relative w-full z-20 flex flex-col items-center p-4 md:p-6">
+        <div className="relative w-full flex items-start justify-between min-h-[72px] md:min-h-[96px]">
+          <button
+            onClick={() => navigate('/trail')}
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
+          >
+            <ArrowLeft className="w-5 h-5 stroke-[3]" />
+            Pamana Trail
+          </button>
 
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-6 md:pt-8">
-          <img
-            src="/images/moduletitles/C_m4.png"
-            alt="Module 4"
-            className="w-[300px] md:w-[400px] lg:w-[500px] object-contain drop-shadow-2xl"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
-          />
+          <div data-decorative className="absolute top-0 left-1/2 -translate-x-1/2 z-10 w-full flex justify-center pointer-events-none pt-4 md:pt-6">
+            <img
+              src="/images/moduletitles/C_m4.png"
+              alt="Module 4"
+              className="w-[240px] sm:w-[300px] md:w-[400px] lg:w-[500px] object-contain drop-shadow-2xl"
+              onError={(e) => { e.currentTarget.style.display = 'none' }}
+            />
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 z-30">
+        <div className="relative z-30 mt-2 flex flex-wrap justify-center gap-2 md:gap-3">
           <ProgressPill
-            size="wide"
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${TOTAL_TASKS_PER_TIER}`}
           />
-          <AccuracyChip size="wide" accuracy={moduleAccuracy} />
+          <AccuracyChip accuracy={moduleAccuracy} />
         </div>
       </div>
 
             {/* Main Game Content */}
-      <div className="flex-1 relative flex flex-col items-center justify-start w-full max-w-4xl mx-auto px-4 pb-6 mt-4 z-10 gap-3 md:gap-4">
+      <div className="flex-1 relative flex flex-col items-center justify-start w-full max-w-4xl mx-auto px-4 pb-4 mt-2 md:mt-3 z-10 gap-2 md:gap-3">
         
         {/* NPC Dialogue */}
         <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-2 md:mb-4">

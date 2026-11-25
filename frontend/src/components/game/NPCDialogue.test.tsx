@@ -208,7 +208,7 @@ describe("NPCDialogue", () => {
     )
   })
 
-  it("groups replay under the mascot rather than over the speech bubble", () => {
+  it("places replay below the speech bubble, right-aligned", () => {
     render(
       <NPCDialogue
         npc="lolo"
@@ -222,8 +222,9 @@ describe("NPCDialogue", () => {
     const bubble = screen.getByText("Pakinggan nang mabuti!").closest(
       "div[class*='rounded-2xl']"
     ) as HTMLElement
+    const replayRow = replay.parentElement as HTMLElement
 
-    expect(bubble).not.toContainElement(replay)
-    expect(replay.parentElement).toContainElement(screen.getByText("Lolo"))
+    expect(replayRow).toHaveClass("justify-end")
+    expect(replayRow.previousElementSibling).toBe(bubble)
   })
 })

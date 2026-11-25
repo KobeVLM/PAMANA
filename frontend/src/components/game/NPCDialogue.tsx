@@ -108,8 +108,8 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
 
   return (
     <div className={cn('flex items-start gap-2.5', className)}>
-      {/* NPC identity + replay control, grouped with the speaker */}
-      <div className="flex w-[132px] shrink-0 flex-col items-center gap-1 z-10 md:w-[240px]">
+      {/* NPC identity */}
+      <div className="flex w-[120px] shrink-0 flex-col items-center gap-1 z-10 md:w-[130px]">
         <Mascot
           directions={mascot.directions}
           reactions={mascot.reactions}
@@ -129,17 +129,10 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         >
           {name}
         </span>
-        {(audioUrl || onPlayAudio) && (
-          <ReplayButton
-            onReplay={handlePlay}
-            isSpeaking={isSpeaking}
-            className="mt-2 px-2 text-xs md:px-4 md:text-base"
-          />
-        )}
       </div>
 
-      {/* Speech bubble is the primary content; replay sits under the speaker. */}
-      <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
+      {/* Speech bubble is the primary content; replay follows it on the right. */}
+      <div className="flex min-w-0 flex-1 flex-col items-stretch gap-2">
         <div
           data-speaking={isSpeaking ? 'true' : undefined}
           className={cn(
@@ -200,6 +193,11 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
             </div>
           )}
         </div>
+        {(audioUrl || onPlayAudio) && (
+          <div className="flex justify-end">
+            <ReplayButton onReplay={handlePlay} isSpeaking={isSpeaking} />
+          </div>
+        )}
       </div>
     </div>
   )

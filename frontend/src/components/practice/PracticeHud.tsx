@@ -21,9 +21,9 @@ const clampPercent = (value: number) => {
  */
 const HUD_CHIP_SIZES = {
   compact: {
-    shell: "w-48 md:w-64 lg:w-80",
-    track: "h-5 md:h-8",
-    value: "ml-2 min-w-[3ch] text-lg md:ml-3 md:text-2xl",
+    shell: "w-40 sm:w-48 md:w-56 lg:w-64",
+    track: "h-5 md:h-7",
+    value: "ml-2 min-w-[3ch] text-base md:ml-3 md:text-xl",
   },
   wide: {
     shell: "w-64 md:w-[22rem] lg:w-[26rem]",

@@ -10,7 +10,6 @@ import {
   PracticeStepRail,
   ProgressPill,
 } from "@/components/practice/PracticeHud";
-import { FocusViewToggle } from "@/components/learning/FocusViewToggle";
 import { GestureDemo } from "@/components/learning/GestureDemo";
 import { ScaffoldMessage } from "@/components/learning/ScaffoldMessage";
 import { NPCDialogue } from "@/components/game/NPCDialogue";
@@ -21,6 +20,7 @@ import { BilingualText } from "@/components/common/BilingualText";
 import { useAudioElement, useSfx } from "@/hooks/useGameAudio";
 import { usePracticeAnswerProgress } from "@/hooks/usePracticeAnswerProgress";
 import { useFocusView } from "@/hooks/useFocusView";
+import { FocusViewToggle } from "@/components/learning/FocusViewToggle";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { bi } from "@/lib/i18n";
 import { fadedDistractorId, scaffoldStage } from "@/lib/scaffolding";
@@ -424,47 +424,45 @@ export const WordPracticePage: React.FC = () => {
     >
       <div data-decorative className="absolute inset-0 bg-black/10 z-0 pointer-events-none" />
 
-      {/* TOP BAR */}
-      <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
-        
-        {/* Left: Back button + Focus View, kept clear of the title. */}
-        <div className="flex flex-col items-start gap-2 z-30">
+      {/* Top Bar: title on its own row, HUD centred below it. */}
+      <div className="relative w-full z-20 flex flex-col items-center p-4 md:p-6">
+        <div className="relative w-full flex items-start justify-between min-h-[72px] md:min-h-[96px]">
           <button
             onClick={() => navigate('/home')}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 mt-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
           >
             <ArrowLeft className="w-5 h-5 stroke-[3]" />
             Bumalik
           </button>
-          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
+
+          <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-0 md:top-2 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
+            <h1
+              className="text-3xl md:text-5xl lg:text-6xl font-black text-center tracking-wide"
+              style={{
+                color: "#FFD700",
+                WebkitTextStroke: "3px black",
+                paintOrder: "stroke fill",
+                textShadow: "0 4px 4px rgba(0,0,0,0.4)",
+              }}
+            >
+              Pagsasanay:
+            </h1>
+            <h1
+              className="text-2xl md:text-4xl lg:text-5xl font-black text-center tracking-wide mt-1 md:mt-2"
+              style={{
+                color: "#FFD700",
+                WebkitTextStroke: "3px black",
+                paintOrder: "stroke fill",
+                textShadow: "0 4px 4px rgba(0,0,0,0.4)",
+              }}
+            >
+              Pagtutugma ng Salita
+            </h1>
+          </div>
         </div>
 
-        <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-2 md:top-4 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
-          <h1 
-            className="text-4xl md:text-6xl lg:text-7xl font-black text-center tracking-wide"
-            style={{
-              color: "#FFD700", 
-              WebkitTextStroke: "3px black", 
-              paintOrder: "stroke fill",
-              textShadow: "0 4px 4px rgba(0,0,0,0.4)", 
-            }}
-          >
-            Pagsasanay:
-          </h1>
-          <h1 
-            className="text-3xl md:text-5xl lg:text-6xl font-black text-center tracking-wide mt-1 md:mt-2"
-            style={{
-              color: "#FFD700", 
-              WebkitTextStroke: "3px black", 
-              paintOrder: "stroke fill",
-              textShadow: "0 4px 4px rgba(0,0,0,0.4)", 
-            }}
-          >
-            Pagtutugma ng Salita
-          </h1>
-        </div>
-        
-        <div className="flex flex-col items-end z-30 mt-1 gap-3">
+        {/* HUD stays visible in Focus View; Focus View lives by the mascot. */}
+        <div className="relative z-30 mt-2 flex flex-wrap items-center justify-center gap-2 md:gap-3">
           <ProgressPill
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${totalRounds}`}
@@ -477,7 +475,7 @@ export const WordPracticePage: React.FC = () => {
       {/* Sub-level Steps are decorative in Focus View; the HUD stays visible. */}
       <div data-decorative>
         <PracticeStepRail
-          className="mt-2 md:mt-4"
+          className="mt-1 md:mt-2"
           steps={steps.map((step, idx) => ({
             label: STEP_LABELS[step].split(". ")[1],
             state: idx === currentStepIndex ? "current" : idx < currentStepIndex ? "done" : "pending",
@@ -487,21 +485,28 @@ export const WordPracticePage: React.FC = () => {
     
       {/* Main Game Content */}
       {/* 👇 Removed pt-20 to let it center naturally, and adjusted the gap */}
-      <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-6 mt-4 z-10 gap-2 md:gap-4">
+      <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-3 mt-1 md:mt-2 z-10 gap-2 md:gap-3">
         
         {/* NPC Dialogue */}
         <div className="w-full flex justify-center z-30 scale-105 md:scale-110 origin-top mb-2">
-          <NPCDialogue
-            npc="lolo"
-            line={NPC_LINE.fil}
-            lineEn={NPC_LINE.en}
-            audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
-            autoPlay={roundIndex === 0 && !npcIntroDone}
-            onAudioEnd={handleNpcAudioEnd}
-            celebrate={celebrate}
-            resetKey={roundIndex}
-            moduleNumber={2}
-          />
+          <div className="relative inline-flex">
+            <FocusViewToggle
+              enabled={focusView}
+              onToggle={toggleFocusView}
+              className="absolute -left-3 -top-3 z-30 px-2 py-1 text-[10px] md:text-xs"
+            />
+            <NPCDialogue
+              npc="lolo"
+              line={NPC_LINE.fil}
+              lineEn={NPC_LINE.en}
+              audioUrl="/static/assets/audio/npc/lolo_mod3_basahin.mp3"
+              autoPlay={roundIndex === 0 && !npcIntroDone}
+              onAudioEnd={handleNpcAudioEnd}
+              celebrate={celebrate}
+              resetKey={roundIndex}
+              moduleNumber={2}
+            />
+          </div>
         </div>
 
         {/* Equation Board */}
