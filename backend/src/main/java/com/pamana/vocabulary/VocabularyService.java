@@ -8,6 +8,7 @@ import com.pamana.vocabulary.WordMastery;
 import com.pamana.vocabulary.dto.VocabularyWordResponse;
 import com.pamana.vocabulary.dto.WordMasteryResponse;
 import com.pamana.vocabulary.dto.MatchOptionsResponse;
+import com.pamana.progress.AnswerEventService;
 import com.pamana.progress.ModuleProgress;
 import com.pamana.common.BaseGameService;
 import com.pamana.common.dto.DialogueResponse;
@@ -29,6 +30,7 @@ public class VocabularyService extends BaseGameService {
 
     private final VocabularyItemRepository vocabularyItemRepository;
     private final WordMasteryRepository wordMasteryRepository;
+    private final AnswerEventService answerEventService;
 
     // Hardcoded simple Tagalog dialogue templates aligned to Grade 2 MATATAG
     // competencies
@@ -65,9 +67,11 @@ public class VocabularyService extends BaseGameService {
     }
 
     public VocabularyService(VocabularyItemRepository vocabularyItemRepository,
-            WordMasteryRepository wordMasteryRepository) {
+            WordMasteryRepository wordMasteryRepository,
+            AnswerEventService answerEventService) {
         this.vocabularyItemRepository = vocabularyItemRepository;
         this.wordMasteryRepository = wordMasteryRepository;
+        this.answerEventService = answerEventService;
     }
 
     @Transactional(readOnly = true)
@@ -196,7 +200,8 @@ public class VocabularyService extends BaseGameService {
     }
 
     @Transactional
-    public WordMasteryResponse recordStepAccuracy(UUID userId, UUID wordId, String step, boolean isCorrect) {
+    public WordMasteryResponse recordStepAccuracy(UUID userId, UUID wordId, String step, boolean isCorrect,
+            UUID runId) {
         log.info("Recording step progress: userId={}, wordId={}, step={}, correct={}", userId, wordId, step, isCorrect);
 
         VocabularyItem item = vocabularyItemRepository.findById(wordId)
@@ -237,6 +242,20 @@ public class VocabularyService extends BaseGameService {
         }
 
         wordMasteryRepository.save(mastery);
+
+        // The mastery row only keeps the latest result per step, so the attempt
+        // history lives in answer_events. Granularity is one scored question,
+        // i.e. a word's step, so retries are counted per question.
+        int moduleNumber = "family_home".equalsIgnoreCase(item.getDomain()) ? 3 : 2;
+        answerEventService.record(
+                userId,
+                runId,
+                AnswerEventService.ACTIVITY_MODULE,
+                "vocabulary_word",
+                wordId + ":" + step.toLowerCase(java.util.Locale.ROOT),
+                step.toLowerCase(java.util.Locale.ROOT),
+                moduleNumber,
+                isCorrect);
 
         // Check if the answered word's own domain is now fully complete (meaning
         // all words in it are green). Using the word's domain (instead of the

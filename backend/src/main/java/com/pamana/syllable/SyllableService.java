@@ -8,6 +8,8 @@ import com.pamana.syllable.dto.SyllableSetResponse;
 import com.pamana.syllable.dto.SyllableStatusResponse;
 import com.pamana.common.BaseGameService;
 
+import com.pamana.progress.AnswerEventService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,14 +26,17 @@ public class SyllableService extends BaseGameService {
 
     private static final Logger log = LoggerFactory.getLogger(SyllableService.class);
     private final SyllableProgressRepository syllableProgressRepository;
+    private final AnswerEventService answerEventService;
 
-    public SyllableService(SyllableProgressRepository syllableProgressRepository) {
+    public SyllableService(SyllableProgressRepository syllableProgressRepository,
+            AnswerEventService answerEventService) {
         this.syllableProgressRepository = syllableProgressRepository;
+        this.answerEventService = answerEventService;
     }
 
     @Transactional
     public SyllableProgressResponse evaluateAnswer(UUID userId, String subLevel, Integer setId, String answer,
-            boolean isCorrect) {
+            boolean isCorrect, UUID runId) {
         log.info("Evaluating Syllable answer: userId={}, subLevel={}, setId={}, correct={}", userId, subLevel, setId,
                 isCorrect);
 
@@ -53,6 +58,16 @@ public class SyllableService extends BaseGameService {
         double calculatedAccuracy = (progress.getCorrectCount() * 100.0) / progress.getAttempts();
         progress.setAccuracy(BigDecimal.valueOf(calculatedAccuracy).setScale(2, RoundingMode.HALF_UP));
         syllableProgressRepository.save(progress);
+
+        answerEventService.record(
+                userId,
+                runId,
+                AnswerEventService.ACTIVITY_MODULE,
+                "syllable_set",
+                subLevel + ":" + setId,
+                subLevel,
+                1,
+                isCorrect);
 
         // Standard logic: advance to the next set when they get it correct
         Integer nextSetId = setId;

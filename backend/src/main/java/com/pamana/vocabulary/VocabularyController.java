@@ -120,7 +120,8 @@ public class VocabularyController {
                 userId,
                 request.getWordId(),
                 request.getStep(),
-                request.isCorrect()
+                request.isCorrect(),
+                request.getRunId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

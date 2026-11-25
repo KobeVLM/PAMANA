@@ -16,6 +16,9 @@ public class VocabularyProgressRequest {
 
     private boolean correct;
 
+    /** Groups this answer with the rest of the same play-through. Optional. */
+    private UUID runId;
+
     public VocabularyProgressRequest() {
     }
 
@@ -48,5 +51,13 @@ public class VocabularyProgressRequest {
 
     public void setCorrect(boolean correct) {
         this.correct = correct;
+    }
+
+    public UUID getRunId() {
+        return runId;
+    }
+
+    public void setRunId(UUID runId) {
+        this.runId = runId;
     }
 }

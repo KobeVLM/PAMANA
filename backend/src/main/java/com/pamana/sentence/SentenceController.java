@@ -64,7 +64,8 @@ public class SentenceController {
         SentenceResultResponse response = sentenceService.evaluateSentenceAnswer(
                 userId,
                 request.getTaskId(),
-                request.getSubmittedOrder()
+                request.getSubmittedOrder(),
+                request.getRunId()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

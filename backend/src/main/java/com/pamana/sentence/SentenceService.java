@@ -6,6 +6,7 @@ import com.pamana.sentence.SentenceProgress;
 import com.pamana.sentence.dto.SentenceResultResponse;
 import com.pamana.sentence.dto.SentenceTaskResponse;
 import com.pamana.common.BaseGameService;
+import com.pamana.progress.AnswerEventService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public class SentenceService extends BaseGameService {
     private static final Logger log = LoggerFactory.getLogger(SentenceService.class);
 
     private final SentenceProgressRepository sentenceProgressRepository;
+    private final AnswerEventService answerEventService;
 
     public static class SentenceTask {
         private final UUID id;
@@ -63,8 +65,10 @@ public class SentenceService extends BaseGameService {
         new SentenceTask("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", 2, Arrays.asList("damit", "?", "ang", "Ano"), Arrays.asList("Ano", "ang", "damit", "?"), "/static/assets/audio/npc/sentence_10.mp3")
     );
 
-    public SentenceService(SentenceProgressRepository sentenceProgressRepository) {
+    public SentenceService(SentenceProgressRepository sentenceProgressRepository,
+            AnswerEventService answerEventService) {
         this.sentenceProgressRepository = sentenceProgressRepository;
+        this.answerEventService = answerEventService;
     }
 
     @Transactional(readOnly = true)
@@ -100,7 +104,8 @@ public class SentenceService extends BaseGameService {
     }
 
     @Transactional
-    public SentenceResultResponse evaluateSentenceAnswer(UUID userId, UUID taskId, List<String> submittedOrder) {
+    public SentenceResultResponse evaluateSentenceAnswer(UUID userId, UUID taskId, List<String> submittedOrder,
+            UUID runId) {
         log.info("Evaluating sentence attempt: userId={}, taskId={}, order={}", userId, taskId, submittedOrder);
 
         SentenceTask target = TASKS.stream()
@@ -127,6 +132,16 @@ public class SentenceService extends BaseGameService {
         double calculatedAccuracy = correct ? (100.0 / progress.getAttempts()) : 0.0;
         progress.setAccuracy(BigDecimal.valueOf(calculatedAccuracy).setScale(2, RoundingMode.HALF_UP));
         sentenceProgressRepository.save(progress);
+
+        answerEventService.record(
+                userId,
+                runId,
+                AnswerEventService.ACTIVITY_MODULE,
+                "sentence_task",
+                taskId.toString(),
+                "tier" + target.getTier(),
+                4,
+                correct);
 
         // Recompute overall tier-specific accuracy
         double tierAccuracy = computeTierAccuracy(userId, target.getTier());

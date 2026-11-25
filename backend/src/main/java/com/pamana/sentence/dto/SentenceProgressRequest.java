@@ -14,6 +14,9 @@ public class SentenceProgressRequest {
     @NotNull
     private List<String> submittedOrder;
 
+    /** Groups this answer with the rest of the same play-through. Optional. */
+    private UUID runId;
+
     public SentenceProgressRequest() {
     }
 
@@ -37,5 +40,13 @@ public class SentenceProgressRequest {
 
     public void setSubmittedOrder(List<String> submittedOrder) {
         this.submittedOrder = submittedOrder;
+    }
+
+    public UUID getRunId() {
+        return runId;
+    }
+
+    public void setRunId(UUID runId) {
+        this.runId = runId;
     }
 }

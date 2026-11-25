@@ -43,7 +43,8 @@ public class SyllableController {
                 request.getSubLevel(),
                 request.getSetId(),
                 request.getSelectedAnswer(),
-                request.isCorrect()
+                request.isCorrect(),
+                request.getRunId()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
