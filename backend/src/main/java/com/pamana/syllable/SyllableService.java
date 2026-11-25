@@ -1,6 +1,5 @@
 package com.pamana.syllable;
 
-import com.pamana.syllable.SyllableService;
 import com.pamana.syllable.SyllableProgressRepository;
 import com.pamana.syllable.SyllableProgress;
 import com.pamana.syllable.dto.SyllableProgressResponse;
@@ -8,6 +7,12 @@ import com.pamana.syllable.dto.SyllableSetResponse;
 import com.pamana.syllable.dto.SyllableStatusResponse;
 import com.pamana.common.BaseGameService;
 
+import com.pamana.adaptive.AdaptiveTier;
+import com.pamana.adaptive.AdaptiveTierResolver;
+import com.pamana.adaptive.ContentBankItem;
+import com.pamana.adaptive.ContentBankRepository;
+import com.pamana.adaptive.SyllableContent;
+import com.pamana.adaptive.TieredDistractors;
 import com.pamana.progress.AnswerEventService;
 
 import org.slf4j.Logger;
@@ -18,7 +23,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -27,11 +39,17 @@ public class SyllableService extends BaseGameService {
     private static final Logger log = LoggerFactory.getLogger(SyllableService.class);
     private final SyllableProgressRepository syllableProgressRepository;
     private final AnswerEventService answerEventService;
+    private final AdaptiveTierResolver adaptiveTierResolver;
+    private final ContentBankRepository contentBankRepository;
 
     public SyllableService(SyllableProgressRepository syllableProgressRepository,
-            AnswerEventService answerEventService) {
+            AnswerEventService answerEventService,
+            AdaptiveTierResolver adaptiveTierResolver,
+            ContentBankRepository contentBankRepository) {
         this.syllableProgressRepository = syllableProgressRepository;
         this.answerEventService = answerEventService;
+        this.adaptiveTierResolver = adaptiveTierResolver;
+        this.contentBankRepository = contentBankRepository;
     }
 
     @Transactional
@@ -59,15 +77,18 @@ public class SyllableService extends BaseGameService {
         progress.setAccuracy(BigDecimal.valueOf(calculatedAccuracy).setScale(2, RoundingMode.HALF_UP));
         syllableProgressRepository.save(progress);
 
+        // Record which adaptive tier was actually served, alongside the answer.
+        AdaptiveTier tier = adaptiveTierResolver.forSyllables(userId);
         answerEventService.record(
                 userId,
                 runId,
                 AnswerEventService.ACTIVITY_MODULE,
-                "syllable_set",
+                AdaptiveTierResolver.ITEM_TYPE_SYLLABLE,
                 subLevel + ":" + setId,
                 subLevel,
                 1,
-                isCorrect);
+                isCorrect,
+                tier.value());
 
         // Standard logic: advance to the next set when they get it correct
         Integer nextSetId = setId;
@@ -164,103 +185,89 @@ public class SyllableService extends BaseGameService {
         return pagsama && pakinggan && kilalanin && rhyming;
     }
 
+    /**
+     * Builds one syllable question for the learner's adaptive tier.
+     *
+     * <p>The target (consonant, vowel, word and audio) is still derived exactly
+     * as before via {@link SyllableContent}; only the distractor pool changes.
+     * STANDARD uses the legacy pool so existing gameplay is unchanged.
+     */
     @Transactional(readOnly = true)
     public SyllableSetResponse getSyllableSet(String subLevel, int setId, UUID userId) {
-        log.info("Generating syllable set for subLevel: {}, setId: {}", subLevel, setId);
+        AdaptiveTier tier = adaptiveTierResolver.forSyllables(userId);
+        log.info("Generating syllable set for subLevel: {}, setId: {}, tier: {}", subLevel, setId, tier);
+
         SyllableSetResponse response = new SyllableSetResponse();
         response.setSetId(setId);
         response.setSubLevel(subLevel);
 
-        List<SyllableSetResponse.Option> options = new ArrayList<>();
-        
-        String[] consonantsList = {"b", "d", "g", "h", "k", "l", "m", "n", "ng", "p", "r", "s", "t", "w", "y"};
-        String[] vowelsList = {"a", "e", "i", "o", "u"};
-        
-        int vIdx = (setId - 1) % vowelsList.length;
-        String vowel = vowelsList[vIdx];
-        
-        List<String> cons = new ArrayList<>(java.util.Arrays.asList(consonantsList));
-        java.util.Collections.shuffle(cons, new java.util.Random(setId + subLevel.hashCode())); 
-        
-        String targetConsonant = cons.get(0);
-        String targetSyllable = targetConsonant + vowel;
+        String vowel = SyllableContent.vowel(setId);
+        String targetConsonant = SyllableContent.shuffledConsonants(setId, subLevel).get(0);
+        String targetSyllable = SyllableContent.targetSyllable(subLevel, setId);
 
-        if ("pagsama".equals(subLevel) || "pakinggan".equals(subLevel)) {
+        if (SyllableContent.isWordContext(subLevel)) {
+            // kilalanin / rhyming: listen to a word and find its first syllable.
+            String word = SyllableContent.contextWord(subLevel, setId);
+            response.setTargetSyllable(targetSyllable.toUpperCase());
+            response.setAudioUrl("/audio/words/" + word + ".mp3");
+        } else {
             response.setConsonant(targetConsonant.toUpperCase());
             response.setVowel(vowel.toUpperCase());
             response.setTargetSyllable(targetSyllable.toUpperCase());
-            
             response.setConsonantAudioUrl("/audio/phonemes/" + targetConsonant + ".mp3");
             response.setVowelAudioUrl("/audio/phonemes/" + vowel + ".mp3");
             response.setAudioUrl("/audio/syllables/" + targetSyllable + ".mp3");
-            
-            options.add(new SyllableSetResponse.Option(targetSyllable.toLowerCase(), targetSyllable.toUpperCase()));
-            
-            if ("pagsama".equals(subLevel)) {
-                int added = 1;
-                for (String v : vowelsList) {
-                    if (added >= 4) break;
-                    if (!v.equals(vowel)) {
-                        String opt = targetConsonant + v;
-                        options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
-                        added++;
-                    }
-                }
-            } else {
-                for (int i = 1; i < 4; i++) {
-                    String opt = cons.get(i) + vowel;
-                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
-                }
-            }
-            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
-        } else if ("kilalanin".equals(subLevel)) {
-            String[] words = {"mata", "bahay", "tatay", "nanay", "bibig"};
-            String[] targetSylls = {"ma", "ba", "ta", "na", "bi"};
-            int index = (setId - 1) % words.length;
-            String word = words[index];
-            String targetSyll = targetSylls[index];
-            
-            response.setTargetSyllable(targetSyll.toUpperCase());
-            response.setAudioUrl("/audio/words/" + word + ".mp3");
-            
-            options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
-            int added = 0;
-            for (int i = 0; i < cons.size(); i++) {
-                if (added >= 3) break;
-                // For kilalanin, we generate distractors ending in 'a' (or 'i' if target ends in 'i')
-                String distractorVowel = targetSyll.substring(targetSyll.length() - 1);
-                String opt = cons.get(i) + distractorVowel;
-                if (!opt.equalsIgnoreCase(targetSyll)) {
-                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
-                    added++;
-                }
-            }
-            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
-        } else if ("rhyming".equals(subLevel)) {
-            String[] words = {"mata", "lola", "lolo", "tenga", "kuya"};
-            String[] targetSylls = {"ta", "la", "lo", "nga", "ya"};
-            int index = (setId - 1) % words.length;
-            String word = words[index];
-            String targetSyll = targetSylls[index];
-            
-            response.setTargetSyllable(targetSyll.toUpperCase());
-            response.setAudioUrl("/audio/words/" + word + ".mp3");
-            
-            options.add(new SyllableSetResponse.Option(targetSyll.toLowerCase(), targetSyll.toUpperCase()));
-            int added = 0;
-            for (int i = 0; i < cons.size(); i++) {
-                if (added >= 3) break;
-                String distractorVowel = targetSyll.substring(targetSyll.length() - 1);
-                String opt = cons.get(i) + distractorVowel;
-                if (!opt.equalsIgnoreCase(targetSyll)) {
-                    options.add(new SyllableSetResponse.Option(opt.toLowerCase(), opt.toUpperCase()));
-                    added++;
-                }
-            }
-            java.util.Collections.shuffle(options, new java.util.Random(setId + subLevel.hashCode()));
         }
+
+        List<SyllableSetResponse.Option> options = new ArrayList<>();
+        options.add(new SyllableSetResponse.Option(targetSyllable.toLowerCase(), targetSyllable.toUpperCase()));
+        for (String distractor : tieredDistractorLabels(subLevel, setId, tier)) {
+            options.add(new SyllableSetResponse.Option(distractor.toLowerCase(), distractor.toUpperCase()));
+        }
+
+        // The tier is part of the seed: options stay stable while the learner's
+        // tier does, and rearrange when the dispatcher changes the tier.
+        long seed = setId + subLevel.hashCode() + tier.hashCode();
+        Collections.shuffle(options, new Random(seed));
 
         response.setOptions(options);
         return response;
+    }
+
+    /**
+     * Distractor labels for one item at the learner's tier, read from the
+     * Content Bank. A missing or stale pool falls back to the deterministic
+     * {@link TieredDistractors} rule so a partially migrated database still
+     * serves playable questions.
+     */
+    private List<String> tieredDistractorLabels(String subLevel, int setId, AdaptiveTier tier) {
+        String target = SyllableContent.targetSyllable(subLevel, setId);
+        Optional<ContentBankItem> pool = contentBankRepository.findByActivityAndItemKeyAndDifficultyTier(
+                TieredDistractors.ACTIVITY_SYLLABLE,
+                subLevel + ":" + setId,
+                tier.value());
+
+        List<String> labels = pool.isPresent()
+                ? Arrays.asList(pool.get().getDistractors().split(","))
+                : TieredDistractors.forSyllable(subLevel, setId, tier);
+
+        Set<String> unique = new LinkedHashSet<>();
+        addValidDistractors(unique, labels, target);
+        if (unique.size() < TieredDistractors.OPTION_COUNT) {
+            addValidDistractors(unique, TieredDistractors.forSyllable(subLevel, setId, tier), target);
+        }
+        return new ArrayList<>(unique);
+    }
+
+    private void addValidDistractors(Set<String> into, List<String> labels, String target) {
+        for (String label : labels) {
+            if (into.size() >= TieredDistractors.OPTION_COUNT) {
+                return;
+            }
+            String normalized = label.trim().toLowerCase(Locale.ROOT);
+            if (!normalized.isEmpty() && !normalized.equals(target)) {
+                into.add(normalized);
+            }
+        }
     }
 }
