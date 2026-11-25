@@ -393,46 +393,46 @@ export const SyllablePracticePage: React.FC = () => {
     >
       <div data-decorative className="absolute inset-0 bg-black/15 z-0 pointer-events-none" />
 
-      {/* Top Bar: title on its own row, HUD centred below it. */}
-      <div className="relative w-full z-20 flex flex-col items-center p-4 md:p-6">
-        <div className="relative w-full flex items-start justify-between min-h-[72px] md:min-h-[96px]">
+      {/* Top Bar: title centred, controls left, HUD upper right. */}
+      <div className="relative w-full z-20 flex justify-between items-start p-4 md:p-6 min-h-[100px] md:min-h-[140px]">
+        <div className="flex flex-col items-start gap-3 z-30">
           <button
             onClick={() => navigate('/home')}
-            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg z-30"
+            className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-full border-b-4 border-orange-700 active:border-b-0 active:translate-y-1 transition-all shadow-lg"
           >
             <ArrowLeft className="w-5 h-5 stroke-[3]" />
             Bumalik
           </button>
-
-          {/* Center: Title (decorative in Focus View) */}
-          <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-0 md:top-2 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
-            <h1
-              className="text-3xl md:text-5xl lg:text-6xl font-black text-center tracking-wide"
-              style={{
-                color: "#FFD700",
-                WebkitTextStroke: "3px black",
-                paintOrder: "stroke fill",
-                textShadow: "0 4px 4px rgba(0,0,0,0.4)",
-              }}
-            >
-              Pagsasanay:
-            </h1>
-            <h1
-              className="text-2xl md:text-4xl lg:text-5xl font-black text-center tracking-wide -mt-1 md:-mt-2"
-              style={{
-                color: "#FFD700",
-                WebkitTextStroke: "3px black",
-                paintOrder: "stroke fill",
-                textShadow: "0 4px 4px rgba(0,0,0,0.4)",
-              }}
-            >
-              Pagtugma ng Pantig
-            </h1>
-          </div>
+          <FocusViewToggle enabled={focusView} onToggle={toggleFocusView} />
         </div>
 
-        {/* HUD stays visible in Focus View; Focus View lives by the mascot. */}
-        <div className="relative z-30 mt-2 flex flex-wrap items-center justify-center gap-2 md:gap-3">
+        {/* Center: Title (decorative in Focus View) */}
+        <div data-decorative className="absolute left-1/2 -translate-x-1/2 top-0 md:top-2 pointer-events-none z-20 flex flex-col items-center justify-center w-full leading-tight">
+          <h1
+            className="text-3xl md:text-5xl lg:text-6xl font-black text-center tracking-wide"
+            style={{
+              color: "#FFD700",
+              WebkitTextStroke: "3px black",
+              paintOrder: "stroke fill",
+              textShadow: "0 4px 4px rgba(0,0,0,0.4)",
+            }}
+          >
+            Pagsasanay:
+          </h1>
+          <h1
+            className="text-2xl md:text-4xl lg:text-5xl font-black text-center tracking-wide -mt-1 md:-mt-2"
+            style={{
+              color: "#FFD700",
+              WebkitTextStroke: "3px black",
+              paintOrder: "stroke fill",
+              textShadow: "0 4px 4px rgba(0,0,0,0.4)",
+            }}
+          >
+            Pagtugma ng Pantig
+          </h1>
+        </div>
+
+        <div className="relative z-30 flex flex-col items-end gap-2 md:flex-row md:items-center md:gap-3">
           <ProgressPill
             value={answerProgress.progress}
             label={`${answerProgress.correctItems}/${SUB_LEVELS.length * 2}`}
@@ -457,23 +457,16 @@ export const SyllablePracticePage: React.FC = () => {
       <div className="flex-1 relative flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 pb-3 mt-1 md:mt-2 z-10 gap-3 md:gap-4">
         
         {/* NPC Dialogue */}
-        <div className="w-full flex justify-center z-30 scale-110 md:scale-125 origin-top mb-2 md:mb-4">
-          <div className="relative inline-flex">
-            <FocusViewToggle
-              enabled={focusView}
-              onToggle={toggleFocusView}
-              className="absolute -left-3 -top-3 z-30 px-2 py-1 text-[10px] md:text-xs"
-            />
-            <NPCDialogue
-              npc="lolo"
-              line={NPC_LINES[currentSet.subLevel].fil}
-              lineEn={NPC_LINES[currentSet.subLevel].en}
-              audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
-              celebrate={celebrate}
-              resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
-              moduleNumber={1}
-            />
-          </div>
+        <div className="w-full flex justify-center z-30 mb-4 md:mb-6">
+          <NPCDialogue
+            npc="lolo"
+            line={NPC_LINES[currentSet.subLevel].fil}
+            lineEn={NPC_LINES[currentSet.subLevel].en}
+            audioUrl={`/static/assets/audio/npc/lolo_mod2_${currentSet.subLevel}.mp3`}
+            celebrate={celebrate}
+            resetKey={`${currentSet.subLevel}-${currentSet.setId}`}
+            moduleNumber={1}
+          />
         </div>
 
         {/* Equation Board */}

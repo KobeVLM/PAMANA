@@ -208,22 +208,29 @@ describe("NPCDialogue", () => {
     )
   })
 
-  it("places replay below the speech bubble, right-aligned", () => {
+  it("places replay below the English panel, right-aligned", async () => {
+    const user = userEvent.setup()
     render(
       <NPCDialogue
         npc="lolo"
         line="Pakinggan nang mabuti!"
+        lineEn="Listen carefully!"
         audioUrl="/audio/npc/lolo_mod2_pagsama.mp3"
         autoPlay={false}
       />
     )
 
+    await user.click(screen.getByRole("button", { name: /Ipakita ang Ingles/i }))
+
     const replay = screen.getByRole("button", { name: /Makinig Ulit/i })
     const bubble = screen.getByText("Pakinggan nang mabuti!").closest(
       "div[class*='rounded-2xl']"
     ) as HTMLElement
+    const translation = screen.getByText("Listen carefully!")
     const replayRow = replay.parentElement as HTMLElement
 
+    expect(bubble).toContainElement(translation)
+    expect(translation.parentElement).not.toHaveClass("absolute")
     expect(replayRow).toHaveClass("justify-end")
     expect(replayRow.previousElementSibling).toBe(bubble)
   })

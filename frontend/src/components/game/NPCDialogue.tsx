@@ -132,7 +132,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
       </div>
 
       {/* Speech bubble is the primary content; replay follows it on the right. */}
-      <div className="flex min-w-0 flex-1 flex-col items-stretch gap-2">
+      <div className="flex min-w-0 flex-1 flex-col items-stretch gap-3">
         <div
           data-speaking={isSpeaking ? 'true' : undefined}
           className={cn(
@@ -182,7 +182,7 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
           </div>
 
           {canToggleEn && showEn && (
-            <div className="absolute top-full left-0 right-0 mt-2 z-50">
+            <div className="mt-2">
               <p
                 id={enId}
                 lang="en"
@@ -195,7 +195,11 @@ export const NPCDialogue: React.FC<NPCDialogueProps> = ({
         </div>
         {(audioUrl || onPlayAudio) && (
           <div className="flex justify-end">
-            <ReplayButton onReplay={handlePlay} isSpeaking={isSpeaking} />
+            <ReplayButton
+              onReplay={handlePlay}
+              isSpeaking={isSpeaking}
+              className="px-3 text-sm md:px-4 md:text-base"
+            />
           </div>
         )}
       </div>
