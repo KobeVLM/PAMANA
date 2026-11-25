@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "optimize:images": "node scripts/optimize-images.mjs",
+    "normalize:audio": "node scripts/normalize-audio.mjs",
     "generate:icons": "node scripts/generate-pwa-icons.mjs",
     "preview": "vite preview"
   },
@@ -56,6 +57,7 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "ffmpeg-static": "^5.3.0",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.15",
